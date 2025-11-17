@@ -7,18 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ----------------------
+// Banner Models
+// ----------------------
 model banners {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model carts {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model categories {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
-  /// Field referred in an index, but found no data to define the type.
-  slug Json?  @unique(map: "slug_1")
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  title   String?
+  imageUrl String?
+  link    String?
 }
 
 model homebanners {
@@ -35,27 +31,26 @@ model homesidebanners {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
-model imageuploads {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model mylists {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model orders {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model productrams {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model productreviews {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+// ----------------------
+// Category & Product Models
+// ----------------------
+model categories {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  slug     String? @unique(map: "slug_1")
+  title    String
+  products Json?   // store product references or IDs
 }
 
 model products {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  title    String?
+  description String?
+  price    Float?
+  category String? // category ID or slug
+  images   Json?   // array of image URLs
+}
+
+model productrams {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
@@ -67,24 +62,62 @@ model productweights {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
-model recentlyviewds {
+model productreviews {
   id String @id @default(auto()) @map("_id") @db.ObjectId
+  productId String?
+  userId String?
+  rating Int?
+  comment String?
 }
 
+// ----------------------
+// Orders & Cart
+// ----------------------
+model carts {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  items Json?
+}
+
+model orders {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String?
+  items Json?
+  total Float?
+  status String?
+}
+
+// ----------------------
+// Users
+// ----------------------
 model users {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   v          Int      @map("__v")
   date       DateTime @db.Date
   email      String
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  images     Json?
+  images     Json?    // array of image URLs
   isAdmin    Boolean
   isVerified Boolean
   name       String
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  otp        Json?
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  otpExpires Json?
+  otp        String?  // store as string for simplicity
+  otpExpires DateTime?
   password   String
   phone      String
+}
+
+// ----------------------
+// Misc / Other Models
+// ----------------------
+model imageuploads {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  url String?
+}
+
+model mylists {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  items Json?
+}
+
+model recentlyviewds {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  products Json?
 }
