@@ -5,13 +5,14 @@ import React from "react";
 
 export default async function SidebarCategories() {
   const categoriesData = await getData("categories");
-  // Only categories with Products
-  const categories = categoriesData.filter(
-    (category) => category.products.length > 0
-  );
-  // console.log(categories);
+
+  // Safely handle undefined or null
+  const categories = Array.isArray(categoriesData)
+    ? categoriesData.filter((category) => category.products?.length > 0)
+    : [];
+
   return (
-    <div className="sm:col-span-3 sm:block bg-white border border-gray-300 rounded-lg  dark:bg-gray-700 dark:border-gray-700 text-slate-800 overflow-hidden hidden">
+    <div className="sm:col-span-3 sm:block bg-white border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-700 text-slate-800 overflow-hidden hidden">
       <h2 className="bg-slate-100 dark:bg-gray-800 py-3 px-6 font-semibold border-b border-gray-300 dark:border-gray-600 text-slate-800 dark:text-slate-100">
         Shop By Category ({categories.length})
       </h2>

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Carousel from "nuka-carousel";
 
-export default function HeroCarousel({ banners }) {
+export default function HeroCarousel({ banners = [] }) {
   const config = {
     nextButtonClassName: "rounded-full",
     nextButtonText: <ChevronRight />,
@@ -12,6 +12,10 @@ export default function HeroCarousel({ banners }) {
     prevButtonClassName: "rounded-full",
     prevButtonText: <ChevronLeft />,
   };
+
+  // Only render carousel if there are banners
+  if (!Array.isArray(banners) || banners.length === 0) return null;
+
   return (
     <Carousel
       defaultControlsConfig={config}
@@ -19,19 +23,17 @@ export default function HeroCarousel({ banners }) {
       className="rounded-md overflow-hidden"
       wrapAround
     >
-      {banners.map((banner, i) => {
-        return (
-          <Link key={i} href={banner.link} className="">
-            <Image
-              width={712}
-              height={384}
-              src={banner.imageUrl}
-              className="w-full"
-              alt={banner.title}
-            />
-          </Link>
-        );
-      })}
+      {banners.map((banner, i) => (
+        <Link key={i} href={banner.link}>
+          <Image
+            width={712}
+            height={384}
+            src={banner.imageUrl}
+            className="w-full"
+            alt={banner.title}
+          />
+        </Link>
+      ))}
     </Carousel>
   );
 }
