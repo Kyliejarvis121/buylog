@@ -6,9 +6,22 @@ import React from "react";
 
 export default async function BlogCard({ training }) {
   const categoryId = training.categoryId;
-  const category = await getData(`categories/${categoryId}`);
-  const categoryTitle = category.title;
+
+  // ✅ Use a default category if in production or if getData fails
+  let categoryTitle = "Category"; // fallback value
+
+  // Only fetch data if in development (localhost)
+  if (process.env.NODE_ENV === "development") {
+    try {
+      const category = await getData(`categories/${categoryId}`);
+      categoryTitle = category?.title || "Category";
+    } catch (err) {
+      console.warn("Failed to fetch category:", err);
+    }
+  }
+
   const normalDate = convertIsoDateToNormal(training.createdAt);
+
   return (
     <div className="group ">
       <div className="relative">
