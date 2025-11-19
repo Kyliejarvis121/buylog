@@ -1,3 +1,8 @@
+export const dynamic = "force-dynamic";
+// Optional: you can also add revalidate=0
+export const revalidate = 0;
+
+
 "use client";
 import ImageInput from "@/components/FormInputs/ImageInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";

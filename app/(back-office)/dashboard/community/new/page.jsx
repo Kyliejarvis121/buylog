@@ -1,3 +1,9 @@
+export const dynamic = "force-dynamic";
+// Optional: you can also add revalidate=0
+export const revalidate = 0;
+
+
+
 import FormHeader from "@/components/backoffice/FormHeader";
 import NewTrainingForm from "@/components/backoffice/NewTrainingForm";
 import { getData } from "@/lib/getData";
