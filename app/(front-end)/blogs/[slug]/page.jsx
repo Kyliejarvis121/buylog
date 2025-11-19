@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import TrainingHtml from "@/components/TrainingHtml";
 import CategoryList from "@/components/frontend/CategoryList";
 import RecentTrainings from "@/components/frontend/RecentTrainings";
@@ -6,14 +9,45 @@ import { getData } from "@/lib/getData";
 import React from "react";
 
 export default async function page({ params: { slug } }) {
-  const training = await getData(`trainings/training/${slug}`);
+  // ---- SAFELY FETCH TRAINING ----
+  let training = null;
+  try {
+    training = await getData(`trainings/training/${slug}`);
+  } catch (e) {
+    console.error("Failed to fetch training:", e);
+  }
+
+  if (!training) {
+    return (
+      <div className="text-center py-20">
+        <h1 className="text-3xl font-bold">Training Not Found</h1>
+      </div>
+    );
+  }
+
   const trainingId = training.id;
   const normalDate = convertIsoDateToNormal(training.createdAt);
-  const allTrainings = await getData("trainings");
+
+  // ---- SAFELY FETCH ALL TRAININGS ----
+  let allTrainings = [];
+  try {
+    allTrainings = await getData("trainings");
+  } catch (e) {
+    console.log("Failed to fetch all trainings");
+  }
+
   const recentTrainings = allTrainings.filter(
-    (training) => training.id !== trainingId
+    (t) => t.id !== trainingId
   );
-  const category = await getData(`categories/${training.categoryId}`);
+
+  // ---- SAFELY FETCH CATEGORY ----
+  let category = null;
+  try {
+    category = await getData(`categories/${training.categoryId}`);
+  } catch (e) {
+    console.log("Failed to fetch category");
+  }
+
   return (
     <>
       <section className="py-12 bg-white sm:py-16 lg:py-20 rounded-md dark:bg-slate-700">
@@ -55,6 +89,7 @@ export default async function page({ params: { slug } }) {
           </div>
         </div>
       </section>
+
       <div className="py-8">
         <CategoryList isMarketPage={false} category={category} />
       </div>
