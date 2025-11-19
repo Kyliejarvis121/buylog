@@ -3,16 +3,16 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
-    const { title, link, imageUrl, isActive } = await request.json();
-    const newBanner = await db.banner.create({
+    const { title, link, imageUrl } = await request.json();
+
+    const newBanner = await db.banners.create({
       data: {
         title,
         link,
-        imageUrl,
-        isActive,
+        imageUrl
       },
     });
-    console.log(newBanner);
+
     return NextResponse.json(newBanner);
   } catch (error) {
     console.log(error);
@@ -24,13 +24,10 @@ export async function POST(request) {
     );
   }
 }
-export async function GET(request) {
+
+export async function GET() {
   try {
-    const banners = await db.banner.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const banners = await db.banners.findMany();
     return NextResponse.json(banners);
   } catch (error) {
     console.log(error);
