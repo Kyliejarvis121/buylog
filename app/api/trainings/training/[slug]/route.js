@@ -1,13 +1,13 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params: { slug } }) {
   try {
-    const training = await db.training.findUnique({
+    const training = await prisma.training.findUnique({
       where: { slug },
     });
 
-    // If no training is found, return a safe empty object
+    // Return a safe response if training not found
     if (!training) {
       return NextResponse.json(
         { data: null, message: "Training not found" },

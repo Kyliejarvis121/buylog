@@ -1,24 +1,25 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params: { id } }) {
   try {
-    const category = await db.category.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        products: true,
-      },
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: { products: true },
     });
-    return NextResponse.json(category);
+
+    if (!category) {
+      return NextResponse.json(
+        { data: null, message: "Category not found" },
+        { status: 200 }
+      );
+    }
+
+    return NextResponse.json({ data: category });
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch category:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Fetch Category",
-        error,
-      },
+      { message: "Failed to Fetch Category", error: error.message || error },
       { status: 500 }
     );
   }
@@ -26,33 +27,26 @@ export async function GET(request, { params: { id } }) {
 
 export async function DELETE(request, { params: { id } }) {
   try {
-    const existingCategory = await db.category.findUnique({
-      where: {
-        id,
-      },
+    const existingCategory = await prisma.category.findUnique({
+      where: { id },
     });
+
     if (!existingCategory) {
       return NextResponse.json(
-        {
-          data: null,
-          message: "Category Not Found",
-        },
+        { data: null, message: "Category Not Found" },
         { status: 404 }
       );
     }
-    const deletedCategory = await db.category.delete({
-      where: {
-        id,
-      },
+
+    const deletedCategory = await prisma.category.delete({
+      where: { id },
     });
-    return NextResponse.json(deletedCategory);
+
+    return NextResponse.json({ data: deletedCategory });
   } catch (error) {
-    console.log(error);
+    console.error("Failed to delete category:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Delete Category",
-        error,
-      },
+      { message: "Failed to Delete Category", error: error.message || error },
       { status: 500 }
     );
   }
@@ -60,34 +54,29 @@ export async function DELETE(request, { params: { id } }) {
 
 export async function PUT(request, { params: { id } }) {
   try {
-    const { title, slug, imageUrl, description, isActive } =
-      await request.json();
-    const existingCategory = await db.category.findUnique({
-      where: {
-        id,
-      },
+    const { title, slug, imageUrl, description, isActive } = await request.json();
+
+    const existingCategory = await prisma.category.findUnique({
+      where: { id },
     });
+
     if (!existingCategory) {
       return NextResponse.json(
-        {
-          data: null,
-          message: `Not Found`,
-        },
+        { data: null, message: "Category Not Found" },
         { status: 404 }
       );
     }
-    const updatedCategory = await db.category.update({
+
+    const updatedCategory = await prisma.category.update({
       where: { id },
       data: { title, slug, imageUrl, description, isActive },
     });
-    return NextResponse.json(updatedCategory);
+
+    return NextResponse.json({ data: updatedCategory });
   } catch (error) {
-    console.log(error);
+    console.error("Failed to update category:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Update Category",
-        error,
-      },
+      { message: "Failed to Update Category", error: error.message || error },
       { status: 500 }
     );
   }

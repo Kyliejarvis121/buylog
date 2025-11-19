@@ -1,20 +1,26 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params: { id } }) {
   try {
-    const market = await db.market.findUnique({
-      where: {
-        id,
-      },
+    const market = await prisma.market.findUnique({
+      where: { id },
     });
-    return NextResponse.json(market);
+
+    if (!market) {
+      return NextResponse.json(
+        { data: null, message: "Market not found" },
+        { status: 200 }
+      );
+    }
+
+    return NextResponse.json({ data: market });
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch market:", error);
     return NextResponse.json(
       {
         message: "Failed to Fetch Market",
-        error,
+        error: error.message || error,
       },
       { status: 500 }
     );
@@ -23,32 +29,28 @@ export async function GET(request, { params: { id } }) {
 
 export async function DELETE(request, { params: { id } }) {
   try {
-    const existingMarket = await db.market.findUnique({
-      where: {
-        id,
-      },
+    const existingMarket = await prisma.market.findUnique({
+      where: { id },
     });
+
     if (!existingMarket) {
       return NextResponse.json(
-        {
-          data: null,
-          message: "Market Not Found",
-        },
+        { data: null, message: "Market Not Found" },
         { status: 404 }
       );
     }
-    const deletedMarket = await db.market.delete({
-      where: {
-        id,
-      },
+
+    const deletedMarket = await prisma.market.delete({
+      where: { id },
     });
-    return NextResponse.json(deletedMarket);
+
+    return NextResponse.json({ data: deletedMarket });
   } catch (error) {
-    console.log(error);
+    console.error("Failed to delete market:", error);
     return NextResponse.json(
       {
         message: "Failed to Delete Market",
-        error,
+        error: error.message || error,
       },
       { status: 500 }
     );

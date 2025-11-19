@@ -1,21 +1,16 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params: { id } }) {
   try {
-    const training = await db.training.findUnique({
-      where: {
-        id,
-      },
+    const training = await prisma.training.findUnique({
+      where: { id },
     });
     return NextResponse.json(training);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch training:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Fetch Training",
-        error,
-      },
+      { message: "Failed to Fetch Training", error: error.message || error },
       { status: 500 }
     );
   }
@@ -23,33 +18,24 @@ export async function GET(request, { params: { id } }) {
 
 export async function DELETE(request, { params: { id } }) {
   try {
-    const existingTraining = await db.training.findUnique({
-      where: {
-        id,
-      },
+    const existingTraining = await prisma.training.findUnique({
+      where: { id },
     });
     if (!existingTraining) {
       return NextResponse.json(
-        {
-          data: null,
-          message: "Training Not Found",
-        },
+        { data: null, message: "Training Not Found" },
         { status: 404 }
       );
     }
-    const deletedTraining = await db.training.delete({
-      where: {
-        id,
-      },
+
+    const deletedTraining = await prisma.training.delete({
+      where: { id },
     });
     return NextResponse.json(deletedTraining);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to delete training:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Delete Training",
-        error,
-      },
+      { message: "Failed to Delete Training", error: error.message || error },
       { status: 500 }
     );
   }
@@ -66,21 +52,19 @@ export async function PUT(request, { params: { id } }) {
       isActive,
       content,
     } = await request.json();
-    const existingTraining = await db.training.findUnique({
-      where: {
-        id,
-      },
+
+    const existingTraining = await prisma.training.findUnique({
+      where: { id },
     });
+
     if (!existingTraining) {
       return NextResponse.json(
-        {
-          data: null,
-          message: `Not Found`,
-        },
+        { data: null, message: "Training Not Found" },
         { status: 404 }
       );
     }
-    const updatedTraining = await db.training.update({
+
+    const updatedTraining = await prisma.training.update({
       where: { id },
       data: {
         title,
@@ -92,14 +76,12 @@ export async function PUT(request, { params: { id } }) {
         content,
       },
     });
+
     return NextResponse.json(updatedTraining);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to update training:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Update Training",
-        error,
-      },
+      { message: "Failed to Update Training", error: error.message || error },
       { status: 500 }
     );
   }
