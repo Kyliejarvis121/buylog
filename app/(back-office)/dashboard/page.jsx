@@ -1,3 +1,7 @@
+export const dynamic = "force-dynamic"; 
+export const revalidate = 0;
+
+
 import CustomDataTable from "@/components/backoffice/CustomDataTable";
 import DashboardCharts from "@/components/backoffice/DashboardCharts";
 import FarmerDashboard from "@/components/backoffice/FarmerDashboard";

@@ -1,3 +1,7 @@
+export const dynamic = "force-dynamic"; 
+export const revalidate = 0;
+
+
 import OrderCard from "@/components/Order/OrderCard";
 import { authOptions } from "@/lib/authOptions";
 import { getData } from "@/lib/getData";

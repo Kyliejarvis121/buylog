@@ -1,3 +1,8 @@
+export const dynamic = "force-dynamic"; 
+export const revalidate = 0;
+
+
+
 import Heading from "@/components/backoffice/Heading";
 import PageHeader from "@/components/backoffice/PageHeader";
 import TableActions from "@/components/backoffice/TableActions";
