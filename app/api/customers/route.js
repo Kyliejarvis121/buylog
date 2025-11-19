@@ -1,28 +1,27 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-export async function GET(request) {
+export async function GET() {
   try {
-    const customers = await db.user.findMany({
+    // Fetch all users
+    const customers = await prisma.users.findMany({
       orderBy: {
-        createdAt: "desc",
+        date: "desc", // 'date' exists in your schema, 'createdAt' does not
       },
-      where: {
-        role: "USER",
-      },
-      include: {
-        profile: true,
-      },
+      // Remove role filter if it doesn't exist
+      // where: { role: "USER" }, 
     });
+
     return NextResponse.json(customers);
   } catch (error) {
-    console.log(error);
+    console.error("GET /api/users failed:", error);
     return NextResponse.json(
       {
-        message: "Failed to Fetch Users",
-        error,
+        message: "Failed to fetch users",
+        error: error.message,
       },
       { status: 500 }
     );
   }
 }
+

@@ -1,11 +1,12 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/prismadb"; // ✅ Use Prisma singleton
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
     const { title, slug, imageUrl, description, isActive } = await request.json();
 
-    const existingCategory = await db.categories.findUnique({
+    // Check if category already exists
+    const existingCategory = await prisma.categories.findUnique({
       where: { slug },
     });
 
@@ -19,13 +20,14 @@ export async function POST(request) {
       );
     }
 
-    const newCategory = await db.categories.create({
+    // Create new category
+    const newCategory = await prisma.categories.create({
       data: { title, slug, imageUrl, description, isActive },
     });
 
     return NextResponse.json(newCategory);
   } catch (error) {
-    console.log(error);
+    console.error("POST /api/categories failed:", error);
     return NextResponse.json(
       {
         message: "Failed to create category",
@@ -36,16 +38,15 @@ export async function POST(request) {
   }
 }
 
-
 export async function GET() {
   try {
-    const categories = await db.categories.findMany({
+    const categories = await prisma.categories.findMany({
       orderBy: { id: "desc" },
     });
 
     return NextResponse.json(categories);
   } catch (error) {
-    console.log(error);
+    console.error("GET /api/categories failed:", error);
     return NextResponse.json(
       {
         message: "Failed to fetch categories",

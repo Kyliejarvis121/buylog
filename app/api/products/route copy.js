@@ -1,4 +1,4 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
@@ -24,29 +24,27 @@ export async function POST(request) {
       qty,
       productImages,
     } = await request.json();
-    //Check if this product already exists in the db
-    const existingProduct = await db.product.findUnique({
-      where: {
-        slug,
-      },
+
+    // Check if product exists
+    const existingProduct = await prisma.products.findUnique({
+      where: { slug },
     });
+
     if (existingProduct) {
       return NextResponse.json(
-        {
-          data: null,
-          message: `Product ( ${title})  already exists in the Database`,
-        },
+        { data: null, message: `Product (${title}) already exists` },
         { status: 409 }
       );
     }
-    const newProduct = await db.product.create({
+
+    const newProduct = await prisma.products.create({
       data: {
         barcode,
-        categoryId,
+        category: categoryId,
         description,
         userId: farmerId,
         productImages,
-        imageUrl: productImages[0],
+        imageUrl: productImages[0] || null,
         isActive,
         isWholesale,
         productCode,
@@ -61,23 +59,14 @@ export async function POST(request) {
         wholesaleQty: parseInt(wholesaleQty),
         productStock: parseInt(productStock),
         qty: parseInt(qty),
-        // category: {
-        //   connect: { id: categoryId },
-        // },
-        // user: {
-        //   connect: { id: farmerId },
-        // },
       },
     });
-    console.log(newProduct);
+
     return NextResponse.json(newProduct);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to create product:", error);
     return NextResponse.json(
-      {
-        message: "Failed to create Product",
-        error,
-      },
+      { message: "Failed to create Product", error: error.message },
       { status: 500 }
     );
   }
@@ -88,66 +77,33 @@ export async function GET(request) {
   const sortBy = request.nextUrl.searchParams.get("sort");
   const min = request.nextUrl.searchParams.get("min");
   const max = request.nextUrl.searchParams.get("max");
-  const page = request.nextUrl.searchParams.get("page") || 1;
+  const page = parseInt(request.nextUrl.searchParams.get("page") || "1");
   const pageSize = 3;
-  console.log(sortBy, categoryId);
-  let where = {
-    categoryId,
-  };
+
+  let where = {};
+  if (categoryId) where.category = categoryId;
+
   if (min && max) {
-    where.salePrice = {
-      gte: parseFloat(min),
-      lte: parseFloat(max),
-    };
+    where.salePrice = { gte: parseFloat(min), lte: parseFloat(max) };
   } else if (min) {
-    where.salePrice = {
-      gte: parseFloat(min),
-    };
+    where.salePrice = { gte: parseFloat(min) };
   } else if (max) {
-    where.salePrice = {
-      lte: parseFloat(max),
-    };
+    where.salePrice = { lte: parseFloat(max) };
   }
-  let products;
+
   try {
-    if (categoryId && page) {
-      products = await db.product.findMany({
-        where,
-        skip: (parseInt(page) - 1) * parseInt(pageSize),
-        take: parseInt(pageSize),
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-    } else if (categoryId && sortBy) {
-      products = await db.product.findMany({
-        where,
-        orderBy: {
-          salePrice: sortBy === "asc" ? "asc" : "desc",
-        },
-      });
-    } else if (categoryId) {
-      products = await db.product.findMany({
-        where,
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-    } else {
-      products = await db.product.findMany({
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-    }
+    const products = await prisma.products.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: sortBy === "asc" ? { salePrice: "asc" } : { createdAt: "desc" },
+    });
+
     return NextResponse.json(products);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch products:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Fetch Products",
-        error,
-      },
+      { message: "Failed to Fetch Products", error: error.message },
       { status: 500 }
     );
   }

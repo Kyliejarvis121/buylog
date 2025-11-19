@@ -1,135 +1,93 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-export async function GET(request, { params: { slug } }) {
+export async function GET(request, { params }) {
+  const { slug } = params;
   try {
-    const product = await db.product.findUnique({
-      where: {
-        slug,
-      },
+    const product = await prisma.products.findUnique({
+      where: { slug },
     });
     return NextResponse.json(product);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch product:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Fetch Product",
-        error,
-      },
+      { message: "Failed to Fetch Product", error: error.message },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(request, { params: { id } }) {
+export async function DELETE(request, { params }) {
+  const { id } = params;
   try {
-    const existingProduct = await db.product.findUnique({
-      where: {
-        id,
-      },
+    const existingProduct = await prisma.products.findUnique({
+      where: { id },
     });
     if (!existingProduct) {
       return NextResponse.json(
-        {
-          data: null,
-          message: "Product Not Found",
-        },
+        { data: null, message: "Product Not Found" },
         { status: 404 }
       );
     }
-    const deletedProduct = await db.product.delete({
-      where: {
-        id,
-      },
+    const deletedProduct = await prisma.products.delete({
+      where: { id },
     });
     return NextResponse.json(deletedProduct);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to delete product:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Delete Product",
-        error,
-      },
+      { message: "Failed to Delete Product", error: error.message },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(request, { params: { id } }) {
+export async function PUT(request, { params }) {
+  const { id } = params;
   try {
-    const {
-      barcode,
-      categoryId,
-      description,
-      farmerId,
-      imageUrl,
-      isActive,
-      isWholesale,
-      productCode,
-      productPrice,
-      salePrice,
-      sku,
-      slug,
-      tags,
-      title,
-      unit,
-      wholesalePrice,
-      wholesaleQty,
-      productStock,
-      qty,
-    } = await request.json();
-    const existingProduct = await db.product.findUnique({
-      where: {
-        id,
-      },
+    const body = await request.json();
+
+    const existingProduct = await prisma.products.findUnique({
+      where: { id },
     });
+
     if (!existingProduct) {
       return NextResponse.json(
-        {
-          data: null,
-          message: `Not Found`,
-        },
+        { data: null, message: "Product Not Found" },
         { status: 404 }
       );
     }
-    const updatedProduct = await db.product.update({
+
+    const updatedProduct = await prisma.products.update({
       where: { id },
       data: {
-        barcode,
-        categoryId,
-        description,
-        userId: farmerId,
-        imageUrl,
-        isActive,
-        isWholesale,
-        productCode,
-        productPrice: parseFloat(productPrice),
-        salePrice: parseFloat(salePrice),
-        sku,
-        slug,
-        tags,
-        title,
-        unit,
-        wholesalePrice: parseFloat(wholesalePrice),
-        wholesaleQty: parseInt(wholesaleQty),
-        productStock: parseInt(productStock),
-        qty: parseInt(qty),
-        // category: {
-        //   connect: { id: categoryId },
-        // },
-        // user: {
-        //   connect: { id: farmerId },
-        // },
+        barcode: body.barcode,
+        categoryId: body.categoryId,
+        description: body.description,
+        userId: body.farmerId,
+        imageUrl: body.imageUrl,
+        isActive: body.isActive,
+        isWholesale: body.isWholesale,
+        productCode: body.productCode,
+        productPrice: parseFloat(body.productPrice),
+        salePrice: parseFloat(body.salePrice),
+        sku: body.sku,
+        slug: body.slug,
+        tags: body.tags,
+        title: body.title,
+        unit: body.unit,
+        wholesalePrice: parseFloat(body.wholesalePrice),
+        wholesaleQty: parseInt(body.wholesaleQty),
+        productStock: parseInt(body.productStock),
+        qty: parseInt(body.qty),
       },
     });
+
     return NextResponse.json(updatedProduct);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to update product:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Update Product",
-        error,
-      },
+      { message: "Failed to Update Product", error: error.message },
       { status: 500 }
     );
   }

@@ -1,27 +1,30 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params: { id } }) {
   try {
-    const order = await db.order.findUnique({
+    // If you want all orders for a user
+    const orders = await prisma.orders.findMany({
       where: {
-        userId:id,
+        userId: id,
       },
       include: {
-        orderItems: true,
+        orderItems: true, // Make sure the relation exists
+      },
+      orderBy: {
+        date: "desc",
       },
     });
-    return NextResponse.json(order);
+
+    return NextResponse.json(orders);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch user orders:", error);
     return NextResponse.json(
       {
-        message: "Failed to Fetch an Order",
-        error,
+        message: "Failed to fetch user orders",
+        error: error.message,
       },
       { status: 500 }
     );
   }
 }
-
-
