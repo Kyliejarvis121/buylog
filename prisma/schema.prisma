@@ -8,7 +8,7 @@ datasource db {
 }
 
 // ----------------------
-// Banners (Plural Models)
+// Banners
 // ----------------------
 model banners {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
@@ -35,13 +35,13 @@ model homesidebanners {
 // Categories & Products
 // ----------------------
 model categories {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  slug     String? @unique
-  title    String
-  imageUrl String?
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String? @unique
+  title       String
+  imageUrl    String?
   description String?
-  isActive Boolean?
-  products Json?
+  isActive    Boolean?
+  products    Json?
 }
 
 model products {
@@ -74,7 +74,7 @@ model productreviews {
 }
 
 // ----------------------
-// Orders & Cart
+// Cart & Orders
 // ----------------------
 model carts {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
@@ -116,4 +116,11 @@ model imageuploads {
 }
 
 model mylists {
-  id    String @id @def
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  items Json?
+}
+
+model recentlyviewds {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  products Json?
+}
