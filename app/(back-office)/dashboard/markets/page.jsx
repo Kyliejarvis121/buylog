@@ -9,7 +9,14 @@ import { getData } from "@/lib/getData";
 import DataTable from "@/components/data-table-components/DataTable";
 
 export default async function page() {
-  const markets = await getData("markets");
+  // Destructure the result
+  const { success, data: markets, error } = await getData("markets");
+
+  // Handle fetch errors gracefully
+  if (!success) {
+    return <div className="p-4 text-red-600">Error fetching markets: {error}</div>;
+  }
+
   return (
     <div>
       {/* Header */}
