@@ -1,3 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------
+// Banners
+// ----------------------
+model banners {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  title    String?
+  imageUrl String?
+  link     String?
+}
+
+model homebanners {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  v      Int      @map("__v")
+  images String[]
+}
+
+model homebottombanners {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model homesidebanners {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+// ----------------------
+// Categories
+// ----------------------
 model categories {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
@@ -5,4 +41,101 @@ model categories {
   imageUrl    String?
   description String?
   isActive    Boolean? @default(true)
+}
+
+// ----------------------
+// Products
+// ----------------------
+model products {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  price       Float?
+  categoryId  String?  // references categories.id
+  images      String[] @default([])
+}
+
+model productrams {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model productsizes {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model productweights {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model productreviews {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  productId String
+  userId    String
+  rating    Int
+  comment   String?
+}
+
+// ----------------------
+// Markets
+// ----------------------
+model markets {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  slug     String  @unique
+  logoUrl  String?
+  description String?
+  isActive Boolean? @default(true)
+  categoryIds String[] @default([])
+}
+
+// ----------------------
+// Cart & Orders
+// ----------------------
+model carts {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  items Json?
+}
+
+model orders {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId String
+  items  Json?
+  total  Float?
+  status String? @default("pending")
+}
+
+// ----------------------
+// Users
+// ----------------------
+model users {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  v          Int      @map("__v")
+  date       DateTime @db.Date @default(now())
+  email      String   @unique
+  images     String[] @default([])
+  isAdmin    Boolean? @default(false)
+  isVerified Boolean? @default(false)
+  name       String
+  otp        String?
+  otpExpires DateTime?
+  password   String
+  phone      String?
+}
+
+// ----------------------
+// Misc / Other
+// ----------------------
+model imageuploads {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId
+  url String
+}
+
+model mylists {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  items Json?
+}
+
+model recentlyviewds {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  products Json?
 }
