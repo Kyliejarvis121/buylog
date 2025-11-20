@@ -8,13 +8,13 @@ datasource db {
 }
 
 // ----------------------
-// Banner Models
+// Banners (Plural Models)
 // ----------------------
 model banners {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  title   String?
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  title    String?
   imageUrl String?
-  link    String?
+  link     String?
 }
 
 model homebanners {
@@ -32,22 +32,25 @@ model homesidebanners {
 }
 
 // ----------------------
-// Category & Product Models
+// Categories & Products
 // ----------------------
 model categories {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  slug     String? @unique(map: "slug_1")
+  slug     String? @unique
   title    String
-  products Json?   // store product references or IDs
+  imageUrl String?
+  description String?
+  isActive Boolean?
+  products Json?
 }
 
 model products {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  title    String?
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  title       String?
   description String?
-  price    Float?
-  category String? // category ID or slug
-  images   Json?   // array of image URLs
+  price       Float?
+  category    String?
+  images      Json?
 }
 
 model productrams {
@@ -63,26 +66,26 @@ model productweights {
 }
 
 model productreviews {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
   productId String?
-  userId String?
-  rating Int?
-  comment String?
+  userId    String?
+  rating    Int?
+  comment   String?
 }
 
 // ----------------------
 // Orders & Cart
 // ----------------------
 model carts {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
   items Json?
 }
 
 model orders {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
   userId String?
-  items Json?
-  total Float?
+  items  Json?
+  total  Float?
   status String?
 }
 
@@ -94,30 +97,23 @@ model users {
   v          Int      @map("__v")
   date       DateTime @db.Date
   email      String
-  images     Json?    // array of image URLs
+  images     Json?
   isAdmin    Boolean
   isVerified Boolean
   name       String
-  otp        String?  // store as string for simplicity
+  otp        String?
   otpExpires DateTime?
   password   String
   phone      String
 }
 
 // ----------------------
-// Misc / Other Models
+// Misc
 // ----------------------
 model imageuploads {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id  String @id @default(auto()) @map("_id") @db.ObjectId
   url String?
 }
 
 model mylists {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  items Json?
-}
-
-model recentlyviewds {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  products Json?
-}
+  id    String @id @def
