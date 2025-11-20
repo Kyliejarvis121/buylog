@@ -1,29 +1,36 @@
-export const dynamic = "force-dynamic"; 
+import { prisma } from "@/lib/prismadb";
+import { authOptions } from "@/lib/authOptions";
+import { getServerSession } from "next-auth";
+import OrderCard from "@/components/Order/OrderCard";
+
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-
-import OrderCard from "@/components/Order/OrderCard";
-import { authOptions } from "@/lib/authOptions";
-import { getData } from "@/lib/getData";
-import { getServerSession } from "next-auth";
-import React from "react";
-
-export default async function page() {
-  // Fetch All Orders
-  const orders = await getData("orders");
-  // Get the user Id
+export default async function OrdersPage() {
   const session = await getServerSession(authOptions);
-  if (!session) return;
+  if (!session) return <p>Please log in to see your orders.</p>;
 
-  const userId = session?.user?.id;
-  console.log(userId);
+  const userId = session.user.id;
 
-  if (orders.length === 0 || !orders) {
+  // Fetch orders directly from Prisma
+  let orders = [];
+  try {
+    orders = await prisma.orders.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    return (
+      <p className="text-red-600">
+        Failed to fetch orders: {error.message}
+      </p>
+    );
+  }
+
+  if (orders.length === 0) {
     return <p>No Orders Yet</p>;
   }
-  // Filter By User Id
-  const userOrders = orders.filter((order) => order.userId === userId);
-  // console.log(userOrders);
+
   return (
     <section className="py-12 bg-white sm:py-16 lg:py-20">
       <div className="px-4 m-auto sm:px-6 lg:px-8 max-w-7xl">
@@ -38,9 +45,9 @@ export default async function page() {
           </div>
 
           <ul className="mt-8 space-y-5 lg:mt-12 sm:space-y-6 lg:space-y-10">
-            {userOrders.map((order, i) => {
-              return <OrderCard key={i} order={order} />;
-            })}
+            {orders.map((order) => (
+              <OrderCard key={order.id} order={order} />
+            ))}
           </ul>
         </div>
       </div>

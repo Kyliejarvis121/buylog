@@ -1,44 +1,50 @@
-export const dynamic = "force-dynamic"; 
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-
-import Heading from "@/components/backoffice/Heading";
-import PageHeader from "@/components/backoffice/PageHeader";
-import TableActions from "@/components/backoffice/TableActions";
-import DataTable from "@/components/data-table-components/DataTable";
-import { getData } from "@/lib/getData";
-
-import Link from "next/link";
 import React from "react";
-import { columns } from "./columns";
+import PageHeader from "@/components/backoffice/PageHeader";
+import DataTable from "@/components/data-table-components/DataTable";
+import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { columns } from "./columns";
 
-export default async function Coupons() {
+export default async function CouponsPage() {
   const session = await getServerSession(authOptions);
-  const id = session?.user?.id;
-  const role = session?.user?.role;
-  const allSales = await getData("sales");
 
-  // Fetch all the Sales
-  // Filter by vendorId => to get sales for this vendor
-  //Fetch Order by Id
-  // Customer Name, email,Phone,OrderNumber
-  const farmerSales = allSales.filter((sale) => sale.vendorId === id);
+  if (!session) {
+    return <p className="p-4 text-red-600">Unauthorized</p>;
+  }
+
+  const userId = session.user.id;
+  const role = session.user.role;
+
+  let allSales = [];
+
+  try {
+    allSales = await prisma.sales.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    return (
+      <div className="p-4 text-red-600">
+        Failed to fetch sales: {error?.message || "Unknown error"}
+      </div>
+    );
+  }
+
+  // Filter for vendors
+  const farmerSales = role === "ADMIN" ? allSales : allSales.filter((sale) => sale.vendorId === userId);
+
   return (
     <div>
-      {/* Header */}
       <PageHeader
         heading="Coupons"
         href="/dashboard/coupons/new"
         linkTitle="Add Coupon"
       />
       <div className="py-8">
-        {role === "ADMIN" ? (
-          <DataTable data={allSales} columns={columns} />
-        ) : (
-          <DataTable data={farmerSales} columns={columns} />
-        )}
+        <DataTable data={farmerSales} columns={columns} />
       </div>
     </div>
   );

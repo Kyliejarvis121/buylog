@@ -1,15 +1,15 @@
-import Heading from "@/components/backoffice/Heading";
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
-import Link from "next/link";
-import React from "react";
-import { getData } from "@/lib/getData";
 import { columns } from "./columns";
-export default async function page() {
-  const banners = await getData("banners");
+import { prisma } from "@/lib/prismadb"; // Use Prisma directly
+
+export default async function BannersPage() {
+  const banners = await prisma.banners.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <div>
-      {/* Header */}
       <PageHeader
         heading="Banners"
         href="/dashboard/banners/new"

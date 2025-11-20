@@ -1,33 +1,35 @@
+import React from "react";
 import FormHeader from "@/components/backoffice/FormHeader";
 import NewProductForm from "@/components/backoffice/NewProductForm";
-import { getData } from "@/lib/getData";
-import React from "react";
+import { prisma } from "@/lib/prismadb";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function NewProduct() {
-  // Fetch categories and users safely
-  const categoriesRes = await getData("categories");
-  const usersRes = await getData("users");
+  let categories = [];
+  let farmers = [];
 
-  const categoriesData = categoriesRes?.data ?? [];
-  const usersData = usersRes?.data ?? [];
+  try {
+    // Fetch categories and farmers from DB
+    const categoriesData = await prisma.categories.findMany({
+      orderBy: { title: "asc" },
+    });
 
-  if (!categoriesData.length || !usersData.length) {
-    return <div>Loading...</div>;
+    const usersData = await prisma.users.findMany({
+      where: { role: "FARMER" },
+      orderBy: { name: "asc" },
+    });
+
+    categories = categoriesData.map((c) => ({ id: c.id, title: c.title }));
+    farmers = usersData.map((f) => ({ id: f.id, title: f.name }));
+  } catch (error) {
+    return (
+      <div className="p-4 text-red-600">
+        Failed to fetch data: {error?.message || "Unknown error"}
+      </div>
+    );
   }
-
-  const farmersData = usersData.filter((user) => user.role === "FARMER");
-  const farmers = farmersData.map((farmer) => ({
-    id: farmer.id,
-    title: farmer.name,
-  }));
-
-  const categories = categoriesData.map((category) => ({
-    id: category.id,
-    title: category.title,
-  }));
 
   return (
     <div>

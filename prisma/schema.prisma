@@ -12,9 +12,11 @@ datasource db {
 // ----------------------
 model banners {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  title    String?
+  title    String
   imageUrl String?
   link     String?
+  isActive Boolean? @default(true)
+  createdAt DateTime @default(now())
 }
 
 model homebanners {
@@ -51,8 +53,10 @@ model products {
   title       String
   description String?
   price       Float?
-  categoryId  String?  // references categories.id
+  categoryId  String   // references categories.id
   images      String[] @default([])
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
 }
 
 model productrams {
@@ -73,19 +77,33 @@ model productreviews {
   userId    String
   rating    Int
   comment   String?
+  createdAt DateTime @default(now())
 }
 
 // ----------------------
 // Markets
 // ----------------------
 model markets {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  title    String
-  slug     String  @unique
-  logoUrl  String?
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String   @unique
+  logoUrl     String?
   description String?
-  isActive Boolean? @default(true)
+  isActive    Boolean? @default(true)
   categoryIds String[] @default([])
+  createdAt   DateTime @default(now())
+}
+
+// ----------------------
+// Sales
+// ----------------------
+model sales {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  items     Json
+  total     Float
+  status    String?   @default("pending")
+  createdAt DateTime  @default(now())
 }
 
 // ----------------------
@@ -93,7 +111,9 @@ model markets {
 // ----------------------
 model carts {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String
   items Json?
+  createdAt DateTime @default(now())
 }
 
 model orders {
@@ -101,7 +121,8 @@ model orders {
   userId String
   items  Json?
   total  Float?
-  status String? @default("pending")
+  status String?  @default("pending")
+  createdAt DateTime @default(now())
 }
 
 // ----------------------
@@ -109,17 +130,16 @@ model orders {
 // ----------------------
 model users {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  v          Int      @map("__v")
-  date       DateTime @db.Date @default(now())
   email      String   @unique
+  name       String
+  password   String
+  phone      String?
   images     String[] @default([])
   isAdmin    Boolean? @default(false)
   isVerified Boolean? @default(false)
-  name       String
   otp        String?
   otpExpires DateTime?
-  password   String
-  phone      String?
+  createdAt  DateTime @default(now())
 }
 
 // ----------------------
@@ -132,10 +152,14 @@ model imageuploads {
 
 model mylists {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String
   items Json?
+  createdAt DateTime @default(now())
 }
 
 model recentlyviewds {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String
   products Json?
+  createdAt DateTime @default(now())
 }

@@ -1,22 +1,27 @@
-export const dynamic = "force-dynamic"; 
+import { prisma } from "@/lib/prismadb";
+import PageHeader from "@/components/backoffice/PageHeader";
+import DataTable from "@/components/data-table-components/DataTable";
+import { columns } from "./columns";
+
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+export default async function FarmersPage() {
+  let farmers = [];
+  try {
+    farmers = await prisma.farmers.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    return (
+      <div className="p-4 text-red-600">
+        Failed to fetch farmers: {error.message}
+      </div>
+    );
+  }
 
-import Heading from "@/components/backoffice/Heading";
-import PageHeader from "@/components/backoffice/PageHeader";
-import TableActions from "@/components/backoffice/TableActions";
-
-import Link from "next/link";
-import React from "react";
-import { columns } from "./columns";
-import { getData } from "@/lib/getData";
-import DataTable from "@/components/data-table-components/DataTable";
-
-export default async function page() {
-  const farmers = await getData("farmers");
   return (
     <div>
-      {/* Header */}
       <PageHeader
         heading="Farmers"
         href="/dashboard/farmers/new"
