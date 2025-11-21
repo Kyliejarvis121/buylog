@@ -1,6 +1,5 @@
-export const dynamic = "force-dynamic"; 
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
 
 import CustomDataTable from "@/components/backoffice/CustomDataTable";
 import DashboardCharts from "@/components/backoffice/DashboardCharts";
@@ -16,26 +15,28 @@ import React from "react";
 
 export default async function page() {
   const session = await getServerSession(authOptions);
-  const role = session?.user?.role;
+
+  if (!session) {
+    return <p className="p-4 text-red-600">Unauthorized</p>;
+  }
+
+  const role =
+    session.user.role || (session.user.isAdmin ? "ADMIN" : "USER");
+
   const sales = await getData("sales");
   const orders = await getData("orders");
   const products = await getData("products");
-  if (role === "USER") {
-    return <UserDashboard />;
-  }
-  if (role === "FARMER") {
-    return <FarmerDashboard />;
-  }
+
+  if (role === "USER") return <UserDashboard />;
+  if (role === "FARMER") return <FarmerDashboard />;
+
+  // Default: Admin
   return (
     <div>
       <Heading title="Dashboard Overview" />
-      {/* Large Cards */}
       <LargeCards sales={sales} />
-      {/* Small cards */}
       <SmallCards orders={orders} />
-      {/* Charts */}
       <DashboardCharts sales={sales} />
-      {/* Recent Orders Table */}
       {/* <CustomDataTable /> */}
     </div>
   );
