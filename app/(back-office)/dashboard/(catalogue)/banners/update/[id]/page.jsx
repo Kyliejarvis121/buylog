@@ -4,8 +4,16 @@ import { getData } from "@/lib/getData";
 import React from "react";
 
 export default async function UpdateBanner({ params: { id } }) {
-  const banner = await getData(`banners/${id}`);
-  console.log(banner);
+  const { success, data: banner, error } = await getData(`banners/${id}`);
+
+  if (!success) {
+    return (
+      <div className="p-4 text-red-600">
+        Failed to load banner: {error}
+      </div>
+    );
+  }
+
   return (
     <div>
       <FormHeader title="Update Banner" />

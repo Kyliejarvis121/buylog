@@ -4,11 +4,19 @@ import { getData } from "@/lib/getData";
 import React from "react";
 
 export default async function UpdateCategory({ params: { id } }) {
-  const category = await getData(`categories/${id}`);
-  console.log(category);
+  const { success, data: category, error } = await getData(`categories/${id}`);
+
+  if (!success) {
+    return (
+      <div className="p-4 text-red-600">
+        Failed to load category: {error}
+      </div>
+    );
+  }
+
   return (
     <div>
-      <FormHeader title="Update category" />
+      <FormHeader title="Update Category" />
       <NewCategoryForm updateData={category} />
     </div>
   );
