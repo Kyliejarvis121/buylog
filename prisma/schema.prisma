@@ -4,34 +4,129 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url      = env("DATABASE_URL")  // Make sure DATABASE_URL is defined in your .env
+  url      = env("DATABASE_URL")
 }
 
+// -------------------
+// CATEGORIES
+// -------------------
 model categories {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String? @unique
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String?  @unique
   title       String
   description String?
   imageUrl    String?
-  isActive    Boolean?
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
+// -------------------
+// MARKETS
+// -------------------
 model markets {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String? @unique
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String?  @unique
   title       String
   logoUrl     String?
   description String?
-  isActive    Boolean?
+  isActive    Boolean? @default(true)
   categoryIds String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
+// -------------------
+// USERS
+// -------------------
 model users {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  email      String? @unique
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  email      String?  @unique
   name       String
   password   String
-  role       String?
-  isVerified Boolean?
+  role       String? 
+  isVerified Boolean? @default(false)
   phone      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// -------------------
+// BANNERS
+// -------------------
+model banners {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  imageUrl  String
+  isActive  Boolean? @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -------------------
+// COUPONS
+// -------------------
+model coupons {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  code      String   @unique
+  discount  Float
+  expiry    DateTime
+  vendorId  String?  // Reference to users
+  isActive  Boolean? @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -------------------
+// PRODUCTS
+// -------------------
+model products {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  price       Float
+  categoryId  String?
+  farmerId    String?
+  imageUrl    String?
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// -------------------
+// SALES
+// -------------------
+model sales {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String
+  customerId  String
+  quantity    Int
+  totalAmount Float
+  createdAt   DateTime @default(now())
+}
+
+// -------------------
+// ORDERS
+// -------------------
+model orders {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId  String
+  productIds  String[]
+  totalAmount Float
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// -------------------
+// TRAININGS / COMMUNITY
+// -------------------
+model trainings {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  categoryId  String?
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
