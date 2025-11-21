@@ -1,29 +1,27 @@
 export const dynamic = "force-dynamic"; 
 export const revalidate = 0;
 
-
-
-import Heading from "@/components/backoffice/Heading";
 import PageHeader from "@/components/backoffice/PageHeader";
-import TableActions from "@/components/backoffice/TableActions";
 import DataTable from "@/components/data-table-components/DataTable";
 import { getData } from "@/lib/getData";
-
-import Link from "next/link";
 import React from "react";
 import { columns } from "./columns";
 
 export default async function Customers() {
-  const customers = await getData("customers");
+  const { success, data: customers, error } = await getData("customers");
+
+  if (!success) {
+    return <div className="text-red-600 p-4">Failed to fetch customers: {error}</div>;
+  }
 
   return (
     <div>
       {/* Header */}
-      {/* <PageHeader
-        heading="Coupons"
-        href="/dashboard/coupons/new"
-        linkTitle="Add Coupon"
-      /> */}
+      <PageHeader
+        heading="Customers"
+        href="/dashboard/customers/new"
+        linkTitle="Add Customer"
+      />
       <div className="py-8">
         <DataTable data={customers} columns={columns} />
       </div>
