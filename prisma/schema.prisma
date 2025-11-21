@@ -100,25 +100,58 @@ model products {
 // SALES
 // -------------------
 model sales {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  productId   String
-  customerId  String
-  quantity    Int
-  totalAmount Float
-  createdAt   DateTime @default(now())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId      String
+  productId    String
+  productTitle String
+  productImage String
+  productPrice Float
+  productQty   Int
+  vendorId     String
+  total        Float
+  createdAt    DateTime @default(now())
 }
 
 // -------------------
 // ORDERS
 // -------------------
 model orders {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  customerId  String
-  productIds  String[]
-  totalAmount Float
-  status      String   @default("pending")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String
+  firstName     String
+  lastName      String
+  email         String
+  phone         String
+  streetAddress String
+  city          String
+  district      String
+  country       String
+  shippingCost  Float
+  paymentMethod String
+  orderNumber   String
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orderItems orderItems[] @relation("OrderToItems")
+}
+
+// -------------------
+// ORDER ITEMS
+// -------------------
+model orderItems {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String
+  productId String
+  vendorId  String
+  quantity  Int
+  price     Float
+  title     String
+  imageUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order orders @relation("OrderToItems", fields: [orderId], references: [id])
 }
 
 // -------------------

@@ -16,98 +16,68 @@ export async function POST(request) {
       shippingCost,
       streetAddress,
       userId,
+      totalAmount,
     } = checkoutFormData;
 
     // Generate order number
-    function generateOrderNumber(length) {
-      const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      let orderNumber = "";
+    const generateOrderNumber = (length) => {
+      const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let result = "";
       for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        orderNumber += characters.charAt(randomIndex);
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      return orderNumber;
-    }
+      return result;
+    };
 
-    // Transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create order
+      // 1️⃣ Create order
       const newOrder = await tx.orders.create({
         data: {
-          userId,
-          firstName,
-          lastName,
-          email,
-          phone,
-          streetAddress,
-          city,
-          country,
-          district,
-          shippingCost: parseFloat(shippingCost),
-          paymentMethod,
-          orderNumber: generateOrderNumber(8),
+          customerId: userId,
+          totalAmount,
+          status: "pending",
         },
       });
 
-      // Create order items (ensure 'orderItems' model exists)
+      // 2️⃣ Create orderItems
       const newOrderItems = await tx.orderItems.createMany({
         data: orderItems.map((item) => ({
+          orderId: newOrder.id,
           productId: item.id,
           vendorId: item.vendorId,
-          quantity: parseInt(item.qty),
-          price: parseFloat(item.salePrice),
-          orderId: newOrder.id,
-          imageUrl: item.imageUrl,
+          quantity: item.qty,
+          price: item.salePrice,
           title: item.title,
+          imageUrl: item.imageUrl,
         })),
       });
 
-      // Create sales (ensure 'sales' model exists)
+      // 3️⃣ Create sales records
       const sales = await Promise.all(
-        orderItems.map(async (item) => {
-          const totalAmount = parseFloat(item.salePrice) * parseInt(item.qty);
-          return tx.sales.create({
+        orderItems.map((item) =>
+          tx.sales.create({
             data: {
               orderId: newOrder.id,
+              productId: item.id,
               productTitle: item.title,
               productImage: item.imageUrl,
-              productPrice: parseFloat(item.salePrice),
-              productQty: parseInt(item.qty),
-              productId: item.id,
+              productPrice: item.salePrice,
+              productQty: item.qty,
               vendorId: item.vendorId,
-              total: totalAmount,
+              total: item.salePrice * item.qty,
             },
-          });
-        })
+          })
+        )
       );
 
       return { newOrder, newOrderItems, sales };
     });
 
-    console.log(result.newOrder, result.newOrderItems, result.sales);
-
-    return NextResponse.json(result.newOrder);
+    return NextResponse.json(result.newOrder, { status: 201 });
   } catch (error) {
     console.error("POST /api/orders failed:", error);
     return NextResponse.json(
-      { message: "Failed to create Order", error: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET() {
-  try {
-    const orders = await prisma.orders.findMany({
-      orderBy: { date: "desc" }, // use 'date' field
-      include: { orderItems: true }, // make sure 'orderItems' relation exists
-    });
-
-    return NextResponse.json(orders);
-  } catch (error) {
-    console.error("GET /api/orders failed:", error);
-    return NextResponse.json(
-      { message: "Failed to fetch Orders", error: error.message },
+      { message: "Failed to create order", error: error.message },
       { status: 500 }
     );
   }
