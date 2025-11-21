@@ -1,16 +1,16 @@
+import PageHeader from "@/components/backoffice/PageHeader"; // <-- add this
+import DataTable from "@/components/data-table-components/DataTable";
+import { columns } from "./columns";
+import { prisma } from "@/lib/prismadb";
+
 export default async function BannersPage() {
   let banners = [];
-
   try {
     banners = await prisma.banners.findMany({
-      orderBy: { createdAt: "desc" }, // Ensure `createdAt` exists in your model
+      orderBy: { createdAt: "desc" },
     });
   } catch (error) {
-    return (
-      <div className="p-4 text-red-600">
-        Failed to fetch banners: {error?.message || "Unknown error"}
-      </div>
-    );
+    return <div className="p-4 text-red-600">Failed to fetch banners: {error?.message}</div>;
   }
 
   return (
@@ -21,11 +21,7 @@ export default async function BannersPage() {
         linkTitle="Add Banner"
       />
       <div className="py-8">
-        {banners.length === 0 ? (
-          <p>No banners available.</p>
-        ) : (
-          <DataTable data={banners} columns={columns} />
-        )}
+        <DataTable data={banners} columns={columns} />
       </div>
     </div>
   );
