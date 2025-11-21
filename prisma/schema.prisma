@@ -40,15 +40,18 @@ model markets {
 // USERS
 // -------------------
 model users {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  email      String?  @unique
-  name       String
-  password   String
-  role       String? 
-  isVerified Boolean? @default(false)
-  phone      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                       String   @id @default(auto()) @map("_id") @db.ObjectId
+  email                    String?  @unique
+  name                     String
+  password                 String
+  role                     String?
+  phone                    String?
+  plan                     String?
+  verificationToken        String?
+  emailVerified            Boolean? @default(false)
+  verificationRequestCount Int      @default(0)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }
 
 // -------------------
@@ -71,7 +74,7 @@ model coupons {
   code      String   @unique
   discount  Float
   expiry    DateTime
-  vendorId  String?  // Reference to users
+  vendorId  String?
   isActive  Boolean? @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -119,7 +122,7 @@ model orders {
 }
 
 // -------------------
-// TRAININGS / COMMUNITY
+// TRAININGS
 // -------------------
 model trainings {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
