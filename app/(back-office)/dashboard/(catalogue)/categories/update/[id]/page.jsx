@@ -6,7 +6,7 @@ import React from "react";
 export default async function UpdateCategory({ params: { id } }) {
   const { success, data: category, error } = await getData(`categories/${id}`);
 
-  if (!success) {
+  if (!success || !category) {
     return (
       <div className="p-4 text-red-600">
         Failed to load category: {error}

@@ -6,7 +6,7 @@ import React from "react";
 export default async function UpdateBanner({ params: { id } }) {
   const { success, data: banner, error } = await getData(`banners/${id}`);
 
-  if (!success) {
+  if (!success || !banner) {
     return (
       <div className="p-4 text-red-600">
         Failed to load banner: {error}
