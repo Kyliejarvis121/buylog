@@ -3,18 +3,11 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
-    const {
-      title,
-      slug,
-      categoryId,
-      imageUrl,
-      description,
-      isActive,
-      content,
-    } = await request.json();
+    const { title, slug, categoryId, imageUrl, description, isActive, content } =
+      await request.json();
 
-    // Check if this training already exists
-    const existingTraining = await prisma.training.findUnique({
+    // Check if training already exists by slug
+    const existingTraining = await prisma.trainings.findUnique({
       where: { slug },
     });
 
@@ -22,33 +15,24 @@ export async function POST(request) {
       return NextResponse.json(
         {
           data: null,
-          message: `Training (${title}) already exists in the Database`,
+          message: `Training (${title}) already exists in the database`,
         },
         { status: 409 }
       );
     }
 
-    const newTraining = await prisma.training.create({
-      data: {
-        title,
-        slug,
-        categoryId,
-        imageUrl,
-        description,
-        isActive,
-        content,
-      },
+    const newTraining = await prisma.trainings.create({
+      data: { title, slug, categoryId, imageUrl, description, isActive, content },
     });
 
-    console.log(newTraining);
-    return NextResponse.json(newTraining);
-  } catch (error) {
-    console.error("Failed to create Training:", error);
     return NextResponse.json(
-      {
-        message: "Failed to create Training",
-        error: error.message,
-      },
+      { data: newTraining, message: "Training created successfully" },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("POST /api/trainings failed:", error);
+    return NextResponse.json(
+      { data: null, message: "Failed to create training", error: error.message },
       { status: 500 }
     );
   }
@@ -56,17 +40,18 @@ export async function POST(request) {
 
 export async function GET() {
   try {
-    const trainings = await prisma.training.findMany({
+    const trainings = await prisma.trainings.findMany({
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(trainings);
+
+    return NextResponse.json({
+      data: trainings,
+      message: "Trainings fetched successfully",
+    });
   } catch (error) {
-    console.error("Failed to fetch Trainings:", error);
+    console.error("GET /api/trainings failed:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Fetch Trainings",
-        error: error.message,
-      },
+      { data: null, message: "Failed to fetch trainings", error: error.message },
       { status: 500 }
     );
   }

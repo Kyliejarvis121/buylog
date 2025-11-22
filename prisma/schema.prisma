@@ -85,6 +85,7 @@ model coupons {
 // -------------------
 model products {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String?  @unique
   title       String
   description String?
   price       Float
@@ -159,6 +160,7 @@ model orderItems {
 // -------------------
 model trainings {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String?  @unique
   title       String
   description String?
   categoryId  String?

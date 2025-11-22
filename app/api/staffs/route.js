@@ -4,48 +4,43 @@ import { hash } from "bcrypt";
 
 export async function POST(request) {
   try {
-    const {
-      name,
-      password,
-      email,
-      phone,
-      physicalAddress,
-      nin,
-      dob,
-      notes,
-      code,
-      isActive,
-    } = await request.json();
+    const { name, email, password, phone, role = "ADMIN", plan } = await request.json();
 
-    // Hash the password
+    // Check if user already exists
+    const existingUser = await prisma.users.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { data: null, message: `User with email (${email}) already exists` },
+        { status: 409 }
+      );
+    }
+
+    // Hash password
     const hashedPassword = await hash(password, 10);
 
     const newStaff = await prisma.users.create({
       data: {
         name,
-        password: hashedPassword,
         email,
+        password: hashedPassword,
         phone,
-        physicalAddress,
-        nin,
-        dob: new Date(dob),
-        notes,
-        isActive,
-        code,
-        isAdmin: true,       // Assuming staff is admin
-        isVerified: true,    // Optional
-        images: [],          // Optional placeholder
+        role,
+        plan,
+        emailVerified: true, // Optional for staff
       },
     });
 
-    return NextResponse.json(newStaff);
+    return NextResponse.json({
+      data: newStaff,
+      message: "Staff created successfully",
+    });
   } catch (error) {
-    console.error("Failed to create Staff:", error);
+    console.error("Failed to create staff:", error);
     return NextResponse.json(
-      {
-        message: "Failed to create Staff",
-        error: error.message,
-      },
+      { data: null, message: "Failed to create staff", error: error.message },
       { status: 500 }
     );
   }

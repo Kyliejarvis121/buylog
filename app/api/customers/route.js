@@ -3,25 +3,23 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // Fetch all users
     const customers = await prisma.users.findMany({
       orderBy: {
-        date: "desc", // 'date' exists in your schema, 'createdAt' does not
+        createdAt: "desc", // ✔ your schema uses createdAt
       },
-      // Remove role filter if it doesn't exist
-      // where: { role: "USER" }, 
     });
 
-    return NextResponse.json(customers);
+    return NextResponse.json({ data: customers }, { status: 200 });
   } catch (error) {
     console.error("GET /api/users failed:", error);
     return NextResponse.json(
       {
         message: "Failed to fetch users",
-        error: error.message,
+        error: error?.message ?? String(error),
       },
       { status: 500 }
     );
   }
 }
+
 

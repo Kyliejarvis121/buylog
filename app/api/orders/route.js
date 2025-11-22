@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(request) {
   try {
     const { checkoutFormData, orderItems } = await request.json();
+
     const {
       city,
       country,
@@ -16,7 +17,6 @@ export async function POST(request) {
       shippingCost,
       streetAddress,
       userId,
-      totalAmount,
     } = checkoutFormData;
 
     // Generate order number
@@ -29,18 +29,30 @@ export async function POST(request) {
       return result;
     };
 
+    const orderNumber = generateOrderNumber(10);
+
     const result = await prisma.$transaction(async (tx) => {
       // 1️⃣ Create order
       const newOrder = await tx.orders.create({
         data: {
-          customerId: userId,
-          totalAmount,
+          userId,
+          firstName,
+          lastName,
+          email,
+          phone,
+          streetAddress,
+          city,
+          district,
+          country,
+          shippingCost,
+          paymentMethod,
+          orderNumber,
           status: "pending",
         },
       });
 
-      // 2️⃣ Create orderItems
-      const newOrderItems = await tx.orderItems.createMany({
+      // 2️⃣ Create order items
+      await tx.orderItems.createMany({
         data: orderItems.map((item) => ({
           orderId: newOrder.id,
           productId: item.id,
@@ -53,7 +65,7 @@ export async function POST(request) {
       });
 
       // 3️⃣ Create sales records
-      const sales = await Promise.all(
+      await Promise.all(
         orderItems.map((item) =>
           tx.sales.create({
             data: {
@@ -70,10 +82,10 @@ export async function POST(request) {
         )
       );
 
-      return { newOrder, newOrderItems, sales };
+      return newOrder;
     });
 
-    return NextResponse.json(result.newOrder, { status: 201 });
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("POST /api/orders failed:", error);
     return NextResponse.json(
