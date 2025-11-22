@@ -1,40 +1,54 @@
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-const db = new PrismaClient();
+import Heading from "@/components/backoffice/Heading";
+import LargeCards from "@/components/backoffice/LargeCards";
+import SmallCards from "@/components/backoffice/SmallCards";
+import DashboardCharts from "@/components/backoffice/DashboardCharts";
+import FarmerDashboard from "@/components/backoffice/FarmerDashboard";
+import UserDashboard from "@/components/backoffice/UserDashboard";
 
-export async function GET() {
-  try {
-    const totalFarmers = await db.farmer.count();
-    const totalSales = await db.sale.count();
-    const totalSupport = await db.support.count();
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
+import { prisma } from "@/lib/prismadb";
 
-    const latestFarmers = await db.farmer.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-    });
+export default async function Page() {
+  const session = await getServerSession(authOptions);
 
-    const latestSales = await db.sale.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      include: { farmer: true },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        totalFarmers,
-        totalSales,
-        totalSupport,
-        latestFarmers,
-        latestSales,
-      }
-    });
-  } catch (error) {
-    console.error("Dashboard error:", error);
-    return NextResponse.json(
-      { success: false, error: "Dashboard failed" },
-      { status: 500 }
+  if (!session) {
+    return (
+      <p className="p-4 text-red-600 text-center">
+        Unauthorized — Please log in.
+      </p>
     );
   }
+
+  const role = session.user.role?.toUpperCase() || "USER";
+
+  // Admin dashboard data
+  let sales = [];
+  let orders = [];
+  let products = [];
+
+  if (role === "ADMIN") {
+    try {
+      sales = await prisma.sales.findMany({ orderBy: { createdAt: "desc" } });
+      orders = await prisma.orders.findMany({ orderBy: { createdAt: "desc" } });
+      products = await prisma.products.findMany({ orderBy: { createdAt: "desc" } });
+    } catch (error) {
+      console.error("Dashboard fetch error:", error);
+    }
+  }
+
+  if (role === "USER") return <UserDashboard />;
+  if (role === "FARMER") return <FarmerDashboard />;
+
+  return (
+    <div>
+      <Heading title="Dashboard Overview" />
+      <LargeCards sales={sales} />
+      <SmallCards orders={orders} />
+      <DashboardCharts sales={sales} />
+    </div>
+  );
 }
