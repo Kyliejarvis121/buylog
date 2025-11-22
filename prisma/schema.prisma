@@ -52,6 +52,8 @@ model users {
   verificationRequestCount Int      @default(0)
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
+
+  farmers farmers[] // Relation to farmers
 }
 
 // -------------------
@@ -163,8 +165,30 @@ model trainings {
   slug        String?  @unique
   title       String
   description String?
+  content     String?    // Added this field
   categoryId  String?
   isActive    Boolean? @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// -------------------
+// FARMERS
+// -------------------
+model farmers {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  code              String
+  name              String
+  email             String?
+  phone             String?
+  physicalAddress   String?
+  isActive          Boolean? @default(true)
+  products          String[]          // array of product IDs
+  landSize          Float?
+  mainCrop          String?
+  userId            String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user users @relation(fields: [userId], references: [id])
 }

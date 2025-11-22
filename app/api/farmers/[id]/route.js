@@ -1,66 +1,56 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params: { id } }) {
   try {
-    const farmer = await prisma.user.findUnique({
+    const farmer = await prisma.users.findUnique({
       where: { id },
-      include: { farmerProfile: true },
+      include: { farmerProfile: true }, // check your schema relation name
     });
-    return NextResponse.json(farmer);
+
+    if (!farmer) {
+      return NextResponse.json({ data: null, message: "Farmer not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: farmer, message: "Farmer fetched successfully" });
   } catch (error) {
     console.error("Failed to fetch farmer:", error);
-    return NextResponse.json(
-      { message: "Failed to Fetch Farmer", error: error.message || error },
-      { status: 500 }
-    );
+    return NextResponse.json({ data: null, message: "Failed to fetch farmer", error: error.message }, { status: 500 });
   }
 }
 
 export async function DELETE(request, { params: { id } }) {
   try {
-    const existingUser = await prisma.user.findUnique({ where: { id } });
+    const existingUser = await prisma.users.findUnique({ where: { id } });
     if (!existingUser) {
-      return NextResponse.json(
-        { data: null, message: "User Not Found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ data: null, message: "User not found" }, { status: 404 });
     }
 
-    const deletedUser = await prisma.user.delete({ where: { id } });
-    return NextResponse.json(deletedUser);
+    const deletedUser = await prisma.users.delete({ where: { id } });
+    return NextResponse.json({ data: deletedUser, message: "Farmer deleted successfully" });
   } catch (error) {
     console.error("Failed to delete user:", error);
-    return NextResponse.json(
-      { message: "Failed to Delete User", error: error.message || error },
-      { status: 500 }
-    );
+    return NextResponse.json({ data: null, message: "Failed to delete farmer", error: error.message }, { status: 500 });
   }
 }
 
 export async function PUT(request, { params: { id } }) {
   try {
-    const { status, emailVerified } = await request.json();
+    const { emailVerified } = await request.json();
 
-    const existingUser = await prisma.user.findUnique({ where: { id } });
+    const existingUser = await prisma.users.findUnique({ where: { id } });
     if (!existingUser) {
-      return NextResponse.json(
-        { data: null, message: "User Not Found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ data: null, message: "User not found" }, { status: 404 });
     }
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id },
-      data: { status, emailVerified },
+      data: { emailVerified },
     });
 
-    return NextResponse.json(updatedUser);
+    return NextResponse.json({ data: updatedUser, message: "Farmer updated successfully" });
   } catch (error) {
     console.error("Failed to update user:", error);
-    return NextResponse.json(
-      { message: "Failed to Update User", error: error.message || error },
-      { status: 500 }
-    );
+    return NextResponse.json({ data: null, message: "Failed to update farmer", error: error.message }, { status: 500 });
   }
 }
