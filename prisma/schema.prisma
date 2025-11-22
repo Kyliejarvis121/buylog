@@ -165,7 +165,7 @@ model trainings {
   slug        String?  @unique
   title       String
   description String?
-  content     String?    // Added this field
+  content     String?
   categoryId  String?
   isActive    Boolean? @default(true)
   createdAt   DateTime @default(now())
@@ -191,4 +191,21 @@ model farmers {
   updatedAt         DateTime @updatedAt
 
   user users @relation(fields: [userId], references: [id])
+  supports farmerSupport[] // Relation to farmerSupport
 }
+
+// -------------------
+// FARMER SUPPORT
+// -------------------
+model farmerSupport {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  farmerId    String
+  title       String
+  description String?
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  farmer farmers @relation(fields: [farmerId], references: [id])
+}
+
