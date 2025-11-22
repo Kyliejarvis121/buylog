@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";  // FIXED IMPORT
+import { prisma } from "@/lib/db";  // ✅ FIXED IMPORT
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -7,9 +7,9 @@ export const revalidate = 0;
 export async function GET() {
   try {
     const [sales, orders, products] = await Promise.all([
-      db.sales.findMany({ orderBy: { createdAt: "desc" } }),
-      db.orders.findMany({ orderBy: { createdAt: "desc" } }),
-      db.products.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.sales.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.orders.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.products.findMany({ orderBy: { createdAt: "desc" } }),
     ]);
 
     return NextResponse.json({
