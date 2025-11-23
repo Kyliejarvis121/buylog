@@ -1,81 +1,61 @@
-"use client";
+import Heading from "@/components/backoffice/Heading";
+import LargeCards from "@/components/backoffice/LargeCards";
+import SmallCards from "@/components/backoffice/SmallCards";
+import DashboardCharts from "@/components/backoffice/DashboardCharts";
+import CustomDataTable from "@/components/backoffice/CustomDataTable";
+import FarmerDashboard from "@/components/backoffice/FarmerDashboard";
+import UserDashboard from "@/components/backoffice/UserDashboard";
+import { getData } from "@/lib/getData";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
 
-import { useEffect, useState } from "react";
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
 
-export default function DashboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [dashboard, setDashboard] = useState(null);
+  // Fetch all necessary dashboard data
+  const [salesRes, ordersRes, productsRes, farmersRes, supportsRes] =
+    await Promise.all([
+      getData("sales"),
+      getData("orders"),
+      getData("products"),
+      getData("farmers"),
+      getData("farmerSupport"),
+    ]);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const res = await fetch("/api/dashboard");
-        const json = await res.json();
-        setDashboard(json.data);
-      } catch (err) {
-        console.log("Dashboard fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const sales = salesRes?.data || [];
+  const orders = ordersRes?.data || [];
+  const products = productsRes?.data || [];
+  const farmers = farmersRes?.data || [];
+  const supports = supportsRes?.data || [];
 
-    loadData();
-  }, []);
+  // Render role-specific dashboards
+  if (role === "USER") return <UserDashboard orders={orders} />;
+  if (role === "FARMER")
+    return (
+      <FarmerDashboard
+        sales={sales}
+        products={products}
+        support={supports}
+      />
+    );
 
-  if (loading) return <div>Loading dashboard...</div>;
-  if (!dashboard) return <div>Failed to load dashboard</div>;
-
+  // Admin dashboard
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+      <Heading title="Dashboard Overview" />
 
-      {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="p-5 bg-white shadow rounded-lg">
-          <p className="text-lg font-semibold">Total Farmers</p>
-          <h2 className="text-3xl font-bold mt-2">{dashboard.totalFarmers}</h2>
-        </div>
+      {/* Large Cards */}
+      <LargeCards sales={sales} products={products} farmers={farmers} />
 
-        <div className="p-5 bg-white shadow rounded-lg">
-          <p className="text-lg font-semibold">Total Sales</p>
-          <h2 className="text-3xl mt-2 font-bold">{dashboard.totalSales}</h2>
-        </div>
+      {/* Small Cards */}
+      <SmallCards orders={orders} supports={supports} />
 
-        <div className="p-5 bg-white shadow rounded-lg">
-          <p className="text-lg font-semibold">Support Tickets</p>
-          <h2 className="text-3xl mt-2 font-bold">{dashboard.totalSupport}</h2>
-        </div>
-      </div>
+      {/* Charts */}
+      <DashboardCharts sales={sales} />
 
-      {/* LATEST FARMERS */}
-      <div className="mb-10">
-        <h3 className="text-2xl font-semibold mb-3">Latest Farmers</h3>
-        <div className="bg-white shadow rounded-lg p-5">
-          {dashboard.latestFarmers.length === 0 && <p>No farmers found.</p>}
-          {dashboard.latestFarmers.map((f) => (
-            <div key={f.id} className="border-b py-2">
-              <p className="font-medium">{f.name}</p>
-              <p className="text-sm text-gray-500">{f.email}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* LATEST SALES */}
-      <div>
-        <h3 className="text-2xl font-semibold mb-3">Latest Sales</h3>
-        <div className="bg-white shadow rounded-lg p-5">
-          {dashboard.latestSales.length === 0 && <p>No sales yet.</p>}
-          {dashboard.latestSales.map((s) => (
-            <div key={s.id} className="border-b py-2">
-              <p className="font-medium">₦{s.amount}</p>
-              <p className="text-sm text-gray-500">
-                {s.farmer?.name || "Unknown farmer"}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Recent Orders Table */}
+      <CustomDataTable orders={orders} />
     </div>
   );
 }
