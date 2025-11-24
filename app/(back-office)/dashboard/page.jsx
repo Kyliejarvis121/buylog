@@ -19,7 +19,7 @@ export default async function DashboardPage() {
       getData("sales"),
       getData("orders"),
       getData("products"),
-      getData("farmers"),
+      getData("farmers?includeInactive=true"), // include inactive farmers
       getData("farmerSupport"),
     ]);
 
@@ -32,13 +32,7 @@ export default async function DashboardPage() {
   // Render role-specific dashboards
   if (role === "USER") return <UserDashboard orders={orders} />;
   if (role === "FARMER")
-    return (
-      <FarmerDashboard
-        sales={sales}
-        products={products}
-        support={supports}
-      />
-    );
+    return <FarmerDashboard sales={sales} products={products} support={supports} />;
 
   // Admin dashboard
   return (
@@ -56,6 +50,21 @@ export default async function DashboardPage() {
 
       {/* Recent Orders Table */}
       <CustomDataTable orders={orders} />
+
+      {/* Optionally: Show farmers table */}
+      <div className="mt-8">
+        <Heading title="All Farmers (Pending & Active)" />
+        <CustomDataTable
+          data={farmers}
+          columns={[
+            { header: "Name", accessor: "name" },
+            { header: "Email", accessor: "email" },
+            { header: "Phone", accessor: "phone" },
+            { header: "Active", accessor: "isActive", cell: (row) => (row.isActive ? "Yes" : "No") },
+            { header: "Created At", accessor: "createdAt" },
+          ]}
+        />
+      </div>
     </div>
   );
 }

@@ -186,7 +186,8 @@ model farmers {
   email             String?
   phone             String?
   physicalAddress   String?
-  isActive          Boolean? @default(true)
+  isActive          Boolean? @default(false)  // default false, admin approves
+  status            String   @default("pending") // pending / approved / rejected
   products          String[]          // array of product IDs
   landSize          Float?
   mainCrop          String?

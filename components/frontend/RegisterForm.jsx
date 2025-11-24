@@ -9,65 +9,68 @@ import SubmitButton from "../FormInputs/SubmitButton";
 import TextInput from "../FormInputs/TextInput";
 
 export default function RegisterForm({ role = "USER" }) {
-  const router = useRouter(); // Redirecting on the client side
+  const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm();
+
   const [loading, setLoading] = useState(false);
   const [emailErr, setEmailErr] = useState("");
+
   async function onSubmit(data) {
     data.plan = plan;
+    data.role = role; // make sure role is set
+
     try {
-      console.log(data);
       setLoading(true);
+
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
       const response = await fetch(`${baseUrl}/api/users`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
       const responseData = await response.json();
+
       if (response.ok) {
-        console.log(responseData);
         setLoading(false);
         toast.success("User Created Successfully");
         reset();
-        //if role =user => home
-        //if role= farmer => onboarding
-        // const userRole =responseData.data.role
+
         if (role === "USER") {
           router.push("/");
-        } else {
-          const { data } = responseData;
-          router.push(`/verify-email?userId=${data.id}`);
+        } else if (role === "FARMER") {
+          // redirect to verification page or thank you page
+          router.push(`/verify-email?userId=${responseData.data.id}`);
         }
       } else {
         setLoading(false);
+
         if (response.status === 409) {
           setEmailErr("User with this Email already exists");
           toast.error("User with this Email already exists");
         } else {
-          // Handle other errors
           console.error("Server Error:", responseData.error);
-          toast.error("Oops Something Went wrong");
+          toast.error("Oops! Something went wrong.");
         }
       }
     } catch (error) {
       setLoading(false);
       console.error("Network Error:", error);
-      toast.error("Something Went wrong, Please Try Again");
+      toast.error("Something went wrong, please try again.");
     }
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="">
+      {/* Hidden Role */}
       <TextInput
         label=""
         name="role"
@@ -77,14 +80,18 @@ export default function RegisterForm({ role = "USER" }) {
         defaultValue={role}
         className="sm:col-span-2 mb-3"
       />
+
+      {/* Name */}
       <TextInput
-        label="Your Full Name"
+        label="Full Name"
         name="name"
         register={register}
         errors={errors}
         type="text"
         className="sm:col-span-2 mb-3"
       />
+
+      {/* Email */}
       <TextInput
         label="Email Address"
         name="email"
@@ -93,51 +100,64 @@ export default function RegisterForm({ role = "USER" }) {
         type="email"
         className="sm:col-span-2 mb-3"
       />
-      {emailErr && (
-        <small className="text-red-600 -mt-2 mb-2">{emailErr}</small>
-      )}
+      {emailErr && <small className="text-red-600 -mt-2 mb-2">{emailErr}</small>}
 
+      {/* Password */}
       <TextInput
         label="Password"
         name="password"
         register={register}
         errors={errors}
         type="password"
+        className="sm:col-span-2 mb-3"
       />
+
+      {/* Optional Fields for Farmers */}
+      {role === "FARMER" && (
+        <>
+          <TextInput
+            label="Phone Number"
+            name="phone"
+            register={register}
+            errors={errors}
+            type="text"
+            className="sm:col-span-2 mb-3"
+          />
+          <TextInput
+            label="Physical Address"
+            name="physicalAddress"
+            register={register}
+            errors={errors}
+            type="text"
+            className="sm:col-span-2 mb-3"
+          />
+        </>
+      )}
 
       <SubmitButton
         isLoading={loading}
         buttonTitle="Register"
-        loadingButtonTitle="Creating Please wait..."
+        loadingButtonTitle="Creating, please wait..."
       />
 
       <div className="flex gap-2 justify-between">
-        <p className="text-[0.75rem] font-light text-gray-500 dark:text-gray-400 py-4">
+        <p className="text-[0.75rem] font-light text-gray-500 py-4">
           Already have an account?{" "}
-          <Link
-            href="/login"
-            className="font-medium text-purple-600 hover:underline dark:text-purple-500"
-          >
+          <Link href="/login" className="font-medium text-purple-600 hover:underline">
             Login
           </Link>
         </p>
         {role === "USER" ? (
-          <p className="text-[0.75rem] font-light text-gray-500 dark:text-gray-400 py-4">
-            Are you a Farmer ?{" "}
-            <Link
-              href="/farmer-pricing"
-              className="font-medium text-purple-600 hover:underline dark:text-purple-500"
-            >
+          <p className="text-[0.75rem] font-light text-gray-500 py-4">
+            Are you a Farmer?{" "}
+            <Link href="/register?role=FARMER" className="font-medium text-purple-600 hover:underline">
               Register here
             </Link>
           </p>
         ) : (
-          <p className="text-[0.75rem] font-light text-gray-500 dark:text-gray-400 py-4">
-            Are you a User ?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-purple-600 hover:underline dark:text-purple-500"
-            >
+          <p className="text-[0.75rem] font-light text-gray-500 py-4">
+            Are you a User?{" "}
+            <Link href="/register" className="font-medium text-purple-600 hover:underline">
               Register here
             </Link>
           </p>
