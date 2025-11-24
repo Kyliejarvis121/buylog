@@ -13,28 +13,38 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   const role = session?.user?.role;
 
-  // Fetch all necessary dashboard data
-  const [salesRes, ordersRes, productsRes, farmersRes, supportsRes] =
-    await Promise.all([
-      getData("sales"),
-      getData("orders"),
-      getData("products"),
-      getData("farmers?includeInactive=true"), // include inactive farmers
-      getData("farmerSupport"),
-    ]);
+  // ----------------------------
+  // Fetch data safely
+  // ----------------------------
+  const fetchData = async (endpoint) => {
+    try {
+      const res = await getData(endpoint);
+      return res?.data || [];
+    } catch (err) {
+      console.error(`Failed to fetch ${endpoint}:`, err.message);
+      return [];
+    }
+  };
 
-  const sales = salesRes?.data || [];
-  const orders = ordersRes?.data || [];
-  const products = productsRes?.data || [];
-  const farmers = farmersRes?.data || [];
-  const supports = supportsRes?.data || [];
+  const [sales, orders, products, farmers, supports, users] = await Promise.all([
+    fetchData("sales"),
+    fetchData("orders"),
+    fetchData("products"),
+    fetchData("farmers?includeInactive=true"), // fetch all farmers
+    fetchData("farmerSupport"),
+    fetchData("users"), // fetch all users for admin
+  ]);
 
-  // Render role-specific dashboards
+  // ----------------------------
+  // Role-specific dashboards
+  // ----------------------------
   if (role === "USER") return <UserDashboard orders={orders} />;
   if (role === "FARMER")
     return <FarmerDashboard sales={sales} products={products} support={supports} />;
 
+  // ----------------------------
   // Admin dashboard
+  // ----------------------------
   return (
     <div className="p-6">
       <Heading title="Dashboard Overview" />
@@ -49,9 +59,12 @@ export default async function DashboardPage() {
       <DashboardCharts sales={sales} />
 
       {/* Recent Orders Table */}
-      <CustomDataTable orders={orders} />
+      <div className="mt-8">
+        <Heading title="Recent Orders" />
+        <CustomDataTable orders={orders} />
+      </div>
 
-      {/* Optionally: Show farmers table */}
+      {/* Farmers Table */}
       <div className="mt-8">
         <Heading title="All Farmers (Pending & Active)" />
         <CustomDataTable
@@ -60,7 +73,27 @@ export default async function DashboardPage() {
             { header: "Name", accessor: "name" },
             { header: "Email", accessor: "email" },
             { header: "Phone", accessor: "phone" },
-            { header: "Active", accessor: "isActive", cell: (row) => (row.isActive ? "Yes" : "No") },
+            {
+              header: "Active",
+              accessor: "isActive",
+              cell: (row) => (row.isActive ? "Yes" : "No"),
+            },
+            { header: "Status", accessor: "status" },
+            { header: "Created At", accessor: "createdAt" },
+          ]}
+        />
+      </div>
+
+      {/* Users Table */}
+      <div className="mt-8">
+        <Heading title="All Users" />
+        <CustomDataTable
+          data={users}
+          columns={[
+            { header: "Name", accessor: "name" },
+            { header: "Email", accessor: "email" },
+            { header: "Role", accessor: "role" },
+            { header: "Verified", accessor: "emailVerified", cell: (row) => (row.emailVerified ? "Yes" : "No") },
             { header: "Created At", accessor: "createdAt" },
           ]}
         />
