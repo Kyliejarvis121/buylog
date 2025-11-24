@@ -11,14 +11,16 @@ datasource db {
 // CATEGORIES
 // -------------------
 model categories {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String?  @unique
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String?   @unique
   title       String
   description String?
   imageUrl    String?
-  isActive    Boolean? @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean?  @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    products[] // Relation to products
 }
 
 // -------------------
@@ -86,17 +88,19 @@ model coupons {
 // PRODUCTS
 // -------------------
 model products {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String?  @unique
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String?   @unique
   title       String
   description String?
   price       Float
-  categoryId  String?
+  categoryId  String?   @db.ObjectId
   farmerId    String?
   imageUrl    String?
-  isActive    Boolean? @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean?  @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  category    categories? @relation(fields: [categoryId], references: [id])
 }
 
 // -------------------
@@ -208,4 +212,3 @@ model farmerSupport {
 
   farmer farmers @relation(fields: [farmerId], references: [id])
 }
-
