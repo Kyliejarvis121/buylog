@@ -1,6 +1,32 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
+// ========================
+// GET — Fetch all orders
+// ========================
+export async function GET() {
+  try {
+    const orders = await prisma.orders.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        orderItems: true,
+        user: true,
+      },
+    });
+
+    return NextResponse.json({ data: orders }, { status: 200 });
+  } catch (error) {
+    console.error("GET /api/orders failed:", error);
+    return NextResponse.json(
+      { message: "Failed to fetch orders", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// ========================
+// POST — Create new order
+// ========================
 export async function POST(request) {
   try {
     const { checkoutFormData, orderItems } = await request.json();
@@ -19,7 +45,6 @@ export async function POST(request) {
       userId,
     } = checkoutFormData;
 
-    // Generate order number
     const generateOrderNumber = (length) => {
       const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       let result = "";
@@ -32,7 +57,6 @@ export async function POST(request) {
     const orderNumber = generateOrderNumber(10);
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1️⃣ Create order
       const newOrder = await tx.orders.create({
         data: {
           userId,
@@ -51,7 +75,6 @@ export async function POST(request) {
         },
       });
 
-      // 2️⃣ Create order items
       await tx.orderItems.createMany({
         data: orderItems.map((item) => ({
           orderId: newOrder.id,
@@ -64,7 +87,6 @@ export async function POST(request) {
         })),
       });
 
-      // 3️⃣ Create sales records
       await Promise.all(
         orderItems.map((item) =>
           tx.sales.create({
