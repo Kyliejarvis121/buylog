@@ -7,8 +7,8 @@ export async function GET() {
     const orders = await prisma.orders.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        user: true,        // Get user details
-        orderItems: true,  // Get order items
+        user: true,        // user details
+        orderItems: true,  // items inside each order
       },
     });
 
@@ -17,7 +17,7 @@ export async function GET() {
       message: "Orders fetched successfully",
     });
   } catch (error) {
-    console.error("GET /api/orders failed:", error);
+    console.error("GET /api/orders failed:", error.message);
     return NextResponse.json(
       {
         message: "Failed to fetch orders",
@@ -91,7 +91,6 @@ export async function POST(request) {
         })),
       });
 
-      // Create sale records
       await Promise.all(
         orderItems.map((item) =>
           tx.sales.create({
@@ -114,7 +113,7 @@ export async function POST(request) {
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
-    console.error("POST /api/orders failed:", error);
+    console.error("POST /api/orders failed:", error.message);
     return NextResponse.json(
       { message: "Failed to create order", error: error.message },
       { status: 500 }

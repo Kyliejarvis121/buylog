@@ -5,12 +5,15 @@ export async function GET() {
   try {
     const supportTickets = await prisma.farmerSupport.findMany({
       orderBy: { createdAt: "desc" },
-      include: { farmer: true }, // optional: include farmer info
+      include: { farmer: true },
     });
 
-    return NextResponse.json({ data: supportTickets, message: "Farmer support tickets fetched successfully" });
+    return NextResponse.json({
+      data: supportTickets,
+      message: "Farmer support tickets fetched successfully",
+    });
   } catch (error) {
-    console.error("GET /api/farmer-support failed:", error);
+    console.error("GET /api/farmerSupport failed:", error);
     return NextResponse.json(
       { data: null, message: "Failed to fetch farmer support tickets", error: error.message },
       { status: 500 }
