@@ -1,7 +1,7 @@
 import React from "react";
 import OverviewCards from "./OverviewCards";
 import ProductUpload from "./ProductUpload";
-import Plans from "./Plans";
+import Plans from "./Farmer/Plans"; // relative to FarmerDashboard.jsx
 import { authOptions } from "@/lib/authOptions";
 import { getData } from "@/lib/getData";
 import { getServerSession } from "next-auth";
