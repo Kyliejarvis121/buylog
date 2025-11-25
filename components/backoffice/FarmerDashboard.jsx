@@ -1,6 +1,6 @@
 import React from "react";
 import OverviewCards from "./Farmer/OverviewCards";
-import Plans from "./Farmer/Plans";
+import Plans from "./Farmer/plans";
 import ProductUpload from "./Farmer/ProductUpload";
 import { authOptions } from "@/lib/authOptions";
 import { getData } from "@/lib/getData";
