@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const customers = await prisma.users.findMany({
+    const customers = await prisma.user.findMany({
       orderBy: {
-        createdAt: "desc", // ✔ your schema uses createdAt
+        createdAt: "desc",
       },
     });
 
@@ -21,5 +21,3 @@ export async function GET() {
     );
   }
 }
-
-
