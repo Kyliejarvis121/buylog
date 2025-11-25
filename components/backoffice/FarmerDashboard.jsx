@@ -1,6 +1,4 @@
 import React from "react";
-import OverviewCards from "./OverviewCards";
-import ProductUpload from "./ProductUpload";
 import OverviewCards from "./Farmer/OverviewCards";
 import Plans from "./Farmer/Plans";
 import ProductUpload from "./Farmer/ProductUpload";
