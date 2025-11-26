@@ -1,76 +1,99 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/prismadb";
 import { compare } from "bcrypt";
-import { prisma } from "@/lib/prismadb"; // Your Prisma client
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
-  secret: process.env.NEXTAUTH_SECRET,
+
   session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
+
+  pages: {
+    signIn: "/login",
+  },
 
   providers: [
+    // --------------------------
+    // CREDENTIALS LOGIN
+    // --------------------------
     CredentialsProvider({
-      name: "Credentials",
+      name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: {},
+        password: {},
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing email or password");
-        }
+        if (!credentials.email || !credentials.password) return null;
 
-        // Find user in the DB
-        const user = await prisma.users.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
 
-        if (!user) throw new Error("User not found");
+        if (!user) return null;
 
-        // Check password
-        const isValid = await compare(credentials.password, user.password);
-        if (!isValid) throw new Error("Invalid password");
+        const isValidPassword = await compare(
+          credentials.password,
+          user.password
+        );
 
-        // Optionally, restrict login to verified users only
-        // if (!user.isVerified) throw new Error("Email not verified");
+        if (!isValidPassword) return null;
 
-        // Return the user object to be stored in JWT
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          isVerified: user.isVerified,
-        };
+        return user;
       },
+    }),
+
+    // --------------------------
+    // GOOGLE LOGIN
+    // --------------------------
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.name = user.name;
-        token.email = user.email;
-        token.role = user.role;
-        token.isVerified = user.isVerified;
+    // Store user id in JWT
+    async jwt({ token, user, account, profile }) {
+      // First time JWT runs → store user id
+      if (user) token.id = user.id;
+
+      // If Google login → auto create user if not exist
+      if (account?.provider === "google") {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: token.email },
+        });
+
+        if (!existingUser) {
+          const newUser = await prisma.user.create({
+            data: {
+              email: token.email,
+              name: profile?.name || "Google User",
+              password: "", // Google does not use password
+              emailVerified: true,
+            },
+          });
+
+          token.id = newUser.id;
+        } else {
+          token.id = existingUser.id;
+        }
       }
+
       return token;
     },
 
+    // Add user id to session
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
-        session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.role = token.role;
-        session.user.isVerified = token.isVerified;
       }
       return session;
     },
   },
+
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);

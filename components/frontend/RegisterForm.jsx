@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { signIn } from "next-auth/react";
 import SubmitButton from "../FormInputs/SubmitButton";
 import TextInput from "../FormInputs/TextInput";
 
@@ -25,10 +26,11 @@ export default function RegisterForm({ role = "USER" }) {
 
   async function onSubmit(data) {
     data.plan = plan;
-    data.role = role; // make sure role is set
+    data.role = role;
 
     try {
       setLoading(true);
+      setEmailErr("");
 
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
       const response = await fetch(`${baseUrl}/api/users`, {
@@ -40,19 +42,22 @@ export default function RegisterForm({ role = "USER" }) {
       const responseData = await response.json();
 
       if (response.ok) {
-        setLoading(false);
         toast.success("User Created Successfully");
         reset();
 
-        if (role === "USER") {
-          router.push("/");
-        } else if (role === "FARMER") {
-          // redirect to verification page or thank you page
-          router.push(`/verify-email?userId=${responseData.data.id}`);
+        // Auto-login after registration
+        const loginResponse = await signIn("credentials", {
+          email: data.email,
+          password: data.password,
+          redirect: false,
+        });
+
+        if (!loginResponse?.error) {
+          router.push("/"); // redirect to homepage
+        } else {
+          toast.success("Registration successful! Please login manually.");
         }
       } else {
-        setLoading(false);
-
         if (response.status === 409) {
           setEmailErr("User with this Email already exists");
           toast.error("User with this Email already exists");
@@ -62,9 +67,10 @@ export default function RegisterForm({ role = "USER" }) {
         }
       }
     } catch (error) {
-      setLoading(false);
       console.error("Network Error:", error);
       toast.error("Something went wrong, please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 

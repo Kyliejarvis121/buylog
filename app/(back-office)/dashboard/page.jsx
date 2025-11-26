@@ -11,16 +11,18 @@ import { authOptions } from "@/lib/authOptions";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-  const role = session?.user?.role;
 
-  // Safe fetch wrapper
+  // FIX: always return a string, never undefined
+  const role = session?.user?.role ?? "USER";
+
+  // Safe fetch to avoid dashboard breaking
   async function safe(endpoint) {
     try {
       const res = await getData(endpoint);
       return res?.data || [];
     } catch (e) {
       console.error("FAILED:", endpoint, e.message);
-      return []; // never break the dashboard
+      return [];
     }
   }
 
@@ -33,13 +35,20 @@ export default async function DashboardPage() {
     safe("users"),
   ]);
 
-  // ROLE-BASED DASHBOARD
+  // USER DASHBOARD
   if (role === "USER") {
     return <UserDashboard orders={orders} />;
   }
 
+  // FARMER DASHBOARD
   if (role === "FARMER") {
-    return <FarmerDashboard sales={sales} products={products} support={supports} />;
+    return (
+      <FarmerDashboard
+        sales={sales}
+        products={products}
+        support={supports}
+      />
+    );
   }
 
   // ADMIN DASHBOARD
