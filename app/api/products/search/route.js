@@ -1,48 +1,19 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
+// GET products by search query
 export async function GET(request) {
-  const searchTerm = request.nextUrl.searchParams.get("search") || "";
-  const sortBy = request.nextUrl.searchParams.get("sort");
-  const min = request.nextUrl.searchParams.get("min");
-  const max = request.nextUrl.searchParams.get("max");
-  const page = parseInt(request.nextUrl.searchParams.get("page") || "1");
-  const pageSize = 3;
-
-  let where = {
-    OR: [
-      { title: { contains: searchTerm, mode: "insensitive" } },
-      { description: { contains: searchTerm, mode: "insensitive" } },
-    ],
-  };
-
-  if (min && max) {
-    where.salePrice = {
-      gte: parseFloat(min),
-      lte: parseFloat(max),
-    };
-  } else if (min) {
-    where.salePrice = { gte: parseFloat(min) };
-  } else if (max) {
-    where.salePrice = { lte: parseFloat(max) };
-  }
-
   try {
-    const products = await prisma.products.findMany({
-      where,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      orderBy: {
-        salePrice: sortBy === "asc" ? "asc" : "desc",
-      },
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.get("q") ?? "";
+
+    const products = await prisma.product.findMany({
+      where: { title: { contains: query, mode: "insensitive" } },
+      include: { category: true, vendor: true },
     });
 
-    return NextResponse.json(products);
+    return NextResponse.json({ data: products, message: `Found ${products.length} products` });
   } catch (error) {
-    console.error("Failed to fetch products:", error);
-    return NextResponse.json(
-      { message: "Failed to Fetch Products", error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Search failed", error: error.message }, { status: 500 });
   }
 }

@@ -3,28 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function GET(request, { params: { id } }) {
   try {
-    // If you want all orders for a user
-    const orders = await prisma.orders.findMany({
-      where: {
-        userId: id,
-      },
-      include: {
-        orderItems: true, // Make sure the relation exists
-      },
-      orderBy: {
-        date: "desc",
-      },
-    });
-
-    return NextResponse.json(orders);
+    const orders = await prisma.order.findMany({ where: { userId: id }, include: { orderItems: true }, orderBy: { createdAt: "desc" } });
+    return NextResponse.json({ data: orders });
   } catch (error) {
-    console.error("Failed to fetch user orders:", error);
-    return NextResponse.json(
-      {
-        message: "Failed to fetch user orders",
-        error: error.message,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Failed to fetch user orders", error: error.message }, { status: 500 });
   }
 }

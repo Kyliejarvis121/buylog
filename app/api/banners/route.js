@@ -1,29 +1,20 @@
+// Route: app/api/banners/route.js
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 // CREATE BANNER
 export async function POST(request) {
   try {
-    const { title, link, imageUrl } = await request.json();
+    const { title, link, imageUrl, isActive } = await request.json();
 
     const newBanner = await prisma.banner.create({
-      data: {
-        title,
-        link,
-        imageUrl,
-      },
+      data: { title, link, imageUrl, isActive },
     });
 
-    return NextResponse.json(newBanner, { status: 201 });
+    return NextResponse.json({ data: newBanner, message: "Banner created successfully" }, { status: 201 });
   } catch (error) {
     console.error("POST /api/banners failed:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to create Banner",
-        details: error.message,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ data: null, message: "Failed to create Banner", error: error.message }, { status: 500 });
   }
 }
 
@@ -34,15 +25,9 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(banners);
+    return NextResponse.json({ data: banners, message: "Banners fetched successfully" });
   } catch (error) {
     console.error("GET /api/banners failed:", error);
-    return NextResponse.json(
-      {
-        message: "Failed to fetch banners",
-        error: error.message,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ data: [], message: "Failed to fetch banners", error: error.message }, { status: 500 });
   }
 }
