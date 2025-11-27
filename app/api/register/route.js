@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prismadb";
 
 export async function POST(req) {
   try {
-    const { name, email, password, phone } = await req.json();
+    const { name, email, password, phone, role } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -14,10 +14,7 @@ export async function POST(req) {
       );
     }
 
-    // Check if email exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
       return NextResponse.json(
@@ -26,17 +23,15 @@ export async function POST(req) {
       );
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const newUser = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         phone,
-        role: "user",
+        role: (role || "USER").toUpperCase(),
       },
     });
 
@@ -44,6 +39,7 @@ export async function POST(req) {
       { message: "Registration successful", user: newUser },
       { status: 201 }
     );
+
   } catch (error) {
     console.error("Register Error:", error);
     return NextResponse.json(

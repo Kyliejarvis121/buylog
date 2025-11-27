@@ -25,25 +25,23 @@ export default function RegisterForm({ role = "USER" }) {
   const [emailErr, setEmailErr] = useState("");
 
   async function onSubmit(data) {
+    data.role = role.toUpperCase();   // FIXED
     data.plan = plan;
-    data.role = role;
 
     try {
       setLoading(true);
       setEmailErr("");
 
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-      const response = await fetch(`${baseUrl}/api/users`, {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      const responseData = await response.json();
+      const result = await response.json();
 
       if (response.ok) {
-        toast.success("User Created Successfully");
-        reset();
+        toast.success("Registration successful");
 
         // Auto-login after registration
         const loginResponse = await signIn("credentials", {
@@ -53,41 +51,32 @@ export default function RegisterForm({ role = "USER" }) {
         });
 
         if (!loginResponse?.error) {
-          router.push("/"); // redirect to homepage
+          router.push("/dashboard");
         } else {
-          toast.success("Registration successful! Please login manually.");
+          toast.success("Please login manually.");
+          router.push("/login");
         }
       } else {
         if (response.status === 409) {
-          setEmailErr("User with this Email already exists");
-          toast.error("User with this Email already exists");
+          setEmailErr("User with this email already exists");
+          toast.error("User with this email already exists");
         } else {
-          console.error("Server Error:", responseData.error);
-          toast.error("Oops! Something went wrong.");
+          toast.error(result.message || "Something went wrong");
         }
       }
-    } catch (error) {
-      console.error("Network Error:", error);
-      toast.error("Something went wrong, please try again.");
+    } catch (err) {
+      toast.error("Network error, try again.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="">
+    <form onSubmit={handleSubmit(onSubmit)}>
       {/* Hidden Role */}
-      <TextInput
-        label=""
-        name="role"
-        register={register}
-        errors={errors}
-        type="hidden"
-        defaultValue={role}
-        className="sm:col-span-2 mb-3"
-      />
+      <input type="hidden" {...register("role")} defaultValue={role.toUpperCase()} />
 
-      {/* Name */}
+      {/* Full Name */}
       <TextInput
         label="Full Name"
         name="name"
@@ -106,7 +95,7 @@ export default function RegisterForm({ role = "USER" }) {
         type="email"
         className="sm:col-span-2 mb-3"
       />
-      {emailErr && <small className="text-red-600 -mt-2 mb-2">{emailErr}</small>}
+      {emailErr && <small className="text-red-500">{emailErr}</small>}
 
       {/* Password */}
       <TextInput
@@ -118,7 +107,7 @@ export default function RegisterForm({ role = "USER" }) {
         className="sm:col-span-2 mb-3"
       />
 
-      {/* Optional Fields for Farmers */}
+      {/* Farmer fields */}
       {role === "FARMER" && (
         <>
           <TextInput
@@ -127,7 +116,7 @@ export default function RegisterForm({ role = "USER" }) {
             register={register}
             errors={errors}
             type="text"
-            className="sm:col-span-2 mb-3"
+            className="mb-3"
           />
           <TextInput
             label="Physical Address"
@@ -135,7 +124,7 @@ export default function RegisterForm({ role = "USER" }) {
             register={register}
             errors={errors}
             type="text"
-            className="sm:col-span-2 mb-3"
+            className="mb-3"
           />
         </>
       )}
@@ -143,27 +132,35 @@ export default function RegisterForm({ role = "USER" }) {
       <SubmitButton
         isLoading={loading}
         buttonTitle="Register"
-        loadingButtonTitle="Creating, please wait..."
+        loadingButtonTitle="Creating account..."
       />
 
-      <div className="flex gap-2 justify-between">
-        <p className="text-[0.75rem] font-light text-gray-500 py-4">
+      {/* GOOGLE SIGN-IN BUTTON */}
+      <button
+        type="button"
+        onClick={() => signIn("google")}
+        className="w-full mt-4 bg-red-500 text-white py-2 rounded-lg"
+      >
+        Continue with Google
+      </button>
+
+      <div className="flex justify-between mt-5 text-sm">
+        <p>
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-purple-600 hover:underline">
-            Login
-          </Link>
+          <Link href="/login" className="text-purple-600">Login</Link>
         </p>
+
         {role === "USER" ? (
-          <p className="text-[0.75rem] font-light text-gray-500 py-4">
+          <p>
             Are you a Farmer?{" "}
-            <Link href="/register?role=FARMER" className="font-medium text-purple-600 hover:underline">
+            <Link href="/register?role=FARMER" className="text-purple-600">
               Register here
             </Link>
           </p>
         ) : (
-          <p className="text-[0.75rem] font-light text-gray-500 py-4">
+          <p>
             Are you a User?{" "}
-            <Link href="/register" className="font-medium text-purple-600 hover:underline">
+            <Link href="/register" className="text-purple-600">
               Register here
             </Link>
           </p>
