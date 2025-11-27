@@ -25,46 +25,46 @@ export default function RegisterForm({ role = "USER" }) {
   const [emailErr, setEmailErr] = useState("");
 
   async function onSubmit(data) {
-    data.role = role.toUpperCase();   // FIXED
-    data.plan = plan;
-
     try {
       setLoading(true);
       setEmailErr("");
 
-      const response = await fetch("/api/register", {
+      const response = await fetch(`/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
+      const res = await response.json();
 
-      if (response.ok) {
-        toast.success("Registration successful");
-
-        // Auto-login after registration
-        const loginResponse = await signIn("credentials", {
-          email: data.email,
-          password: data.password,
-          redirect: false,
-        });
-
-        if (!loginResponse?.error) {
-          router.push("/dashboard");
-        } else {
-          toast.success("Please login manually.");
-          router.push("/login");
-        }
-      } else {
+      if (!response.ok) {
         if (response.status === 409) {
-          setEmailErr("User with this email already exists");
-          toast.error("User with this email already exists");
+          setEmailErr("Email already exists");
+          toast.error("Email already registered");
         } else {
-          toast.error(result.message || "Something went wrong");
+          toast.error(res.message || "Registration failed");
         }
+        return;
       }
-    } catch (err) {
+
+      toast.success("Registration successful!");
+
+      // Automatically login user
+      const loginRes = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (loginRes?.error) {
+        toast.success("Registered! Please login manually.");
+        router.push("/login");
+      } else {
+        router.push("/");
+      }
+
+    } catch (error) {
+      console.error(error);
       toast.error("Network error, try again.");
     } finally {
       setLoading(false);
@@ -72,11 +72,9 @@ export default function RegisterForm({ role = "USER" }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      {/* Hidden Role */}
-      <input type="hidden" {...register("role")} defaultValue={role.toUpperCase()} />
+    <form onSubmit={handleSubmit(onSubmit)} className="">
 
-      {/* Full Name */}
+      {/* Name */}
       <TextInput
         label="Full Name"
         name="name"
@@ -95,7 +93,7 @@ export default function RegisterForm({ role = "USER" }) {
         type="email"
         className="sm:col-span-2 mb-3"
       />
-      {emailErr && <small className="text-red-500">{emailErr}</small>}
+      {emailErr && <small className="text-red-600 -mt-2 mb-2">{emailErr}</small>}
 
       {/* Password */}
       <TextInput
@@ -107,7 +105,7 @@ export default function RegisterForm({ role = "USER" }) {
         className="sm:col-span-2 mb-3"
       />
 
-      {/* Farmer fields */}
+      {/* Optional Farmer Fields */}
       {role === "FARMER" && (
         <>
           <TextInput
@@ -116,7 +114,7 @@ export default function RegisterForm({ role = "USER" }) {
             register={register}
             errors={errors}
             type="text"
-            className="mb-3"
+            className="sm:col-span-2 mb-3"
           />
           <TextInput
             label="Physical Address"
@@ -124,7 +122,7 @@ export default function RegisterForm({ role = "USER" }) {
             register={register}
             errors={errors}
             type="text"
-            className="mb-3"
+            className="sm:col-span-2 mb-3"
           />
         </>
       )}
@@ -135,32 +133,35 @@ export default function RegisterForm({ role = "USER" }) {
         loadingButtonTitle="Creating account..."
       />
 
-      {/* GOOGLE SIGN-IN BUTTON */}
+      {/* Google Sign Up */}
       <button
         type="button"
         onClick={() => signIn("google")}
-        className="w-full mt-4 bg-red-500 text-white py-2 rounded-lg"
+        className="w-full mt-4 py-2 bg-red-500 text-white rounded-md"
       >
         Continue with Google
       </button>
 
-      <div className="flex justify-between mt-5 text-sm">
-        <p>
+      {/* Links */}
+      <div className="flex gap-2 justify-between">
+        <p className="text-[0.75rem] text-gray-500 py-4">
           Already have an account?{" "}
-          <Link href="/login" className="text-purple-600">Login</Link>
+          <Link href="/login" className="text-purple-600 hover:underline">
+            Login
+          </Link>
         </p>
 
         {role === "USER" ? (
-          <p>
+          <p className="text-[0.75rem] text-gray-500 py-4">
             Are you a Farmer?{" "}
-            <Link href="/register?role=FARMER" className="text-purple-600">
+            <Link href="/register?role=FARMER" className="text-purple-600 hover:underline">
               Register here
             </Link>
           </p>
         ) : (
-          <p>
+          <p className="text-[0.75rem] text-gray-500 py-4">
             Are you a User?{" "}
-            <Link href="/register" className="text-purple-600">
+            <Link href="/register" className="text-purple-600 hover:underline">
               Register here
             </Link>
           </p>
@@ -169,3 +170,4 @@ export default function RegisterForm({ role = "USER" }) {
     </form>
   );
 }
+
