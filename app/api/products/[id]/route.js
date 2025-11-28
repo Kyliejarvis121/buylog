@@ -1,14 +1,17 @@
-// app/api/products/[id]/route.js
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 // GET a single product
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
-    const { id } = params;
+    const { id } = context.params; // ensure params exist
+    if (!id) {
+      return NextResponse.json({ data: null, message: "Product ID is required" }, { status: 400 });
+    }
+
     const product = await prisma.product.findUnique({
       where: { id },
-      include: { category: true, vendor: true }, // include related models if needed
+      include: { category: true }, // remove vendor if your schema has no vendor
     });
 
     if (!product) {
@@ -23,9 +26,13 @@ export async function GET(request, { params }) {
 }
 
 // PUT update a product
-export async function PUT(request, { params }) {
+export async function PUT(request, context) {
   try {
-    const { id } = params;
+    const { id } = context.params;
+    if (!id) {
+      return NextResponse.json({ message: "Product ID is required" }, { status: 400 });
+    }
+
     const data = await request.json();
     const updatedProduct = await prisma.product.update({ where: { id }, data });
     return NextResponse.json({ data: updatedProduct, message: "Product updated" });
@@ -36,9 +43,13 @@ export async function PUT(request, { params }) {
 }
 
 // DELETE a product
-export async function DELETE(request, { params }) {
+export async function DELETE(request, context) {
   try {
-    const { id } = params;
+    const { id } = context.params;
+    if (!id) {
+      return NextResponse.json({ message: "Product ID is required" }, { status: 400 });
+    }
+
     const deletedProduct = await prisma.product.delete({ where: { id } });
     return NextResponse.json({ data: deletedProduct, message: "Product deleted" });
   } catch (error) {
