@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
+// Force this route to run server-side only (App Router)
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -12,7 +13,10 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ data: products, message: `Found ${products.length} products` }, { status: 200 });
+    return NextResponse.json(
+      { data: products, message: `Found ${products.length} products` },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("GET /api/products failed:", error);
     return NextResponse.json(
