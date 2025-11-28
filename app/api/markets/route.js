@@ -3,17 +3,24 @@ import { prisma } from "@/lib/db";
 
 export async function GET() {
   try {
-    const markets = await prisma.market.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { categories: true }, // include related categories
-    });
+    // Fetch all markets
+    const markets = await prisma.market.findMany();
+
+    // For each market, fetch categories separately
+    const marketsWithCategories = await Promise.all(
+      markets.map(async (market) => {
+        const categories = await prisma.category.findMany({
+          where: { marketId: market.id }, // adjust your relation field
+        });
+        return { ...market, categories };
+      })
+    );
 
     return NextResponse.json({
       success: true,
-      data: markets,
+      data: marketsWithCategories,
     });
   } catch (error) {
-    // Use proper type-safe logging
     console.error("MARKETS API ERROR:", error);
     return NextResponse.json(
       {
@@ -25,3 +32,4 @@ export async function GET() {
     );
   }
 }
+
