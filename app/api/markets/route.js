@@ -7,10 +7,13 @@ export const revalidate = 0;
 export async function GET() {
   try {
     const markets = await prisma.market.findMany({
-      include: {
-        categories: true, // include related categories
-      },
       orderBy: { createdAt: "desc" },
+      // Explicitly include relations only, no $scalars
+      include: {
+        categories: true,
+      },
+      // If you only need specific fields from Market itself:
+      // select: { id: true, name: true, createdAt: true, categories: true }
     });
 
     const totalMarkets = await prisma.market.count();
