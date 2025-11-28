@@ -1,47 +1,33 @@
-// Route: GET /api/markets
-import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
 
-export async function GET(request) {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function GET() {
   try {
-    const url = new URL(request.url);
-
-    // Pagination params
-    const page = parseInt(url.searchParams.get("page") ?? "1");
-    const limit = parseInt(url.searchParams.get("limit") ?? "20");
-    const skip = (page - 1) * limit;
-
-    // Optional search by market name
-    const search = url.searchParams.get("q")?.trim() ?? "";
-
-    const where = search
-      ? { name: { contains: search, mode: "insensitive" } }
-      : {};
-
     const markets = await prisma.market.findMany({
-      where,
       include: {
-        categories: true, // will include categories if they exist
+        categories: true, // include related categories
       },
       orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
     });
 
-    const total = await prisma.market.count({ where });
+    const totalMarkets = await prisma.market.count();
 
     return NextResponse.json({
-      data: markets,
-      total,
-      page,
-      limit,
-      message: `Fetched ${markets.length} markets out of ${total}`,
+      success: true,
+      data: {
+        totalMarkets,
+        markets,
+      },
     });
   } catch (error) {
-    console.error("GET /api/markets failed:", error);
+    console.error("MARKETS API ERROR:", error);
+
     return NextResponse.json(
       {
-        data: [],
+        success: false,
         message: "Failed to fetch markets",
         error: error.message,
       },
