@@ -1,19 +1,46 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// GET products by search query
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get("q") ?? "";
+    // Safe URL parsing
+    const url = new URL(request.url);
+    const query = url.searchParams.get("q")?.trim() ?? "";
+    const page = parseInt(url.searchParams.get("page") ?? "1");
+    const limit = parseInt(url.searchParams.get("limit") ?? "20");
+    const skip = (page - 1) * limit;
+
+    if (!query) {
+      return NextResponse.json(
+        { data: [], message: "Please provide a search query" },
+        { status: 400 }
+      );
+    }
 
     const products = await prisma.product.findMany({
       where: { title: { contains: query, mode: "insensitive" } },
       include: { category: true, vendor: true },
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ data: products, message: `Found ${products.length} products` });
+    const total = await prisma.product.count({
+      where: { title: { contains: query, mode: "insensitive" } },
+    });
+
+    return NextResponse.json({
+      data: products,
+      total,
+      page,
+      limit,
+      message: `Found ${products.length} products out of ${total}`,
+    });
   } catch (error) {
-    return NextResponse.json({ message: "Search failed", error: error.message }, { status: 500 });
+    console.error("Search API error:", error); // log error to console
+    return NextResponse.json(
+      { message: "Search failed", error: error.message },
+      { status: 500 }
+    );
   }
 }

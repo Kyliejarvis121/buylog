@@ -6,13 +6,19 @@ export async function PUT(request) {
   try {
     const { password, id } = await request.json();
 
-    const user = await prisma.users.findUnique({
-      where: { id },
-    });
+    // Validate input
+    if (!id || !password || password.length < 6) {
+      return NextResponse.json(
+        { data: null, message: "Invalid user ID or password (min 6 chars required)" },
+        { status: 400 }
+      );
+    }
 
+    // Check if user exists
+    const user = await prisma.users.findUnique({ where: { id } });
     if (!user) {
       return NextResponse.json(
-        { data: null, message: "No User Found" },
+        { data: null, message: "No user found with this ID" },
         { status: 404 }
       );
     }
@@ -20,16 +26,20 @@ export async function PUT(request) {
     // Encrypt the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Update password
     const updatedUser = await prisma.users.update({
       where: { id },
       data: { password: hashedPassword },
     });
 
-    return NextResponse.json(updatedUser);
+    return NextResponse.json({
+      data: { id: updatedUser.id, email: updatedUser.email },
+      message: "Password updated successfully",
+    });
   } catch (error) {
-    console.error("Failed to Update User:", error);
+    console.error("PUT /api/users failed:", error);
     return NextResponse.json(
-      { message: "Failed to Update User", error: error.message },
+      { data: null, message: "Failed to update user password", error: error.message },
       { status: 500 }
     );
   }

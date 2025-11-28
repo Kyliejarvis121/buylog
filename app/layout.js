@@ -11,10 +11,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark"> {/* You can dynamically toggle dark/light mode later */}
+      <head>
+        {/* You can add custom favicon, SEO meta tags here */}
+      </head>
       <body className={inter.className}>
         <Providers>
-          {children}
+          {children} {/* All app components have access to your context providers */}
         </Providers>
       </body>
     </html>

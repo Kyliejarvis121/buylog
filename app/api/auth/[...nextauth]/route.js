@@ -15,9 +15,6 @@ export const authOptions = {
   },
 
   providers: [
-    // --------------------------
-    // CREDENTIALS LOGIN
-    // --------------------------
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -45,50 +42,56 @@ export const authOptions = {
     }),
 
     // --------------------------
-    // GOOGLE LOGIN
+    // FIXED GOOGLE LOGIN
     // --------------------------
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+        };
+      },
     }),
   ],
 
   callbacks: {
-    // Store user id in JWT
-    async jwt({ token, user, account, profile }) {
-      // First time JWT runs → store user id
+    async jwt({ token, user, account }) {
+      // First run
       if (user) token.id = user.id;
 
-      // If Google login → auto create user if not exist
+      // Google login logic
       if (account?.provider === "google") {
-        const existingUser = await prisma.user.findUnique({
+        const existing = await prisma.user.findUnique({
           where: { email: token.email },
         });
 
-        if (!existingUser) {
+        if (!existing) {
           const newUser = await prisma.user.create({
             data: {
               email: token.email,
-              name: profile?.name || "Google User",
-              password: "", // Google does not use password
-              emailVerified: true,
+              name: token.name,
+              image: token.picture,
+              password: null, // VERY IMPORTANT FIX
+              emailVerified: new Date(),
             },
           });
 
           token.id = newUser.id;
         } else {
-          token.id = existingUser.id;
+          token.id = existing.id;
         }
       }
 
       return token;
     },
 
-    // Add user id to session
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-      }
+      session.user.id = token.id;
       return session;
     },
   },
