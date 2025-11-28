@@ -1,47 +1,33 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/db"; // ✅ Use the same client as dashboard
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    const [
-      farmers,
-      sales,
-      supports
-    ] = await Promise.all([
-      prisma.farmers.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 5, // Latest 5 farmers
-      }),
+    const products = await prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 10, // optional: latest 10 products
+    });
 
-      prisma.sales.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 5, // Latest 5 sales
-      }),
-
-      prisma.farmerSupport.count(), // support tickets count
-    ]);
+    const totalProducts = await prisma.product.count();
 
     return NextResponse.json({
       success: true,
       data: {
-        totalFarmers: farmers.length,
-        totalSales: await prisma.sales.count(),
-        totalSupport: supports,
-        latestFarmers: farmers,
-        latestSales: sales,
+        totalProducts,
+        latestProducts: products,
       },
     });
   } catch (error) {
-    console.error("DASHBOARD API ERROR:", error);
+    console.error("GET /api/products failed:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load dashboard data",
-        error: error.message,
+        message: "Failed to fetch products",
+        error: error?.message ?? String(error),
       },
       { status: 500 }
     );

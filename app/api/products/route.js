@@ -1,31 +1,22 @@
+// app/api/products/route.ts
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// Force this route to run server-side only (App Router)
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     });
-
-    return NextResponse.json(
-      { data: products, message: `Found ${products.length} products` },
-      { status: 200 }
-    );
+    return NextResponse.json({ data: products, message: `Found ${products.length} products` }, { status: 200 });
   } catch (error) {
     console.error("GET /api/products failed:", error);
-    return NextResponse.json(
-      {
-        data: [],
-        message: "Failed to fetch products",
-        error: error?.message ?? String(error),
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      data: [],
+      message: "Failed to fetch products",
+      error: error?.message ?? String(error),
+    }, { status: 500 });
   }
 }
