@@ -1,10 +1,10 @@
-import { prisma } from "@/lib/prismadb";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { authOptions } from "@/lib/authOptions";
 import { getServerSession } from "next-auth";
 import OrderCard from "@/components/Order/OrderCard";
-
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+import { getData } from "@/lib/getData";
 
 export default async function OrdersPage() {
   const session = await getServerSession(authOptions);
@@ -12,22 +12,13 @@ export default async function OrdersPage() {
 
   const userId = session.user.id;
 
-  // Fetch orders directly from Prisma
-  let orders = [];
-  try {
-    orders = await prisma.orders.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
-    return (
-      <p className="text-red-600">
-        Failed to fetch orders: {error.message}
-      </p>
-    );
+  const { success, data: orders, error } = await getData(`orders?userId=${userId}`);
+
+  if (!success) {
+    return <p className="text-red-600">Failed to fetch orders: {error}</p>;
   }
 
-  if (orders.length === 0) {
+  if (!orders || orders.length === 0) {
     return <p>No Orders Yet</p>;
   }
 

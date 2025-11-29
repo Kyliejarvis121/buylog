@@ -1,10 +1,13 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+
 import React from "react";
 import FormHeader from "@/components/backoffice/FormHeader";
 import NewProductForm from "@/components/backoffice/NewProductForm";
 import { prisma } from "@/lib/prismadb";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+
 
 export default async function NewProduct() {
   let categories = [];

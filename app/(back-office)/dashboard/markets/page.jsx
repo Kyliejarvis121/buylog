@@ -1,18 +1,18 @@
-import { prisma } from "@/lib/prismadb";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
+import { getData } from "@/lib/getData";
 import { columns } from "./columns";
 
 export default async function MarketsPage() {
-  let markets = [];
-  try {
-    markets = await prisma.markets.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
+  const { success, data: markets, error } = await getData("markets");
+
+  if (!success) {
     return (
       <div className="p-4 text-red-600">
-        Error fetching markets: {error.message}
+        Failed to fetch markets: {error}
       </div>
     );
   }

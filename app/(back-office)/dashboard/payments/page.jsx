@@ -1,18 +1,17 @@
-import { prisma } from "@/lib/prismadb";
+import { getData } from "@/lib/getData";
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
 
-export default async function DemoPage() {
-  let categories = [];
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-  try {
-    categories = await prisma.categories.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
+export default async function DemoPage() {
+  const { success, data: categories, error } = await getData("categories");
+
+  if (!success) {
     return (
       <div className="container mx-auto py-10 text-red-600">
-        Error fetching categories: {error.message}
+        Failed to fetch categories: {error}
       </div>
     );
   }
