@@ -7,21 +7,21 @@ import DataTable from "@/components/data-table-components/DataTable";
 import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { redirect } from "next/navigation";
 import { columns } from "./columns";
 
 export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return <p className="p-4 text-red-600">Unauthorized</p>;
-  }
 
-  const role = session.user.role;
-  const userId = session.user.id;
+  if (!session) redirect("/login");
+
+  const { role, id: userId } = session.user;
 
   let allProducts = [];
 
   try {
     allProducts = await prisma.products.findMany({
+      where: role === "ADMIN" ? {} : { userId },
       orderBy: { createdAt: "desc" },
     });
   } catch (error) {
@@ -32,9 +32,6 @@ export default async function ProductsPage() {
     );
   }
 
-  // Filter products for non-admins
-  const farmerProducts = role === "ADMIN" ? allProducts : allProducts.filter((p) => p.userId === userId);
-
   return (
     <div className="container mx-auto py-8">
       <PageHeader
@@ -44,7 +41,7 @@ export default async function ProductsPage() {
       />
 
       <div className="py-8">
-        <DataTable data={farmerProducts} columns={columns} />
+        <DataTable data={allProducts} columns={columns} />
       </div>
     </div>
   );

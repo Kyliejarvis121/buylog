@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prismadb";
 
 export async function POST(req) {
   try {
-    const { name, email, password, phone, role } = await req.json();
+    const { name, email, password, phone } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -31,7 +31,17 @@ export async function POST(req) {
         email,
         password: hashedPassword,
         phone,
-        role: (role || "USER").toUpperCase(),
+        role: "USER",                // FIX: block users from setting roles
+        emailVerified: false,        // FIX: always start unverified
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        emailVerified: true,
+        createdAt: true,
       },
     });
 

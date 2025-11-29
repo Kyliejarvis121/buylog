@@ -1,20 +1,17 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-
 import React from "react";
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { prisma } from "@/lib/prismadb";
 import { columns } from "./columns";
 
-
-
 export default async function CategoriesPage() {
   let categories = [];
 
   try {
-    categories = await prisma.categories.findMany({
+    categories = await prisma.category.findMany({
       orderBy: { title: "asc" },
     });
   } catch (error) {
