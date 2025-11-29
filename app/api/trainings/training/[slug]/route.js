@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params: { slug } }) {
@@ -7,7 +7,6 @@ export async function GET(request, { params: { slug } }) {
       where: { slug },
     });
 
-    // Return a safe response if training not found
     if (!training) {
       return NextResponse.json(
         { data: null, message: "Training not found" },
