@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
@@ -37,10 +39,11 @@ export async function GET(request) {
       message: `Found ${products.length} products out of ${total}`,
     });
   } catch (error) {
-    console.error("Search API error:", error); // log error to console
+    console.error("Search API error:", error);
     return NextResponse.json(
       { message: "Search failed", error: error.message },
       { status: 500 }
     );
   }
 }
+
