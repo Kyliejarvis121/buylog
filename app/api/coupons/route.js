@@ -1,80 +1,122 @@
-// Route: app/api/coupons/route.js
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth"; // <- you must already have this
 
-// CREATE COUPON
+// ----------------------
+// CREATE COUPON (ADMIN ONLY)
+// ----------------------
 export async function POST(request) {
   try {
-    const { title, code, discount, expiry, isActive, vendorId } = await request.json();
+    const user = await getCurrentUser();
 
-    // Validate required fields
+    if (!user) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    if (user.role !== "ADMIN") {
+      return NextResponse.json(
+        { message: "Only admins can create coupons" },
+        { status: 403 }
+      );
+    }
+
+    const { title, code, discount, expiry, isActive, vendorId } =
+      await request.json();
+
+    // Basic validation
     if (!title || !code || discount == null || !expiry) {
       return NextResponse.json(
-        { data: null, message: "Title, code, discount, and expiry are required" },
+        { message: "Title, code, discount, and expiry are required" },
         { status: 400 }
       );
     }
 
-    // Check if coupon already exists
-    const existingCoupon = await prisma.coupon.findUnique({ where: { code } });
-    if (existingCoupon) {
+    // Ensure unique coupon code
+    const existing = await prisma.coupon.findUnique({ where: { code } });
+    if (existing) {
       return NextResponse.json(
-        { data: null, message: `Coupon with code (${code}) already exists` },
+        { message: `Coupon code (${code}) already exists` },
         { status: 409 }
       );
     }
 
-    const newCoupon = await prisma.coupon.create({
+    // Create coupon
+    const coupon = await prisma.coupon.create({
       data: {
         title,
         code,
         discount: Number(discount),
         expiry: new Date(expiry),
         isActive: Boolean(isActive),
-        vendorId: vendorId ?? null,
+        vendorId: vendorId || null,
       },
     });
 
     return NextResponse.json(
-      { data: newCoupon, message: "Coupon created successfully" },
+      { data: coupon, message: "Coupon created successfully" },
       { status: 201 }
     );
+
   } catch (error) {
-    console.error("POST /api/coupons failed:", error);
+    console.error("POST /api/coupons error:", error);
     return NextResponse.json(
-      { data: null, message: "Failed to create coupon", error: error.message },
+      { message: "Failed to create coupon", error: error.message },
       { status: 500 }
     );
   }
 }
 
-// GET ALL COUPONS WITH PAGINATION
+
+// ----------------------
+// GET COUPONS (ADMIN ONLY)
+// ----------------------
 export async function GET(request) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    if (user.role !== "ADMIN") {
+      return NextResponse.json(
+        { message: "Only admins can view coupons" },
+        { status: 403 }
+      );
+    }
+
     const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get("page") ?? "1");
-    const limit = parseInt(url.searchParams.get("limit") ?? "20");
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const limit = parseInt(url.searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
 
-    const coupons = await prisma.coupon.findMany({
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
-    });
-
-    const total = await prisma.coupon.count();
+    const [coupons, total] = await Promise.all([
+      prisma.coupon.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.coupon.count(),
+    ]);
 
     return NextResponse.json({
       data: coupons,
       total,
       page,
       limit,
-      message: `Fetched ${coupons.length} coupons out of ${total}`,
+      message: "Coupons fetched successfully",
     });
+
   } catch (error) {
-    console.error("GET /api/coupons failed:", error);
+    console.error("GET /api/coupons error:", error);
     return NextResponse.json(
-      { data: [], message: "Failed to fetch coupons", error: error.message },
+      { message: "Failed to fetch coupons", error: error.message },
       { status: 500 }
     );
   }

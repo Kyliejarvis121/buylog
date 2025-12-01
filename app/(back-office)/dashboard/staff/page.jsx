@@ -1,49 +1,47 @@
-// app/(back-office)/dashboard/coupons/page.jsx
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import React from "react";
 import PageHeader from "@/components/backoffice/PageHeader";
-import TableActions from "@/components/backoffice/TableActions";
 import DataTable from "@/components/data-table-components/DataTable";
 import { prisma } from "@/lib/prismadb";
-import { columns } from "./columns"; // Make sure this matches your coupons model
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
+import { redirect } from "next/navigation";
+import { columns } from "./columns";
 
-export default async function CouponsPage() {
-  let coupons = [];
+export default async function StaffPage() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) redirect("/login");
+
+  const { role, id: userId } = session.user;
+
+  let allStaff = [];
 
   try {
-    // Fetch all coupons from the database
-    coupons = await prisma.coupons.findMany({
-      orderBy: { createdAt: "desc" }, // Replace with a valid field in your model
+    allStaff = await prisma.staff.findMany({
+      where: role === "ADMIN" ? {} : { ownerId: userId },
+      orderBy: { createdAt: "desc" },
     });
   } catch (error) {
     return (
       <div className="p-4 text-red-600">
-        Failed to fetch coupons: {error?.message || "Unknown error"}
+        Failed to fetch staff: {error?.message || "Unknown error"}
       </div>
     );
   }
 
   return (
     <div className="container mx-auto py-8">
-      {/* Page Header */}
       <PageHeader
-        heading="Coupons"
-        href="/dashboard/coupons/new"
-        linkTitle="Add Coupon"
+        heading="Staff"
+        href="/dashboard/staff/new"
+        linkTitle="Add Staff"
       />
 
-      {/* Table Actions (Search / Export / Bulk Delete) */}
-      <TableActions />
-
-      {/* Data Table */}
       <div className="py-8">
-        {coupons.length === 0 ? (
-          <p>No coupons available.</p>
-        ) : (
-          <DataTable data={coupons} columns={columns} />
-        )}
+        <DataTable data={allStaff} columns={columns} />
       </div>
     </div>
   );

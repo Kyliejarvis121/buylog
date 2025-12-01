@@ -1,13 +1,12 @@
 "use client";
-import ImageInput from "@/components/FormInputs/ImageInput";
+
 import SubmitButton from "@/components/FormInputs/SubmitButton";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import TextInput from "@/components/FormInputs/TextInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import FormHeader from "@/components/backoffice/FormHeader";
+
 import { makePostRequest } from "@/lib/apiRequest";
-import { generateCouponCode } from "@/lib/generateCouponCode";
-import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
 
 import React, { useState } from "react";
@@ -15,7 +14,6 @@ import { useForm } from "react-hook-form";
 
 export default function NewStaff() {
   const [loading, setLoading] = useState(false);
-  const [couponCode, setCouponCode] = useState();
 
   const {
     register,
@@ -28,84 +26,80 @@ export default function NewStaff() {
       isActive: true,
     },
   });
-  const isActive = watch("isActive");
+
   async function onSubmit(data) {
-    /*
-    - name
-    -password
-    -email
-    -phone
-    -physicalAddress
-    -NIN
-    -DOB
-    -notes
-    -isActive
-    PW: 
-    */
+    // Generate unique staff code
     const code = generateUserCode("LSM", data.name);
     data.code = code;
-    console.log(data);
+
+    console.log("SUBMITTING STAFF:", data);
+
     makePostRequest(setLoading, "api/staffs", data, "Staff", reset);
   }
+
   return (
     <div>
       <FormHeader title="New Staff" />
+
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3 "
+        className="w-full max-w-4xl p-4 bg-white border border-gray-200 
+               rounded-lg shadow sm:p-6 md:p-8 mx-auto my-3 
+               dark:bg-gray-800 dark:border-gray-700"
       >
         <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+          
           <TextInput
             label="Staff Full Name"
             name="name"
             register={register}
             errors={errors}
           />
+
           <TextInput
-            label="NIN (Id Number)"
+            label="NIN (ID Number)"
             name="nin"
             register={register}
             errors={errors}
-            className="w-full"
           />
+
           <TextInput
             label="Date of Birth"
             name="dob"
             type="date"
             register={register}
             errors={errors}
-            className="w-full"
           />
+
           <TextInput
             label="Password"
             name="password"
             type="password"
             register={register}
             errors={errors}
-            className="w-full"
           />
+
           <TextInput
-            label="Staff's Email Address"
+            label="Staff Email Address"
             name="email"
+            type="email"
             register={register}
             errors={errors}
-            className="w-full"
           />
+
           <TextInput
-            label="Staff's Phone"
+            label="Staff Phone"
             name="phone"
             type="tel"
             register={register}
             errors={errors}
-            className="w-full"
           />
 
           <TextInput
-            label="Staff's Physical Address"
+            label="Physical Address"
             name="physicalAddress"
             register={register}
             errors={errors}
-            className="w-full"
           />
 
           <TextareaInput
@@ -115,8 +109,9 @@ export default function NewStaff() {
             errors={errors}
             isRequired={false}
           />
+
           <ToggleInput
-            label="Staff Member status"
+            label="Staff Member Status"
             name="isActive"
             trueTitle="Active"
             falseTitle="Draft"
@@ -127,7 +122,7 @@ export default function NewStaff() {
         <SubmitButton
           isLoading={loading}
           buttonTitle="Create Staff"
-          loadingButtonTitle="Creating Staff please wait..."
+          loadingButtonTitle="Creating staff, please wait..."
         />
       </form>
     </div>

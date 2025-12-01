@@ -7,22 +7,21 @@ import DataTable from "@/components/data-table-components/DataTable";
 import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { redirect } from "next/navigation";
 import { columns } from "./columns";
-
 
 export default async function CouponsPage() {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return <p className="p-4 text-red-600">Unauthorized</p>;
-  }
 
-  const userId = session.user.id;
-  const role = session.user.role;
+  if (!session) redirect("/login");
+
+  const { id: userId, role } = session.user;
 
   let allCoupons = [];
 
   try {
-    allCoupons = await prisma.coupons.findMany({
+    allCoupons = await prisma.coupon.findMany({
+      where: role === "ADMIN" ? {} : { vendorId: userId },
       orderBy: { createdAt: "desc" },
     });
   } catch (error) {
@@ -33,18 +32,16 @@ export default async function CouponsPage() {
     );
   }
 
-  // Filter coupons for non-admin users
-  const farmerCoupons = role === "ADMIN" ? allCoupons : allCoupons.filter(c => c.vendorId === userId);
-
   return (
-    <div>
+    <div className="container mx-auto py-8">
       <PageHeader
         heading="Coupons"
         href="/dashboard/coupons/new"
         linkTitle="Add Coupon"
       />
+
       <div className="py-8">
-        <DataTable data={farmerCoupons} columns={columns} />
+        <DataTable data={allCoupons} columns={columns} />
       </div>
     </div>
   );

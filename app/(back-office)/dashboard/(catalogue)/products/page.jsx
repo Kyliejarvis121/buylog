@@ -20,8 +20,8 @@ export default async function ProductsPage() {
   let allProducts = [];
 
   try {
-    allProducts = await prisma.products.findMany({
-      where: role === "ADMIN" ? {} : { userId },
+    allProducts = await prisma.product.findMany({
+      where: role === "ADMIN" ? {} : { vendorId: userId },
       orderBy: { createdAt: "desc" },
     });
   } catch (error) {
@@ -46,3 +46,4 @@ export default async function ProductsPage() {
     </div>
   );
 }
+
