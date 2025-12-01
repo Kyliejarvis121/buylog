@@ -7,48 +7,30 @@ import { compare } from "bcrypt";
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
-
   session: { strategy: "jwt" },
-
-  pages: {
-    signIn: "/login",
-  },
-
+  pages: { signIn: "/login" },
   providers: [
     CredentialsProvider({
       name: "credentials",
-      credentials: {
-        email: {},
-        password: {},
-      },
+      credentials: { email: {}, password: {} },
       async authorize(credentials) {
         if (!credentials.email || !credentials.password) return null;
-
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
-
         if (!user) return null;
 
-        const isValidPassword = await compare(
-          credentials.password,
-          user.password
-        );
-
+        const isValidPassword = await compare(credentials.password, user.password);
         if (!isValidPassword) return null;
 
         return user;
       },
     }),
-
-    // --------------------------
-    // FIXED GOOGLE LOGIN
-    // --------------------------
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-
       profile(profile) {
+        // This CANNOT be async
         return {
           id: profile.sub,
           name: profile.name,
@@ -61,14 +43,13 @@ export const authOptions = {
 
   callbacks: {
     async jwt({ token, user, account }) {
-      // First run
-      if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id;
+        token.role = user.role; // attach role from DB
+      }
 
-      // Google login logic
       if (account?.provider === "google") {
-        const existing = await prisma.user.findUnique({
-          where: { email: token.email },
-        });
+        const existing = await prisma.user.findUnique({ where: { email: token.email } });
 
         if (!existing) {
           const newUser = await prisma.user.create({
@@ -76,14 +57,16 @@ export const authOptions = {
               email: token.email,
               name: token.name,
               image: token.picture,
-              password: null, // VERY IMPORTANT FIX
+              password: null,
               emailVerified: new Date(),
+              role: "USER", // default role
             },
           });
-
           token.id = newUser.id;
+          token.role = newUser.role;
         } else {
           token.id = existing.id;
+          token.role = existing.role || "USER";
         }
       }
 
@@ -91,7 +74,10 @@ export const authOptions = {
     },
 
     async session({ session, token }) {
-      session.user.id = token.id;
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role || "USER"; // attach role
+      }
       return session;
     },
   },
