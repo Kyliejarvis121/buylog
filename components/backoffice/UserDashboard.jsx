@@ -1,9 +1,8 @@
-// app/components/backoffice/UserDashboard.jsx
-export default function UserDashboard({ orders }) {
+export default function UserDashboard() {
   return (
     <div className="p-6">
-      <h2>Welcome User</h2>
-      <div>Orders: {orders.length}</div>
+      <h2 className="text-2xl font-semibold mb-4">Welcome User</h2>
+      <p>Your dashboard will show your orders and activity here.</p>
     </div>
   );
 }
