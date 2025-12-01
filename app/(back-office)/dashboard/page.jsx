@@ -12,10 +12,11 @@ import { authOptions } from "@/lib/authOptions";
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
-  // FIX: always return a string, never undefined
-  const role = session?.user?.role ?? "USER";
+  if (!session) return <div className="p-6 text-red-600">Not logged in</div>;
 
-  // Safe fetch to avoid dashboard breaking
+  const role = session.user?.role ?? "USER";
+
+  // Safe fetch helper
   async function safe(endpoint) {
     try {
       const res = await getData(endpoint);
@@ -26,6 +27,7 @@ export default async function DashboardPage() {
     }
   }
 
+  // Fetch all required data
   const [sales, orders, products, farmers, supports, users] = await Promise.all([
     safe("sales"),
     safe("orders"),
@@ -35,23 +37,45 @@ export default async function DashboardPage() {
     safe("users"),
   ]);
 
+  // -------------------
   // USER DASHBOARD
+  // -------------------
   if (role === "USER") {
     return <UserDashboard orders={orders} />;
   }
 
+  // -------------------
   // FARMER DASHBOARD
+  // -------------------
   if (role === "FARMER") {
     return (
-      <FarmerDashboard
-        sales={sales}
-        products={products}
-        support={supports}
-      />
+      <div className="p-6">
+        <Heading title="Dashboard Overview" />
+
+        {/* LargeCards: Farmer can see sales, products (but not farmers/users) */}
+        <LargeCards sales={sales} products={products} />
+
+        {/* SmallCards: only orders/supports relevant */}
+        <SmallCards orders={orders} supports={supports} />
+
+        <DashboardCharts sales={sales} />
+
+        <div className="mt-8">
+          <Heading title="Your Products" />
+          <CustomDataTable data={products} columns={[ /* product columns */ ]} />
+        </div>
+
+        <div className="mt-8">
+          <Heading title="Support Requests" />
+          <CustomDataTable data={supports} columns={[ /* support columns */ ]} />
+        </div>
+      </div>
     );
   }
 
+  // -------------------
   // ADMIN DASHBOARD
+  // -------------------
   return (
     <div className="p-6">
       <Heading title="Dashboard Overview" />
