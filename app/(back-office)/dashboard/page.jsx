@@ -1,8 +1,5 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-
-import FarmerDashboard from "@/components/backoffice/FarmerDashboard";
-import UserDashboard from "@/components/backoffice/UserDashboard";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import Heading from "@/components/backoffice/Heading";
 import LargeCards from "@/components/backoffice/LargeCards";
@@ -10,6 +7,11 @@ import SmallCards from "@/components/backoffice/SmallCards";
 import DashboardCharts from "@/components/backoffice/DashboardCharts";
 import CustomDataTable from "@/components/backoffice/CustomDataTable";
 
+import FarmerDashboard from "@/components/backoffice/FarmerDashboard";
+import UserDashboard from "@/components/backoffice/UserDashboard";
+
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
 import { getData } from "@/lib/getData";
 
 export default async function DashboardPage() {
@@ -24,7 +26,7 @@ export default async function DashboardPage() {
     const role = session.user.role ?? "USER";
     const userId = session.user.id;
 
-    // Fetch all data safely
+    // Fetch all required data safely
     const endpoints = [
       "sales",
       "orders",
@@ -134,3 +136,4 @@ export default async function DashboardPage() {
     );
   }
 }
+
