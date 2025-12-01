@@ -20,10 +20,27 @@ export default async function ProductsPage() {
   let allProducts = [];
 
   try {
-    allProducts = await prisma.product.findMany({
-      where: role === "ADMIN" ? {} : { vendorId: userId },
-      orderBy: { createdAt: "desc" },
-    });
+    if (role === "ADMIN") {
+      // Admin sees all products
+      allProducts = await prisma.product.findMany({
+        orderBy: { createdAt: "desc" },
+        include: { category: true },
+      });
+    } else {
+      // Farmer: get all their farmer IDs first
+      const farmers = await prisma.farmer.findMany({
+        where: { userId },
+        select: { id: true },
+      });
+      const farmerIds = farmers.map(f => f.id);
+
+      // Fetch only products for these farmer IDs
+      allProducts = await prisma.product.findMany({
+        where: { farmerId: { in: farmerIds } },
+        orderBy: { createdAt: "desc" },
+        include: { category: true },
+      });
+    }
   } catch (error) {
     return (
       <div className="p-4 text-red-600">
@@ -46,4 +63,3 @@ export default async function ProductsPage() {
     </div>
   );
 }
-

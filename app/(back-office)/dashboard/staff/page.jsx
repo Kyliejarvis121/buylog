@@ -15,13 +15,13 @@ export default async function StaffPage() {
 
   if (!session) redirect("/login");
 
-  const { role, id: userId } = session.user;
+  const { role } = session.user;
 
   let allStaff = [];
 
   try {
-    allStaff = await prisma.staff.findMany({
-      where: role === "ADMIN" ? {} : { ownerId: userId },
+    allStaff = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "STAFF"] } }, // fetch only staff/admin
       orderBy: { createdAt: "desc" },
     });
   } catch (error) {
