@@ -7,9 +7,21 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ data: sales, message: "Sales fetched successfully" });
+    return NextResponse.json({
+      success: true,
+      data: sales, // MUST be an array
+    });
   } catch (error) {
     console.error("SALES API ERROR:", error);
-    return NextResponse.json({ data: null, message: "Failed to fetch sales", error: error.message }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        success: false,
+        data: [], // MUST NOT be null
+        message: "Failed to fetch sales",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }

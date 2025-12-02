@@ -7,8 +7,6 @@ export const revalidate = 0;
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
-      skip: 0,
-      take: 20,
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -17,20 +15,13 @@ export async function GET() {
         role: true,
         emailVerified: true,
         phone: true,
-        planId: true, // keep if you have plan relation
         createdAt: true,
-        updatedAt: true,
       },
     });
 
-    const totalUsers = await prisma.user.count();
-
     return NextResponse.json({
       success: true,
-      data: {
-        totalUsers,
-        users,
-      },
+      data: users, // MUST be an array
     });
   } catch (error) {
     console.error("USERS API ERROR:", error);
@@ -38,6 +29,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: false,
+        data: [],
         message: "Failed to fetch users",
         error: error.message,
       },
