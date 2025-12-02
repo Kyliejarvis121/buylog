@@ -18,14 +18,13 @@ export default async function NewProduct() {
   let farmers = [];
 
   try {
-    // Fetch categories
-    const categoriesData = await prisma.categories.findMany({
+    // ✅ Correct model names
+    const categoriesData = await prisma.category.findMany({
       select: { id: true, title: true },
       orderBy: { title: "asc" },
     });
 
-    // Fetch only farmer users
-    const usersData = await prisma.users.findMany({
+    const usersData = await prisma.user.findMany({
       where: { role: "FARMER" },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
@@ -33,7 +32,6 @@ export default async function NewProduct() {
 
     categories = categoriesData;
     farmers = usersData.map((f) => ({ id: f.id, title: f.name }));
-
   } catch (error) {
     return (
       <div className="p-4 text-red-600">
