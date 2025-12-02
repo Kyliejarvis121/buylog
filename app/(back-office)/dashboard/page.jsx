@@ -1,3 +1,4 @@
+// app/backoffice/dashboard/page.jsx
 import Heading from "@/components/backoffice/Heading";
 import LargeCards from "@/components/backoffice/LargeCards";
 import SmallCards from "@/components/backoffice/SmallCards";
@@ -12,16 +13,18 @@ import { authOptions } from "@/lib/authOptions";
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
+  // Default to USER role if session missing
   const role = session?.user?.role ?? "USER";
   const userId = session?.user?.id;
 
-  // Helper to safely fetch data
+  // Safe fetch helper
   async function safe(endpoint) {
     try {
       const res = await getData(endpoint);
-      return res || []; // ensure array fallback
+      // unwrap 'data' property; fallback to empty array
+      return res?.data ?? [];
     } catch (e) {
-      console.error(`FAILED: ${endpoint}`, e.message);
+      console.error("FAILED:", endpoint, e.message);
       return [];
     }
   }
@@ -31,7 +34,7 @@ export default async function DashboardPage() {
     safe("sales"),
     safe("orders"),
     safe("products"),
-    safe("farmers?includeInactive=true"), // Admin sees all
+    safe("farmers?includeInactive=true"),
     safe("farmerSupport"),
     safe("users"),
   ]);
@@ -45,9 +48,9 @@ export default async function DashboardPage() {
   if (role === "FARMER") {
     return (
       <FarmerDashboard
-        sales={sales.filter((s) => s.vendorId === userId)}
-        products={products.filter((p) => p.farmerId === userId)}
-        support={supports.filter((s) => s.farmerId === userId)}
+        sales={Array.isArray(sales) ? sales.filter((s) => s.vendorId === userId) : []}
+        products={Array.isArray(products) ? products.filter((p) => p.farmerId === userId) : []}
+        support={Array.isArray(supports) ? supports.filter((s) => s.farmerId === userId) : []}
       />
     );
   }
@@ -57,27 +60,36 @@ export default async function DashboardPage() {
     <div className="p-6">
       <Heading title="Dashboard Overview" />
 
-      <LargeCards sales={sales} products={products} farmers={farmers} />
-      <SmallCards orders={orders} supports={supports} />
-      <DashboardCharts sales={sales} />
+      <LargeCards
+        sales={Array.isArray(sales) ? sales : []}
+        products={Array.isArray(products) ? products : []}
+        farmers={Array.isArray(farmers) ? farmers : []}
+      />
 
-      {/* Recent Orders */}
+      <SmallCards
+        orders={Array.isArray(orders) ? orders : []}
+        supports={Array.isArray(supports) ? supports : []}
+      />
+
+      <DashboardCharts
+        sales={Array.isArray(sales) ? sales : []}
+      />
+
       <div className="mt-8">
         <Heading title="Recent Orders" />
-        <CustomDataTable data={orders} type="orders" />
+        <CustomDataTable data={Array.isArray(orders) ? orders : []} type="orders" />
       </div>
 
-      {/* All Farmers */}
       <div className="mt-8">
         <Heading title="All Farmers (Pending & Active)" />
-        <CustomDataTable data={farmers} type="farmers" />
+        <CustomDataTable data={Array.isArray(farmers) ? farmers : []} type="farmers" />
       </div>
 
-      {/* All Users */}
       <div className="mt-8">
         <Heading title="All Users" />
-        <CustomDataTable data={users} type="users" />
+        <CustomDataTable data={Array.isArray(users) ? users : []} type="users" />
       </div>
     </div>
   );
 }
+
