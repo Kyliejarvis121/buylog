@@ -12,17 +12,16 @@ import { authOptions } from "@/lib/authOptions";
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
-  // Default to USER role if session missing
   const role = session?.user?.role ?? "USER";
   const userId = session?.user?.id;
 
-  // Safe fetch helper
+  // Helper to safely fetch data
   async function safe(endpoint) {
     try {
       const res = await getData(endpoint);
-      return res?.data || [];
+      return res || []; // ensure array fallback
     } catch (e) {
-      console.error("FAILED:", endpoint, e.message);
+      console.error(`FAILED: ${endpoint}`, e.message);
       return [];
     }
   }
@@ -32,7 +31,7 @@ export default async function DashboardPage() {
     safe("sales"),
     safe("orders"),
     safe("products"),
-    safe("farmers?includeInactive=true"),
+    safe("farmers?includeInactive=true"), // Admin sees all
     safe("farmerSupport"),
     safe("users"),
   ]);
@@ -62,16 +61,19 @@ export default async function DashboardPage() {
       <SmallCards orders={orders} supports={supports} />
       <DashboardCharts sales={sales} />
 
+      {/* Recent Orders */}
       <div className="mt-8">
         <Heading title="Recent Orders" />
         <CustomDataTable data={orders} type="orders" />
       </div>
 
+      {/* All Farmers */}
       <div className="mt-8">
         <Heading title="All Farmers (Pending & Active)" />
         <CustomDataTable data={farmers} type="farmers" />
       </div>
 
+      {/* All Users */}
       <div className="mt-8">
         <Heading title="All Users" />
         <CustomDataTable data={users} type="users" />
@@ -79,4 +81,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-
