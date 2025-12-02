@@ -1,18 +1,16 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-
 import { prisma } from "@/lib/prismadb";
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { columns } from "./columns";
 
-
-
 export default async function FarmersPage() {
   let farmers = [];
   try {
-    farmers = await prisma.farmers.findMany({
+    // ✅ Use singular 'farmer'
+    farmers = await prisma.farmer.findMany({
       orderBy: { createdAt: "desc" },
       include: { user: true },
     });
@@ -25,7 +23,7 @@ export default async function FarmersPage() {
       <PageHeader heading="Farmers" href="/dashboard/farmers/new" linkTitle="Add Farmer" />
       <div className="py-0">
         <DataTable
-          data={farmers}
+          data={Array.isArray(farmers) ? farmers : []}
           columns={columns} // include "Approve/Reject" actions in your columns
           filterKeys={["name", "status"]}
         />
