@@ -1,35 +1,52 @@
+import { prisma } from "@/lib/prismadb"; // make sure this is the correct Prisma client
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+// GET: fetch all markets with their categories
 export async function GET() {
   try {
-    // Fetch all markets
-    const markets = await prisma.market.findMany();
-
-    // For each market, fetch categories separately
-    const marketsWithCategories = await Promise.all(
-      markets.map(async (market) => {
-        const categories = await prisma.category.findMany({
-          where: { marketId: market.id }, // adjust your relation field
-        });
-        return { ...market, categories };
-      })
-    );
-
-    return NextResponse.json({
-      success: true,
-      data: marketsWithCategories,
+    const markets = await prisma.market.findMany({
+      include: { categories: true }, // fetch related categories
+      orderBy: { createdAt: "desc" },
     });
+
+    return NextResponse.json({ success: true, data: markets });
   } catch (error) {
     console.error("MARKETS API ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch markets",
-        error: error instanceof Error ? error.message : String(error),
-      },
+      { success: false, message: "Failed to fetch markets", error: error.message },
       { status: 500 }
     );
   }
 }
 
+// POST: create a new market
+export async function POST(req) {
+  try {
+    const { name, categoryIds } = await req.json();
+
+    if (!name) {
+      return NextResponse.json({ success: false, message: "Market name is required" }, { status: 400 });
+    }
+
+    const market = await prisma.market.create({
+      data: {
+        name,
+        categories: {
+          connect: categoryIds?.map((id) => ({ id })) || [],
+        },
+      },
+      include: { categories: true },
+    });
+
+    return NextResponse.json({ success: true, data: market });
+  } catch (error) {
+    console.error("POST /api/markets failed:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to create market", error: error.message },
+      { status: 500 }
+    );
+  }
+}
