@@ -1,23 +1,92 @@
-import React from "react";
-import Heading from "./Heading";
-import LargeCards from "./LargeCards";
-import SmallCards from "./SmallCards";
-import DashboardCharts from "./DashboardCharts";
-import ProductUpload from "./Farmer/ProductUpload"; // use client
+"use client";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import TextInput from "../FormInputs/TextInput";
+import TextareaInput from "../FormInputs/TextAreaInput";
+import SubmitButton from "../FormInputs/SubmitButton";
 
-export default function FarmerDashboard({ sales, products, supports, farmerId }) {
+export default function ProductUpload({ farmerId }) {
+  const [productImages, setProductImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm();
+
+  const onSubmit = (data) => {
+    if (productImages.length === 0) {
+      alert("Please upload at least one product image");
+      return;
+    }
+
+    const payload = {
+      ...data,
+      farmerId,
+      productImages,
+    };
+
+    console.log("Submitting product:", payload);
+    // call your API here, e.g. makePostRequest(...)
+    setLoading(true);
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setProductImages(files);
+  };
+
   return (
-    <div className="p-6">
-      <Heading title="Farmer Dashboard" />
-      <LargeCards sales={sales || []} products={products || []} />
-      <SmallCards orders={[]} supports={supports || []} />
-      <DashboardCharts sales={sales || []} />
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="bg-white p-4 rounded shadow-md"
+    >
+      <TextInput
+        label="Product Title"
+        name="title"
+        register={register}
+        errors={errors}
+      />
+      <TextInput
+        label="Price"
+        name="price"
+        type="number"
+        register={register}
+        errors={errors}
+      />
+      <TextareaInput
+        label="Description"
+        name="description"
+        register={register}
+        errors={errors}
+      />
 
-      <div className="mt-8">
-        <Heading title="Upload New Product" />
-        <ProductUpload farmerId={farmerId} />
+      <div className="mb-4">
+        <label className="block mb-2 text-black font-medium">
+          Upload Product Images
+        </label>
+        <input
+          type="file"
+          multiple
+          className="w-full text-black"
+          onChange={handleFileChange}
+        />
+        {productImages.length > 0 && (
+          <ul className="mt-2">
+            {productImages.map((file, idx) => (
+              <li key={idx}>{file.name}</li>
+            ))}
+          </ul>
+        )}
       </div>
-    </div>
+
+      <SubmitButton
+        isLoading={loading}
+        buttonTitle="Upload Product"
+        loadingButtonTitle="Uploading..."
+      />
+    </form>
   );
 }
-
