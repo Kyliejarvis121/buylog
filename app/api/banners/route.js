@@ -1,5 +1,4 @@
-// Route: app/api/banners/route.js
-
+// app/api/banners/route.js
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -26,7 +25,7 @@ export async function POST(request) {
     const newBanner = await prisma.banner.create({
       data: {
         title,
-        link: link || "",
+        link: link?.trim() || null, // optional
         imageUrl,
         isActive: Boolean(isActive),
       },
@@ -52,7 +51,7 @@ export async function POST(request) {
   }
 }
 
-// GET ALL BANNERS (with pagination)
+// GET ALL BANNERS (with pagination and optional search)
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -60,14 +59,22 @@ export async function GET(request) {
     const page = Number(searchParams.get("page") || 1);
     const limit = Number(searchParams.get("limit") || 20);
     const skip = (page - 1) * limit;
+    const searchQuery = searchParams.get("q")?.trim() || "";
 
     const [banners, total] = await Promise.all([
       prisma.banner.findMany({
+        where: searchQuery
+          ? { title: { contains: searchQuery, mode: "insensitive" } }
+          : undefined,
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.banner.count(),
+      prisma.banner.count({
+        where: searchQuery
+          ? { title: { contains: searchQuery, mode: "insensitive" } }
+          : undefined,
+      }),
     ]);
 
     return NextResponse.json({
@@ -75,7 +82,7 @@ export async function GET(request) {
       total,
       page,
       limit,
-      message: "Banners fetched successfully",
+      message: `Fetched ${banners.length} banners out of ${total}`,
     });
   } catch (error) {
     console.error("GET /api/banners failed:", error);

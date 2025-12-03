@@ -11,7 +11,6 @@ datasource db {
 // ===============================
 // CATEGORIES
 // ===============================
-//
 model Category {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   slug        String?   @unique
@@ -29,7 +28,6 @@ model Category {
 // ===============================
 // MARKETS
 // ===============================
-//
 model Market {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   slug        String?  @unique
@@ -46,7 +44,6 @@ model Market {
 // ===============================
 // USERS
 // ===============================
-//
 model User {
   id                       String   @id @default(auto()) @map("_id") @db.ObjectId
   email                    String?  @unique
@@ -69,10 +66,10 @@ model User {
 // ===============================
 // BANNERS
 // ===============================
-//
 model Banner {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   title     String
+  link      String?  // <-- Added optional link field
   imageUrl  String
   isActive  Boolean? @default(true)
   createdAt DateTime @default(now())
@@ -83,7 +80,6 @@ model Banner {
 // ===============================
 // COUPONS
 // ===============================
-//
 model Coupon {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   code      String   @unique
@@ -99,7 +95,6 @@ model Coupon {
 // ===============================
 // PRODUCTS
 // ===============================
-//
 model Product {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   slug          String?   @unique
@@ -121,7 +116,6 @@ model Product {
 // ===============================
 // SALES
 // ===============================
-//
 model Sale {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   orderId      String   @db.ObjectId
@@ -139,7 +133,6 @@ model Sale {
 // ===============================
 // ORDERS
 // ===============================
-//
 model Order {
   id            String       @id @default(auto()) @map("_id") @db.ObjectId
   userId        String       @db.ObjectId
@@ -166,7 +159,6 @@ model Order {
 // ===============================
 // ORDER ITEMS
 // ===============================
-//
 model OrderItem {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   orderId   String   @db.ObjectId
@@ -186,14 +178,13 @@ model OrderItem {
 // ===============================
 // TRAININGS
 // ===============================
-//
 model Training {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   slug        String?  @unique
   title       String
   description String?
   content     String?
-  categoryId  String?  @db.ObjectId
+  categoryId  String?   @db.ObjectId
   isActive    Boolean? @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -203,7 +194,6 @@ model Training {
 // ===============================
 // FARMERS
 // ===============================
-//
 model Farmer {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   code              String
@@ -230,7 +220,6 @@ model Farmer {
 // ===============================
 // FARMER SUPPORT
 // ===============================
-//
 model FarmerSupport {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   farmerId    String   @db.ObjectId
@@ -247,7 +236,6 @@ model FarmerSupport {
 // ===============================
 // PLANS
 // ===============================
-//
 model Plan {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
