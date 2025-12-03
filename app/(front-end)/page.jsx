@@ -1,17 +1,16 @@
 // app/(front-end)/page.jsx
 "use client";
 
-import Hero from "@/components/frontend/Hero";
+import HeroCarousel from "@/components/frontend/HeroCarousel";
 import MarketList from "@/components/frontend/MarketList";
 import CategoryList from "@/components/frontend/CategoryList";
 import CommunityTrainings from "@/components/frontend/CommunityTrainings";
-import BannerList from "@/components/frontend/BannerList"; // Optional if you have a Banner component
 import { getData } from "@/lib/getData";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
 export default async function Home() {
-  // Optional: Auth session
+  // Optional auth session
   const session = await getServerSession(authOptions);
 
   // Fetch banners
@@ -38,7 +37,7 @@ export default async function Home() {
     ? categoriesRes
     : [];
 
-  // Fetch related products count for each category
+  // Fetch products for each category
   const categories = await Promise.all(
     categoriesArray.map(async (cat) => {
       const productsRes = await getData(`products?catId=${cat.id}`);
@@ -51,8 +50,8 @@ export default async function Home() {
     })
   );
 
-  // Filter categories safely
-  const filteredCategories = categories.filter((c) => c.products.length > 0);
+  // Only categories with >3 products
+  const filteredCategories = categories.filter((c) => c.products.length > 3);
 
   // Fetch trainings
   const trainingsRes = await getData("trainings");
@@ -64,29 +63,24 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <Hero />
+      {/* HERO / BANNER CAROUSEL */}
+      <HeroCarousel banners={banners} />
 
-      {/* Banners Section */}
-      {banners.length > 0 && <BannerList banners={banners} />}
+      {/* MARKETS */}
+      <MarketList markets={markets} />
 
-      {/* Markets Section */}
-      {markets.length > 0 && <MarketList markets={markets} />}
-
-      {/* Categories Section */}
+      {/* CATEGORIES */}
       {filteredCategories.map((category, i) => (
-        <div className="py-8" key={category.id || i}>
+        <div className="py-8" key={i}>
           <CategoryList isMarketPage={false} category={category} />
         </div>
       ))}
 
-      {/* Trainings Section */}
-      {trainings.length > 0 && (
-        <CommunityTrainings
-          title="Featured Trainings"
-          trainings={trainings.slice(0, 3)}
-        />
-      )}
+      {/* FEATURED TRAININGS */}
+      <CommunityTrainings
+        title="Featured Trainings"
+        trainings={trainings.slice(0, 3)}
+      />
     </div>
   );
 }
