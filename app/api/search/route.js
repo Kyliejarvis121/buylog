@@ -1,5 +1,4 @@
 export const dynamic = "force-dynamic";
-
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
@@ -14,23 +13,27 @@ export async function GET(request) {
 
   let where = {};
 
-  if (categoryId) where.category = categoryId;
+  if (categoryId) where.categoryId = categoryId;
+
   if (searchTerm) {
     where.OR = [
       { title: { contains: searchTerm, mode: "insensitive" } },
       { description: { contains: searchTerm, mode: "insensitive" } },
     ];
   }
+
   if (min && max) where.salePrice = { gte: parseFloat(min), lte: parseFloat(max) };
   else if (min) where.salePrice = { gte: parseFloat(min) };
   else if (max) where.salePrice = { lte: parseFloat(max) };
 
-  const products = await prisma.products.findMany({
+  const products = await prisma.product.findMany({
     where,
     skip: (page - 1) * pageSize,
     take: pageSize,
     orderBy: { salePrice: sortBy === "asc" ? "asc" : "desc" },
   });
 
-  return NextResponse.json(products);
+  const total = await prisma.product.count({ where });
+
+  return NextResponse.json({ data: products, total, page, pageSize });
 }
