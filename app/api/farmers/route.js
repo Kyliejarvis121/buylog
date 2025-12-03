@@ -1,62 +1,77 @@
-import { prisma } from "@/lib/prismadb";
+// app/api/farmers/route.js
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prismadb";
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const data = await request.json();
+    const data = await req.json();
+    const {
+      title,
+      description,
+      salePrice,
+      productStock,
+      isActive,
+      farmerId,
+      productImages
+    } = data;
 
-    if (!data.userId) {
+    // VALIDATION
+    if (!farmerId) {
       return NextResponse.json(
-        { success: false, message: "User ID is required" },
+        { success: false, message: "Missing farmerId" },
+        { status: 400 }
+      );
+    }
+    if (!title || !description || !salePrice || !productStock) {
+      return NextResponse.json(
+        { success: false, message: "All fields are required" },
+        { status: 400 }
+      );
+    }
+    if (!productImages || productImages.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "Please upload at least one product image" },
         { status: 400 }
       );
     }
 
-    // Validate user exists
-    const user = await prisma.user.findUnique({
-      where: { id: data.userId },
+    // CHECK FARMER EXISTS
+    const farmer = await prisma.farmer.findUnique({
+      where: { id: farmerId }
     });
 
-    if (!user) {
+    if (!farmer) {
       return NextResponse.json(
-        { success: false, message: "User not found" },
+        { success: false, message: "Farmer not found" },
         { status: 404 }
       );
     }
 
-    // Auto-generate code if not provided
-    const code = data.code || "FR" + Math.floor(Math.random() * 1000000);
-
-    const farmer = await prisma.farmer.create({
+    // CREATE PRODUCT
+    const product = await prisma.product.create({
       data: {
-        code,
-        name: data.name || user.name,
-        email: data.email || user.email,
-        phone: data.phone || "",
-        physicalAddress: data.physicalAddress || "",
-        isActive: data.isActive || false,
-        status: "pending",
-        products: data.products || [],
-        landSize: Number(data.landSize) || 0,
-        mainCrop: data.mainCrop || "",
-        userId: data.userId,
-      },
+        title,
+        description,
+        salePrice: Number(salePrice),
+        productStock: Number(productStock),
+        isActive: Boolean(isActive),
+        images: productImages,
+        farmerId: farmerId
+      }
     });
 
-    return NextResponse.json(
-      { success: true, data: farmer, message: "Farmer registered successfully" },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: "Product uploaded successfully",
+      data: product
+    });
   } catch (error) {
-    console.error("POST /api/farmers failed:", error);
+    console.error("API ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        message: "Failed to register farmer",
-        error: error.message,
-      },
+      { success: false, message: "Server error uploading product" },
       { status: 500 }
     );
   }
 }
+
+// ❌ NO GET, NO DELETE, NO PUT — Because your dashboard doesn’t need them
