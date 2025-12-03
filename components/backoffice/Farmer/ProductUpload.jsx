@@ -10,36 +10,33 @@ import ToggleInput from "@/components/FormInputs/ToggleInput";
 import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
 
-// Function to generate a simple product/farmer code
-function generateCode() {
-  return "FR" + Math.floor(Math.random() * 1000000);
-}
-
 export default function ProductUpload({ farmerId, userId }) {
   const [loading, setLoading] = useState(false);
   const [productImages, setProductImages] = useState([]);
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   async function onSubmit(data) {
+    // Validate images
     if (productImages.length === 0) {
-      alert("Please upload at least one product image");
+      alert("Please upload at least one product image (up to 5).");
       return;
     }
 
+    // Build payload
     const payload = {
       ...data,
-      userId,        // pass userId for linking
-      farmerId,      // optional if needed
-      products: productImages,
+      farmerId,
+      userId,
+      productImages,
       isActive: data.isActive || false,
-      code: generateCode(),  // generate code automatically
     };
 
     try {
       setLoading(true);
       const res = await axios.post("/api/farmers", payload);
+
       if (res.data.success) {
-        alert("Product uploaded successfully");
+        alert("Product uploaded successfully!");
         reset();
         setProductImages([]);
       } else {
@@ -56,7 +53,7 @@ export default function ProductUpload({ farmerId, userId }) {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="bg-black p-6 rounded-lg max-w-3xl mx-auto space-y-4"
+      className="bg-black text-white p-6 rounded-lg max-w-3xl mx-auto space-y-4"
     >
       <TextInput
         label="Product Title"
