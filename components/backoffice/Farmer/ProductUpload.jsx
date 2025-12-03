@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
-import { useSession } from "next-auth/react"; // <--- Import session
+import { generateUserCode } from "@/lib/generateUserCode";
 
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
@@ -12,7 +12,6 @@ import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
 
 export default function ProductUpload({ farmerId }) {
-  const { data: session } = useSession(); // <--- Get logged-in user
   const [loading, setLoading] = useState(false);
   const [productImages, setProductImages] = useState([]);
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
@@ -23,17 +22,21 @@ export default function ProductUpload({ farmerId }) {
       return;
     }
 
+    // Generate a unique code for the product/farmer
+    const code = generateUserCode("FMR", data.name || "farmer");
+
     const payload = {
       ...data,
       farmerId,
-      userId: session?.user?.id, // <--- Add userId here
       productImages,
       isActive: data.isActive || false,
+      code, // <- required by Prisma
     };
 
     try {
       setLoading(true);
       const res = await axios.post("/api/farmers", payload);
+
       if (res.data.success) {
         alert("Product uploaded successfully");
         reset();
@@ -42,7 +45,7 @@ export default function ProductUpload({ farmerId }) {
         alert(res.data.message || "Failed to upload product");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Upload error:", error);
       alert("An error occurred while uploading the product");
     } finally {
       setLoading(false);
@@ -52,11 +55,29 @@ export default function ProductUpload({ farmerId }) {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="bg-black p-6 rounded-lg max-w-3xl mx-auto space-y-4"
+      className="bg-black text-white p-6 rounded-lg max-w-3xl mx-auto space-y-4"
     >
       <TextInput
         label="Product Title"
         name="title"
+        register={register}
+        errors={errors}
+      />
+      <TextInput
+        label="Farmer Name"
+        name="name"
+        register={register}
+        errors={errors}
+      />
+      <TextInput
+        label="Farmer Email"
+        name="email"
+        register={register}
+        errors={errors}
+      />
+      <TextInput
+        label="Farmer Phone"
+        name="phone"
         register={register}
         errors={errors}
       />
