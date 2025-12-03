@@ -1,17 +1,11 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-import CategoryList from "@/components/frontend/CategoryList";
-import CommunityTrainings from "@/components/frontend/CommunityTrainings";
-import Hero from "@/components/frontend/Hero";
-import MarketList from "@/components/frontend/MarketList";
-import { getData } from "@/lib/getData";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-
 export default async function Home() {
-  // Auth session (optional)
-  const session = await getServerSession(authOptions);
+  // Fetch banners
+  const bannersRes = await getData("banners");
+  const banners = Array.isArray(bannersRes?.data)
+    ? bannersRes.data
+    : Array.isArray(bannersRes)
+    ? bannersRes
+    : [];
 
   // Fetch categories
   const categoriesRes = await getData("categories");
@@ -21,7 +15,6 @@ export default async function Home() {
     ? categoriesRes
     : [];
 
-  // Optionally fetch related products count per category
   const categories = await Promise.all(
     categoriesArray.map(async (cat) => {
       const productsRes = await getData(`products?catId=${cat.id}`);
@@ -34,7 +27,6 @@ export default async function Home() {
     })
   );
 
-  // Filter categories safely
   const filteredCategories = categories.filter((c) => c.products.length > 3);
 
   // Fetch trainings
@@ -47,6 +39,23 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* Banners */}
+      {banners.length > 0 && (
+        <div className="py-4">
+          <div className="flex overflow-x-auto gap-4">
+            {banners.map((banner) => (
+              <a key={banner.id} href={banner.link || "#"}>
+                <img
+                  src={banner.imageUrl}
+                  alt={banner.title}
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Hero />
       <MarketList />
 
