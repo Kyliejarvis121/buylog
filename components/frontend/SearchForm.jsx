@@ -7,14 +7,17 @@ import { useForm } from "react-hook-form";
 export default function SearchForm() {
   const { register, handleSubmit, reset } = useForm();
   const router = useRouter();
+
   function handleSearch(data) {
     const { searchTerm } = data;
-    console.log(searchTerm);
+    if (!searchTerm) return;
     reset();
-    router.push(`/search?search=${searchTerm}`);
+    // Push to your search results page
+    router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
   }
+
   return (
-    <form onSubmit={handleSubmit(handleSearch)} className="flex items-center">
+    <form onSubmit={handleSubmit(handleSearch)} className="flex items-center w-full">
       <label htmlFor="voice-search" className="sr-only">
         Search
       </label>
@@ -26,7 +29,7 @@ export default function SearchForm() {
           {...register("searchTerm")}
           type="text"
           id="voice-search"
-          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-lime-500 dark:focus:border-lime-500"
+          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-lime-500 dark:focus:border-lime-500"
           placeholder="Search Products, Categories, Markets..."
           required
         />

@@ -5,8 +5,8 @@ import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
-    // Safe URL parsing
     const url = new URL(request.url);
+
     const query = url.searchParams.get("q")?.trim() ?? "";
     const page = parseInt(url.searchParams.get("page") ?? "1");
     const limit = parseInt(url.searchParams.get("limit") ?? "20");
@@ -21,7 +21,7 @@ export async function GET(request) {
 
     const products = await prisma.product.findMany({
       where: { title: { contains: query, mode: "insensitive" } },
-      include: { category: true, vendor: true },
+      include: { category: true }, // ✅ FIXED: remove vendor
       skip,
       take: limit,
       orderBy: { createdAt: "desc" },
@@ -46,4 +46,3 @@ export async function GET(request) {
     );
   }
 }
-
