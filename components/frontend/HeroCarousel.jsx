@@ -5,6 +5,8 @@ import Link from "next/link";
 import Carousel from "nuka-carousel";
 
 export default function HeroCarousel({ banners = [] }) {
+  if (!Array.isArray(banners) || banners.length === 0) return null;
+
   const config = {
     nextButtonClassName: "rounded-full",
     nextButtonText: <ChevronRight />,
@@ -13,24 +15,21 @@ export default function HeroCarousel({ banners = [] }) {
     prevButtonText: <ChevronLeft />,
   };
 
-  // Only render carousel if there are banners
-  if (!Array.isArray(banners) || banners.length === 0) return null;
-
   return (
     <Carousel
       defaultControlsConfig={config}
       autoplay
-      className="rounded-md overflow-hidden"
       wrapAround
+      className="rounded-md overflow-hidden"
     >
       {banners.map((banner, i) => (
-        <Link key={i} href={banner.link}>
+        <Link key={i} href={banner.link || "#"} passHref>
           <Image
+            src={banner.imageUrl}
             width={712}
             height={384}
-            src={banner.imageUrl}
-            className="w-full"
-            alt={banner.title}
+            alt={banner.title || "Banner"}
+            className="w-full object-cover"
           />
         </Link>
       ))}
