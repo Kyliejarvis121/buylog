@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
+import { useSession } from "next-auth/react"; // <--- Import session
 
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
@@ -11,6 +12,7 @@ import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
 
 export default function ProductUpload({ farmerId }) {
+  const { data: session } = useSession(); // <--- Get logged-in user
   const [loading, setLoading] = useState(false);
   const [productImages, setProductImages] = useState([]);
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
@@ -24,6 +26,7 @@ export default function ProductUpload({ farmerId }) {
     const payload = {
       ...data,
       farmerId,
+      userId: session?.user?.id, // <--- Add userId here
       productImages,
       isActive: data.isActive || false,
     };
@@ -99,3 +102,4 @@ export default function ProductUpload({ farmerId }) {
     </form>
   );
 }
+
