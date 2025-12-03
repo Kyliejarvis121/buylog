@@ -24,6 +24,7 @@
     "@reduxjs/toolkit": "^2.0.1",
     "@tanstack/react-table": "^8.10.7",
     "@uploadthing/react": "^6.0.2",
+    "axios": "^1.13.2",
     "base64url": "^3.0.1",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.3",
