@@ -1,46 +1,51 @@
-// Route: app/api/farmers/[id]/route.js
-import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prismadb";
 
-// GET farmer by id
-export async function GET(request, { params: { id } }) {
-  try {
-    const farmer = await prisma.farmer.findUnique({ where: { id }, include: { user: true } });
-    if (!farmer) return NextResponse.json({ data: null, message: "Farmer not found" }, { status: 404 });
-    return NextResponse.json({ data: farmer, message: "Farmer fetched successfully" });
-  } catch (error) {
-    return NextResponse.json({ data: null, message: error.message }, { status: 500 });
+// GET SINGLE PRODUCT
+export async function GET(_, { params }) {
+  const { id } = params;
+
+  const product = await prisma.product.findUnique({
+    where: { id },
+  });
+
+  if (!product) {
+    return NextResponse.json(
+      { success: false, message: "Product not found" },
+      { status: 404 }
+    );
   }
+
+  return NextResponse.json({ success: true, data: product });
 }
 
-// PUT farmer (approve/reject or update status)
-export async function PUT(request, { params: { id } }) {
-  try {
-    const { action, isActive, status } = await request.json();
-    const farmer = await prisma.farmer.findUnique({ where: { id } });
-    if (!farmer) return NextResponse.json({ data: null, message: "Farmer not found" }, { status: 404 });
+// UPDATE PRODUCT
+export async function PUT(req, { params }) {
+  const { id } = params;
+  const data = await req.json();
 
-    let data = {};
-    if (action === "approve") data = { status: "approved", isActive: true };
-    else if (action === "reject") data = { status: "rejected", isActive: false };
-    else data = { isActive: isActive ?? farmer.isActive, status: status ?? farmer.status };
+  const updated = await prisma.product.update({
+    where: { id },
+    data,
+  });
 
-    const updatedFarmer = await prisma.farmer.update({ where: { id }, data });
-    return NextResponse.json({ data: updatedFarmer, message: "Farmer updated successfully" });
-  } catch (error) {
-    return NextResponse.json({ data: null, message: error.message }, { status: 500 });
-  }
+  return NextResponse.json({
+    success: true,
+    message: "Product updated successfully",
+    data: updated,
+  });
 }
 
-// DELETE farmer
-export async function DELETE(request, { params: { id } }) {
-  try {
-    const farmer = await prisma.farmer.findUnique({ where: { id } });
-    if (!farmer) return NextResponse.json({ data: null, message: "Farmer not found" }, { status: 404 });
+// DELETE PRODUCT
+export async function DELETE(_, { params }) {
+  const { id } = params;
 
-    const deletedFarmer = await prisma.farmer.delete({ where: { id } });
-    return NextResponse.json({ data: deletedFarmer, message: "Farmer deleted successfully" });
-  } catch (error) {
-    return NextResponse.json({ data: null, message: error.message }, { status: 500 });
-  }
+  await prisma.product.delete({
+    where: { id },
+  });
+
+  return NextResponse.json({
+    success: true,
+    message: "Product deleted successfully",
+  });
 }
