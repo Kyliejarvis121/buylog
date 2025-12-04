@@ -1,109 +1,253 @@
-// -----------------------
-// DATABASE CONNECTION
-// -----------------------
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// -----------------------
-// MODELS
-// -----------------------
-
-// USERS
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String?
-  phone     String?
-  role      String   @default("customer") // customer | admin | vendor
-
-  orders    Order[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
-// FARMERS
-model Farmer {
-  id        String   @id @default(uuid())
-  name      String
-  location  String?
-  imageUrl  String?
-  products  Product[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
+//
+// ===============================
 // CATEGORIES
+// ===============================
 model Category {
-  id        String    @id @default(uuid())
-  name      String
-  slug      String    @unique
-  products  Product[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// VENDORS
-model Vendor {
-  id        String   @id @default(uuid())
-  name      String
-  logoUrl   String?
-  products  Product[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// PRODUCTS
-model Product {
-  id          String     @id @default(uuid())
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String?   @unique
   title       String
-  slug        String      @unique
   description String?
-  price       Float
-  stock       Int         @default(0)
+  imageUrl    String?
+  isActive    Boolean?  @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  categoryId  String
-  category    Category    @relation(fields: [categoryId], references: [id])
+  products    Product[]
+}
 
-  vendorId    String?
-  vendor      Vendor?     @relation(fields: [vendorId], references: [id])
-
-  farmerId    String?
-  farmer      Farmer?     @relation(fields: [farmerId], references: [id])
-
-  images      ProductImage[]
-
+//
+// ===============================
+// MARKETS
+// ===============================
+model Market {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String?  @unique
+  title       String
+  logoUrl     String?
+  description String?
+  isActive    Boolean? @default(true)
+  categoryIds String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-// PRODUCT IMAGES
-model ProductImage {
-  id        String   @id @default(uuid())
-  url       String
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
+//
+// ===============================
+// USERS
+// ===============================
+model User {
+  id                       String   @id @default(auto()) @map("_id") @db.ObjectId
+  email                    String?  @unique
+  name                     String
+  password                 String
+  role                     String?
+  phone                    String?
+  planId                   String?  @db.ObjectId
+  emailVerified            Boolean? @default(false)
+  verificationToken        String?
+  verificationRequestCount Int      @default(0)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  farmers Farmer[]
+  orders  Order[]
 }
 
+//
+// ===============================
+// BANNERS
+// ===============================
+model Banner {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  link      String?
+  imageUrl  String
+  isActive  Boolean? @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//
+// ===============================
+// COUPONS
+// ===============================
+model Coupon {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  code      String   @unique
+  discount  Float
+  expiry    DateTime
+  vendorId  String?  @db.ObjectId
+  isActive  Boolean? @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//
+// ===============================
+// PRODUCTS
+// ===============================
+model Product {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  slug          String?   @unique
+  title         String
+  description   String?
+  price         Float
+  salePrice     Float?
+  productStock  Int?
+  categoryId    String?   @db.ObjectId
+  farmerId      String?   @db.ObjectId
+  imageUrl      String?
+  productImages String[]
+  isActive      Boolean?  @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  category Category? @relation(fields: [categoryId], references: [id])
+}
+
+//
+// ===============================
+// SALES
+// ===============================
+model Sale {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId      String   @db.ObjectId
+  productId    String   @db.ObjectId
+  productTitle String
+  productImage String
+  productPrice Float
+  productQty   Int
+  vendorId     String   @db.ObjectId
+  total        Float
+  createdAt    DateTime @default(now())
+}
+
+//
+// ===============================
 // ORDERS
+// ===============================
 model Order {
-  id        String    @id @default(uuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String       @db.ObjectId
+  firstName     String
+  lastName      String
+  email         String
+  phone         String
+  streetAddress String
+  city          String
+  district      String
+  country       String
+  shippingCost  Float
+  paymentMethod String
+  orderNumber   String
+  status        String       @default("pending")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  total     Float
-  status    String    @default("pending") // pending | completed | cancelled
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  user       User        @relation(fields: [userId], references: [id])
+  orderItems OrderItem[] @relation("OrderToItems")
 }
+
+//
+// ===============================
+// ORDER ITEMS
+// ===============================
+model OrderItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String   @db.ObjectId
+  productId String   @db.ObjectId
+  vendorId  String   @db.ObjectId
+  quantity  Int
+  price     Float
+  title     String
+  imageUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order @relation("OrderToItems", fields: [orderId], references: [id])
+}
+
+//
+// ===============================
+// TRAININGS
+// ===============================
+model Training {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String?  @unique
+  title       String
+  description String?
+  content     String?
+  categoryId  String?   @db.ObjectId
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+//
+// ===============================
+// FARMERS
+// ===============================
+model Farmer {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  code              String
+  name              String
+  email             String?
+  phone             String?
+  physicalAddress   String?
+  isActive          Boolean? @default(false)
+  status            String   @default("pending")
+  products          String[]
+  landSize          Float?
+  mainCrop          String?
+  userId            String   @db.ObjectId
+  planId            String?  @db.ObjectId
+  planExpiresAt     DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id])
+  supports FarmerSupport[]
+}
+
+//
+// ===============================
+// FARMER SUPPORT
+// ===============================
+model FarmerSupport {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  farmerId    String   @db.ObjectId
+  title       String
+  description String?
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+}
+
+//
+// ===============================
+// PLANS
+// ===============================
+model Plan {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String?  @unique
+  description String?
+  price       Float
+  period      String
+  features    String[]
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
