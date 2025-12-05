@@ -1,74 +1,76 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
+import { NextResponse } from "next/server";
 
-// GET SINGLE PRODUCT
-export async function GET(req, { params }) {
+// GET product by ID
+export async function GET(request, { params }) {
+  const { id } = params;
+
+  if (!id) {
+    return NextResponse.json({ message: "Product ID is required" }, { status: 400 });
+  }
+
   try {
-    const { id } = params;
-
-    const product = await prisma.product.findUnique({
-      where: { id }
-    });
+    const product = await prisma.product.findUnique({ where: { id } });
 
     if (!product) {
       return NextResponse.json(
-        { success: false, message: "Product not found" },
+        { data: null, message: "Product not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: product });
-
+    return NextResponse.json({ data: product });
   } catch (error) {
     console.error("GET PRODUCT ERROR:", error);
-    return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
+    return NextResponse.json({ message: "Failed to fetch product" }, { status: 500 });
   }
 }
 
 
-// UPDATE PRODUCT
-export async function PUT(req, { params }) {
-  try {
-    const { id } = params;
-    const data = await req.json();
+// UPDATE product by ID
+export async function PUT(request, { params }) {
+  const { id } = params;
 
-    const updated = await prisma.product.update({
+  try {
+    const data = await request.json();
+
+    const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
-        ...data,
-        price: data.price ? Number(data.price) : undefined
-      }
+        title: data.title,
+        description: data.description,
+        salePrice: data.salePrice ? Number(data.salePrice) : undefined,
+        productStock: data.productStock ? Number(data.productStock) : undefined,
+        isActive: data.isActive,
+        images: data.productImages || [],
+        categoryId: data.categoryId,
+        farmerId: data.farmerId,
+      },
     });
 
     return NextResponse.json({
-      success: true,
-      message: "Product updated successfully",
-      data: updated
+      data: updatedProduct,
+      message: "Product updated successfully"
     });
-
   } catch (error) {
     console.error("UPDATE PRODUCT ERROR:", error);
-    return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
+    return NextResponse.json({ message: "Failed to update product" }, { status: 500 });
   }
 }
 
 
-// DELETE PRODUCT
-export async function DELETE(req, { params }) {
-  try {
-    const { id } = params;
+// DELETE product by ID
+export async function DELETE(request, { params }) {
+  const { id } = params;
 
-    await prisma.product.delete({
-      where: { id }
-    });
+  try {
+    await prisma.product.delete({ where: { id } });
 
     return NextResponse.json({
-      success: true,
       message: "Product deleted successfully"
     });
-
   } catch (error) {
     console.error("DELETE PRODUCT ERROR:", error);
-    return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
+    return NextResponse.json({ message: "Failed to delete product" }, { status: 500 });
   }
 }
