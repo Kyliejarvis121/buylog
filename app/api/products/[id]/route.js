@@ -1,76 +1,75 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// GET product by ID
-export async function GET(request, { params }) {
-  const { id } = params;
-
-  if (!id) {
-    return NextResponse.json({ message: "Product ID is required" }, { status: 400 });
+// GET product by slug
+export async function GET(request, context) {
+  const { slug } = context.params;
+  if (!slug) {
+    return NextResponse.json({ message: "Slug is required" }, { status: 400 });
   }
 
   try {
-    const product = await prisma.product.findUnique({ where: { id } });
+    const product = await prisma.product.findUnique({
+      where: { slug },
+    });
 
     if (!product) {
-      return NextResponse.json(
-        { data: null, message: "Product not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ data: null, message: "Product not found" }, { status: 404 });
     }
 
     return NextResponse.json({ data: product });
   } catch (error) {
-    console.error("GET PRODUCT ERROR:", error);
-    return NextResponse.json({ message: "Failed to fetch product" }, { status: 500 });
+    console.error("Failed to fetch product:", error);
+    return NextResponse.json({ message: "Failed to fetch product", error: error.message }, { status: 500 });
   }
 }
 
-
-// UPDATE product by ID
-export async function PUT(request, { params }) {
-  const { id } = params;
+// DELETE product by id
+export async function DELETE(request, context) {
+  const { id } = context.params;
+  if (!id) return NextResponse.json({ message: "Product ID is required" }, { status: 400 });
 
   try {
-    const data = await request.json();
+    const existingProduct = await prisma.product.findUnique({ where: { id } });
+    if (!existingProduct)
+      return NextResponse.json({ data: null, message: "Product not found" }, { status: 404 });
+
+    const deletedProduct = await prisma.product.delete({ where: { id } });
+    return NextResponse.json({ data: deletedProduct, message: "Product deleted" });
+  } catch (error) {
+    console.error("Failed to delete product:", error);
+    return NextResponse.json({ message: "Failed to delete product", error: error.message }, { status: 500 });
+  }
+}
+
+// PUT update product by id
+export async function PUT(request, context) {
+  const { id } = context.params;
+  if (!id) return NextResponse.json({ message: "Product ID is required" }, { status: 400 });
+
+  try {
+    const body = await request.json();
+    const existingProduct = await prisma.product.findUnique({ where: { id } });
+    if (!existingProduct)
+      return NextResponse.json({ data: null, message: "Product not found" }, { status: 404 });
 
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
-        title: data.title,
-        description: data.description,
-        salePrice: data.salePrice ? Number(data.salePrice) : undefined,
-        productStock: data.productStock ? Number(data.productStock) : undefined,
-        isActive: data.isActive,
-        images: data.productImages || [],
-        categoryId: data.categoryId,
-        farmerId: data.farmerId,
+        title: body.title,
+        slug: body.slug, // no slugify
+        description: body.description,
+        categoryId: body.categoryId,
+        price: parseFloat(body.productPrice || 0),
+        imageUrl: body.imageUrl,
+        productImages: body.productImages || [],
+        isActive: body.isActive,
       },
     });
 
-    return NextResponse.json({
-      data: updatedProduct,
-      message: "Product updated successfully"
-    });
+    return NextResponse.json({ data: updatedProduct, message: "Product updated" });
   } catch (error) {
-    console.error("UPDATE PRODUCT ERROR:", error);
-    return NextResponse.json({ message: "Failed to update product" }, { status: 500 });
-  }
-}
-
-
-// DELETE product by ID
-export async function DELETE(request, { params }) {
-  const { id } = params;
-
-  try {
-    await prisma.product.delete({ where: { id } });
-
-    return NextResponse.json({
-      message: "Product deleted successfully"
-    });
-  } catch (error) {
-    console.error("DELETE PRODUCT ERROR:", error);
-    return NextResponse.json({ message: "Failed to delete product" }, { status: 500 });
+    console.error("Failed to update product:", error);
+    return NextResponse.json({ message: "Failed to update product", error: error.message }, { status: 500 });
   }
 }
