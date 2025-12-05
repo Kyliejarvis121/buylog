@@ -2,84 +2,71 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 import slugify from "slugify";
 
-// CREATE PRODUCT
+// GET all products or filter by category
+export async function GET(req) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const catId = searchParams.get("catId");
+
+    const products = await prisma.product.findMany({
+      where: catId ? { categoryId: catId } : {},
+      orderBy: { createdAt: "desc" }
+    });
+
+    return NextResponse.json({ success: true, data: products });
+  } catch (error) {
+    console.error("FETCH PRODUCTS ERROR:", error);
+    return NextResponse.json({ success: false, message: "Error fetching products" }, { status: 500 });
+  }
+}
+
+// CREATE product
 export async function POST(req) {
   try {
     const data = await req.json();
-    const { title, description, salePrice, productStock, isActive, farmerId, productImages } = data;
+    const {
+      title, description, salePrice, price, productStock,
+      categoryId, farmerId, imageUrl, productImages, sku, isActive
+    } = data;
 
-    // VALIDATION
-    if (!title || !description || !salePrice || !productStock || !farmerId) {
-      return NextResponse.json(
-        { success: false, message: "Missing required fields" },
-        { status: 400 }
-      );
+    // Validation
+    if (!title || !salePrice || !farmerId || !categoryId) {
+      return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
 
     if (!productImages || productImages.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "Please upload at least one product image" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "Upload at least one product image" }, { status: 400 });
     }
 
-    // AUTO-GENERATE SLUG
+    // Generate unique slug
     const baseSlug = slugify(title, { lower: true, strict: true });
     let uniqueSlug = baseSlug;
     let count = 1;
-
-    // Ensure slug is unique
     while (await prisma.product.findUnique({ where: { slug: uniqueSlug } })) {
       uniqueSlug = `${baseSlug}-${count++}`;
     }
 
-    // CREATE PRODUCT
     const product = await prisma.product.create({
       data: {
         title,
         description,
+        price: Number(price || salePrice),
         salePrice: Number(salePrice),
-        productStock: Number(productStock),
-        isActive: Boolean(isActive),
-        images: productImages,
+        productStock: Number(productStock || 0),
+        categoryId,
         farmerId,
+        imageUrl,
+        productImages,
+        sku,
+        isActive: Boolean(isActive),
         slug: uniqueSlug
       }
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Product uploaded successfully",
-      data: product
-    });
+    return NextResponse.json({ success: true, data: product, message: "Product created successfully" });
 
   } catch (error) {
     console.error("PRODUCT CREATE ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Server error uploading product" },
-      { status: 500 }
-    );
-  }
-}
-
-
-// GET ALL PRODUCTS (for dashboard)
-export async function GET() {
-  try {
-    const products = await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { farmer: true },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: products,
-    });
-  } catch (error) {
-    console.error("FETCH ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Error fetching products" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "Server error creating product", error: error.message }, { status: 500 });
   }
 }

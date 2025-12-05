@@ -1,75 +1,39 @@
-// app/api/farmers/route.js
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 
-// CREATE FARMER
+// GET all farmers
+export async function GET() {
+  try {
+    const farmers = await prisma.farmer.findMany({ orderBy: { createdAt: "desc" } });
+    return NextResponse.json({ success: true, data: farmers });
+  } catch (error) {
+    console.error("FETCH FARMERS ERROR:", error);
+    return NextResponse.json({ success: false, message: "Error fetching farmers" }, { status: 500 });
+  }
+}
+
+// CREATE farmer
 export async function POST(req) {
   try {
-    const {
-      code,
-      name,
-      email,
-      phone,
-      physicalAddress,
-      landSize,
-      mainCrop,
-      userId
-    } = await req.json();
+    const data = await req.json();
+    const { name, email, phone, physicalAddress, userId, isActive } = data;
 
-    // Validation
-    if (!code || !name || !userId) {
-      return NextResponse.json(
-        { success: false, message: "code, name and userId are required" },
-        { status: 400 }
-      );
-    }
+    if (!name || !userId) return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
 
     const farmer = await prisma.farmer.create({
       data: {
-        code,
         name,
         email,
         phone,
         physicalAddress,
-        landSize: landSize ? Number(landSize) : null,
-        mainCrop,
-        userId
+        userId,
+        isActive: Boolean(isActive),
       }
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Farmer created successfully",
-      data: farmer
-    });
+    return NextResponse.json({ success: true, data: farmer, message: "Farmer created successfully" });
   } catch (error) {
     console.error("FARMER CREATE ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Server error creating farmer" },
-      { status: 500 }
-    );
-  }
-}
-
-// GET ALL FARMERS
-export async function GET() {
-  try {
-    const farmers = await prisma.farmer.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: true
-      }
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: farmers
-    });
-  } catch (error) {
-    console.error("FETCH FARMERS ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Error fetching farmers" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "Server error creating farmer", error: error.message }, { status: 500 });
   }
 }
