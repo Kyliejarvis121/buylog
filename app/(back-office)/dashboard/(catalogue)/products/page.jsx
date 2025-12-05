@@ -1,81 +1,46 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-import React from "react";
+import Heading from "@/components/backoffice/Heading";
 import PageHeader from "@/components/backoffice/PageHeader";
+import TableActions from "@/components/backoffice/TableActions";
 import DataTable from "@/components/data-table-components/DataTable";
-import { prisma } from "@/lib/prismadb";
+import { getData } from "@/lib/getData";
+
+import Link from "next/link";
+import React from "react";
+import { columns } from "./columns";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { redirect } from "next/navigation";
-import { columns } from "./columns";
 
-export default async function ProductsPage() {
+export default async function page() {
   const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
+  if (!session) return null;
 
-  const { role, id: userId } = session.user;
-  let allProducts = [];
+  const role = session.user.role;
+  const userId = session.user.id;
 
-  try {
-    if (role === "ADMIN") {
-      allProducts = await prisma.product.findMany({
-        orderBy: { createdAt: "desc" },
-        include: { category: true, farmer: true },
-      });
-    } else {
-      const farmers = await prisma.farmer.findMany({
-        where: { userId },
-        select: { id: true },
-      });
-      const farmerIds = farmers.map(f => f.id);
+  // Fetch products
+  const productsRes = await getData("products");
+  const allProducts = productsRes.success ? productsRes.data : [];
 
-      allProducts = await prisma.product.findMany({
-        where: { farmerId: { in: farmerIds } },
-        orderBy: { createdAt: "desc" },
-        include: { category: true, farmer: true },
-      });
-    }
-
-    // Serialize ObjectIds and Dates
-    allProducts = allProducts.map(p => ({
-      ...p,
-      id: p.id.toString(),
-      categoryId: p.categoryId?.toString() || null,
-      farmerId: p.farmerId?.toString() || null,
-      createdAt: p.createdAt.toISOString(),
-      updatedAt: p.updatedAt.toISOString(),
-      category: p.category ? {
-        ...p.category,
-        id: p.category.id.toString(),
-        createdAt: p.category.createdAt.toISOString(),
-        updatedAt: p.category.updatedAt.toISOString(),
-      } : null,
-      farmer: p.farmer ? {
-        ...p.farmer,
-        id: p.farmer.id.toString(),
-        createdAt: p.farmer.createdAt.toISOString(),
-        updatedAt: p.farmer.updatedAt.toISOString(),
-      } : null
-    }));
-
-  } catch (error) {
-    return (
-      <div className="p-4 text-red-600">
-        Failed to fetch products: {error?.message || "Unknown error"}
-      </div>
-    );
-  }
+  // Filter products for farmers
+  const farmerProducts = allProducts.filter(
+    (product) => product.userId === userId
+  );
 
   return (
-    <div className="container mx-auto py-8">
+    <div>
+      {/* Header */}
       <PageHeader
         heading="Products"
         href="/dashboard/products/new"
         linkTitle="Add Product"
       />
+
       <div className="py-8">
-        <DataTable data={allProducts} columns={columns} />
+        {role === "ADMIN" ? (
+          <DataTable data={allProducts} columns={columns} />
+        ) : (
+          <DataTable data={farmerProducts} columns={columns} />
+        )}
       </div>
     </div>
   );
