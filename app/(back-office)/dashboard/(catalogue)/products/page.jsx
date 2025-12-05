@@ -1,103 +1,82 @@
-import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import React from "react";
+import PageHeader from "@/components/backoffice/PageHeader";
+import DataTable from "@/components/data-table-components/DataTable";
 import { prisma } from "@/lib/prismadb";
-import slugify from "slugify";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { redirect } from "next/navigation";
+import { columns } from "./columns";
 
-// GET: List all products (Admin sees all, Farmer sees only theirs)
-// POST: Create a new product
-export async function GET(req) {
+export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  if (!session) redirect("/login");
 
   const { role, id: userId } = session.user;
+  let allProducts = [];
 
   try {
-    let products = [];
-
     if (role === "ADMIN") {
-      products = await prisma.product.findMany({
+      allProducts = await prisma.product.findMany({
         orderBy: { createdAt: "desc" },
         include: { category: true, farmer: true },
       });
     } else {
-      // Farmer: get their farmer ID(s)
-      const farmers = await prisma.farmer.findMany({ where: { userId }, select: { id: true } });
+      const farmers = await prisma.farmer.findMany({
+        where: { userId },
+        select: { id: true },
+      });
       const farmerIds = farmers.map(f => f.id);
 
-      products = await prisma.product.findMany({
+      allProducts = await prisma.product.findMany({
         where: { farmerId: { in: farmerIds } },
         orderBy: { createdAt: "desc" },
         include: { category: true, farmer: true },
       });
     }
 
-    return NextResponse.json({ success: true, data: products });
-  } catch (error) {
-    console.error("FETCH PRODUCTS ERROR:", error);
-    return NextResponse.json({ success: false, message: "Error fetching products" }, { status: 500 });
-  }
-}
-
-export async function POST(req) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-
-  const { role, id: userId } = session.user;
-  if (!["ADMIN", "FARMER"].includes(role)) {
-    return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
-  }
-
-  try {
-    const data = await req.json();
-    const {
-      title, description, productPrice, categoryId, farmerId,
-      imageUrl, productImages, tags, isActive, wholesalePrice, wholesaleQty
-    } = data;
-
-    if (!title || !productPrice) {
-      return NextResponse.json({ success: false, message: "Title and Product Price are required" }, { status: 400 });
-    }
-
-    if (!productImages || productImages.length === 0) {
-      return NextResponse.json({ success: false, message: "Upload at least one product image" }, { status: 400 });
-    }
-
-    // For Farmers, override farmerId with their own
-    let finalFarmerId = farmerId;
-    if (role === "FARMER") {
-      const farmer = await prisma.farmer.findFirst({ where: { userId } });
-      if (!farmer) return NextResponse.json({ success: false, message: "Farmer profile not found" }, { status: 400 });
-      finalFarmerId = farmer.id;
-    }
-
-    // Generate unique slug
-    const baseSlug = slugify(title, { lower: true, strict: true });
-    let uniqueSlug = baseSlug;
-    let count = 1;
-    while (await prisma.product.findUnique({ where: { slug: uniqueSlug } })) {
-      uniqueSlug = `${baseSlug}-${count++}`;
-    }
-
-    const product = await prisma.product.create({
-      data: {
-        title,
-        slug: uniqueSlug,
-        description: description || "",
-        price: Number(productPrice),
-        salePrice: wholesalePrice ? Number(wholesalePrice) : Number(productPrice),
-        categoryId,
-        farmerId: finalFarmerId,
-        imageUrl: imageUrl || productImages[0],
-        productImages,
-        isActive: Boolean(isActive),
-      },
-    });
-
-    return NextResponse.json({ success: true, data: product, message: "Product created successfully" });
+    // Serialize ObjectIds and Dates
+    allProducts = allProducts.map(p => ({
+      ...p,
+      id: p.id.toString(),
+      categoryId: p.categoryId?.toString() || null,
+      farmerId: p.farmerId?.toString() || null,
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+      category: p.category ? {
+        ...p.category,
+        id: p.category.id.toString(),
+        createdAt: p.category.createdAt.toISOString(),
+        updatedAt: p.category.updatedAt.toISOString(),
+      } : null,
+      farmer: p.farmer ? {
+        ...p.farmer,
+        id: p.farmer.id.toString(),
+        createdAt: p.farmer.createdAt.toISOString(),
+        updatedAt: p.farmer.updatedAt.toISOString(),
+      } : null
+    }));
 
   } catch (error) {
-    console.error("CREATE PRODUCT ERROR:", error);
-    return NextResponse.json({ success: false, message: "Server error creating product", error: error.message }, { status: 500 });
+    return (
+      <div className="p-4 text-red-600">
+        Failed to fetch products: {error?.message || "Unknown error"}
+      </div>
+    );
   }
+
+  return (
+    <div className="container mx-auto py-8">
+      <PageHeader
+        heading="Products"
+        href="/dashboard/products/new"
+        linkTitle="Add Product"
+      />
+      <div className="py-8">
+        <DataTable data={allProducts} columns={columns} />
+      </div>
+    </div>
+  );
 }
