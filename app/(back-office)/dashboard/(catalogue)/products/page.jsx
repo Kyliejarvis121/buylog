@@ -1,46 +1,59 @@
-import Heading from "@/components/backoffice/Heading";
-import PageHeader from "@/components/backoffice/PageHeader";
-import TableActions from "@/components/backoffice/TableActions";
-import DataTable from "@/components/data-table-components/DataTable";
-import { getData } from "@/lib/getData";
+// Force this page to be dynamic because we use server-side data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-import Link from "next/link";
 import React from "react";
+import PageHeader from "@/components/backoffice/PageHeader";
+import DataTable from "@/components/data-table-components/DataTable";
 import { columns } from "./columns";
+import { prisma } from "@/lib/prismadb"; // server-only prisma
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { redirect } from "next/navigation";
 
-export default async function page() {
+export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
-  if (!session) return null;
+
+  // Redirect if not logged in
+  if (!session) redirect("/login");
 
   const role = session.user.role;
   const userId = session.user.id;
 
-  // Fetch products
-  const productsRes = await getData("products");
-  const allProducts = productsRes.success ? productsRes.data : [];
+  let products = [];
 
-  // Filter products for farmers
-  const farmerProducts = allProducts.filter(
-    (product) => product.userId === userId
-  );
+  try {
+    if (role === "ADMIN") {
+      products = await prisma.product.findMany({
+        orderBy: { createdAt: "desc" },
+        include: { category: true, user: true },
+      });
+    } else {
+      // For farmer: get only their products
+      products = await prisma.product.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        include: { category: true, user: true },
+      });
+    }
+  } catch (error) {
+    console.error("Failed to fetch products:", error);
+    return (
+      <div className="p-4 text-red-600">
+        Failed to load products. {error?.message || ""}
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {/* Header */}
+    <div className="container mx-auto py-8">
       <PageHeader
         heading="Products"
         href="/dashboard/products/new"
         linkTitle="Add Product"
       />
-
       <div className="py-8">
-        {role === "ADMIN" ? (
-          <DataTable data={allProducts} columns={columns} />
-        ) : (
-          <DataTable data={farmerProducts} columns={columns} />
-        )}
+        <DataTable data={products} columns={columns} />
       </div>
     </div>
   );

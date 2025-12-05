@@ -1,40 +1,47 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import React from "react";
 import FormHeader from "@/components/backoffice/FormHeader";
 import NewProductForm from "@/components/backoffice/NewProductForm";
-import { getData } from "@/lib/getData";
-import React from "react";
+import { prisma } from "@/lib/prismadb";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
+import { redirect } from "next/navigation";
 
 export default async function NewProduct() {
-  // Fetch categories
-  const categoriesRes = await getData("categories");
-  const categories = categoriesRes.success ? categoriesRes.data : [];
+  const session = await getServerSession(authOptions);
+  if (!session) redirect("/login");
 
-  // Fetch users
-  const usersRes = await getData("users");
-  const users = usersRes.success ? usersRes.data : [];
+  let categories = [];
+  let farmers = [];
 
-  // Loading fallback
-  if (!categories.length || !users.length) {
-    return <div>Loading...</div>;
+  try {
+    categories = await prisma.category.findMany({
+      select: { id: true, title: true },
+      orderBy: { title: "asc" },
+    });
+
+    const users = await prisma.user.findMany({
+      where: { role: "FARMER" },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+
+    farmers = users.map((f) => ({ id: f.id, title: f.name }));
+  } catch (error) {
+    console.error("Failed to fetch categories/farmers:", error);
+    return (
+      <div className="p-4 text-red-600">
+        Failed to load form data. {error?.message || ""}
+      </div>
+    );
   }
 
-  // Extract farmers
-  const farmers = users
-    .filter((user) => user.role === "FARMER")
-    .map((farmer) => ({
-      id: farmer.id,
-      title: farmer.name,
-    }));
-
-  // Format categories for dropdown
-  const categoryOptions = categories.map((category) => ({
-    id: category.id,
-    title: category.title,
-  }));
-
   return (
-    <div>
+    <div className="container mx-auto py-8">
       <FormHeader title="New Product" />
-      <NewProductForm categories={categoryOptions} farmers={farmers} />
+      <NewProductForm categories={categories} farmers={farmers} />
     </div>
   );
 }
