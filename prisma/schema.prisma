@@ -107,6 +107,14 @@ model Product {
   farmerId      String?  @db.ObjectId
   imageUrl      String?
   productImages String[]
+
+  // NEW FIELDS
+  tags          String[]
+  productCode   String?
+  isWholesale   Boolean? @default(false)
+  wholesalePrice Float?
+  wholesaleQty   Int?
+
   isActive      Boolean? @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -205,6 +213,14 @@ model Farmer {
   email           String?
   phone           String?
   physicalAddress String?
+
+  // NEW FIELDS
+  contactPerson        String?
+  contactPersonPhone   String?
+  profileImageUrl      String?
+  terms                String?
+  notes                String?
+
   isActive        Boolean?  @default(false)
   status          String    @default("pending")
   landSize        Float?
@@ -217,8 +233,6 @@ model Farmer {
 
   user     User            @relation(fields: [userId], references: [id])
   supports FarmerSupport[]
-
-  // RELATION: Products
   products Product[]
 }
 

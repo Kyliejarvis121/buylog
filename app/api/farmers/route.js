@@ -1,28 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 
-// ==========================
 // GET all farmers
-// ==========================
 export async function GET() {
   try {
     const farmers = await prisma.farmer.findMany({
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
     });
 
-    const mapped = farmers.map(f => ({
-      id: f.id,
-      name: f.name,
-      phone: f.phone,
-      address: f.address,
-      status: f.status,
-      createdAt: f.createdAt,
-      updatedAt: f.updatedAt,
-    }));
-
-    return NextResponse.json({ success: true, data: mapped });
+    return NextResponse.json({ success: true, data: farmers });
   } catch (error) {
-    console.error("FARMER GET ERROR:", error);
+    console.error("FETCH FARMERS ERROR:", error);
     return NextResponse.json(
       { success: false, message: "Error fetching farmers" },
       { status: 500 }
@@ -30,16 +18,33 @@ export async function GET() {
   }
 }
 
-// ==========================
 // CREATE farmer
-// ==========================
 export async function POST(req) {
   try {
-    const { name, phone, address, status } = await req.json();
+    const data = await req.json();
 
-    if (!name || !phone) {
+    const {
+      name,
+      phone,
+      email,
+      physicalAddress,
+      contactPerson,
+      contactPersonPhone,
+      landSize,
+      mainCrop,
+      products,
+      profileImageUrl,
+      terms,
+      notes,
+      isActive,
+      code,
+      userId,
+    } = data;
+
+    // Required validation
+    if (!name || !phone || !userId) {
       return NextResponse.json(
-        { success: false, message: "Name and phone are required" },
+        { success: false, message: "Name, phone, and userId are required" },
         { status: 400 }
       );
     }
@@ -48,8 +53,19 @@ export async function POST(req) {
       data: {
         name,
         phone,
-        address: address || "",
-        status: status || "active",
+        email,
+        physicalAddress,
+        contactPerson,
+        contactPersonPhone,
+        landSize: Number(landSize) || 0,
+        mainCrop,
+        products,
+        profileImageUrl,
+        terms,
+        notes,
+        isActive: Boolean(isActive),
+        code,
+        userId,
       },
     });
 
@@ -61,7 +77,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("FARMER CREATE ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Error creating farmer", error: error.message },
+      { success: false, message: "Server error creating farmer", error: error.message },
       { status: 500 }
     );
   }

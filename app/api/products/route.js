@@ -1,10 +1,9 @@
+// app/api/products/route.js
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 import slugify from "slugify";
 
-// ==========================
-// GET all products (optionally filter by category)
-// ==========================
+// GET all or filter by category
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -15,51 +14,12 @@ export async function GET(req) {
       orderBy: { createdAt: "desc" },
       include: {
         category: true,
-        farmer: true,
+        farmer: true
       }
     });
 
-    // Map response to match frontend formats
-    const mapped = products.map((p) => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      description: p.description,
-      price: p.price,
-      salePrice: p.salePrice,
-      productStock: p.productStock,
-      sku: p.sku,
-      isActive: p.isActive,
-      categoryId: p.categoryId,
-      farmerId: p.farmerId,
-      imageUrl: p.imageUrl,
-      productImages: p.productImages || [],
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-
-      // Attach category info
-      category: p.category
-        ? {
-            id: p.category.id,
-            title: p.category.title,
-            slug: p.category.slug,
-          }
-        : null,
-
-      // Attach farmer info
-      farmer: p.farmer
-        ? {
-            id: p.farmer.id,
-            name: p.farmer.name,
-            phone: p.farmer.phone,
-            status: p.farmer.status,
-          }
-        : null,
-    }));
-
-    return NextResponse.json({ success: true, data: mapped });
+    return NextResponse.json({ success: true, data: products });
   } catch (error) {
-    console.error("FETCH PRODUCTS ERROR:", error);
     return NextResponse.json(
       { success: false, message: "Error fetching products" },
       { status: 500 }
@@ -67,9 +27,7 @@ export async function GET(req) {
   }
 }
 
-// ==========================
 // CREATE product
-// ==========================
 export async function POST(req) {
   try {
     const data = await req.json();
@@ -84,10 +42,10 @@ export async function POST(req) {
       imageUrl,
       productImages,
       sku,
-      isActive,
+      isActive
     } = data;
 
-    // Validation
+    // Required fields
     if (!title || !salePrice || !farmerId || !categoryId) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -102,7 +60,7 @@ export async function POST(req) {
       );
     }
 
-    // Generate unique slug
+    // Unique slug generation
     const baseSlug = slugify(title, { lower: true, strict: true });
     let uniqueSlug = baseSlug;
     let count = 1;
@@ -125,26 +83,22 @@ export async function POST(req) {
         productImages,
         sku,
         isActive: Boolean(isActive),
-        slug: uniqueSlug,
-      },
-      include: {
-        category: true,
-        farmer: true,
-      },
+        slug: uniqueSlug
+      }
     });
 
     return NextResponse.json({
       success: true,
       data: product,
-      message: "Product created successfully",
+      message: "Product created successfully"
     });
+
   } catch (error) {
-    console.error("PRODUCT CREATE ERROR:", error);
     return NextResponse.json(
       {
         success: false,
         message: "Server error creating product",
-        error: error.message,
+        error: error.message
       },
       { status: 500 }
     );
