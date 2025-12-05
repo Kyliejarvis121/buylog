@@ -1,5 +1,7 @@
-import { prisma } from "@/lib/prismadb";
+import db from "@/lib/db";
 import { NextResponse } from "next/server";
+
+const PAGE_SIZE = 3;
 
 export async function POST(request) {
   try {
@@ -25,26 +27,24 @@ export async function POST(request) {
       productImages,
     } = await request.json();
 
-    // Check if product exists
-    const existingProduct = await prisma.products.findUnique({
-      where: { slug },
-    });
-
+    // Check if product already exists
+    const existingProduct = await db.product.findUnique({ where: { slug } });
     if (existingProduct) {
       return NextResponse.json(
-        { data: null, message: `Product (${title}) already exists` },
+        { success: false, data: null, message: `Product (${title}) already exists` },
         { status: 409 }
       );
     }
 
-    const newProduct = await prisma.products.create({
+    // Create new product
+    const newProduct = await db.product.create({
       data: {
         barcode,
-        category: categoryId,
+        categoryId,
         description,
         userId: farmerId,
         productImages,
-        imageUrl: productImages[0] || null,
+        imageUrl: productImages?.[0] || "",
         isActive,
         isWholesale,
         productCode,
@@ -62,48 +62,45 @@ export async function POST(request) {
       },
     });
 
-    return NextResponse.json(newProduct);
+    return NextResponse.json({ success: true, data: newProduct });
   } catch (error) {
-    console.error("Failed to create product:", error);
+    console.error(error);
     return NextResponse.json(
-      { message: "Failed to create Product", error: error.message },
+      { success: false, message: "Failed to create product", error },
       { status: 500 }
     );
   }
 }
 
 export async function GET(request) {
-  const categoryId = request.nextUrl.searchParams.get("catId");
-  const sortBy = request.nextUrl.searchParams.get("sort");
-  const min = request.nextUrl.searchParams.get("min");
-  const max = request.nextUrl.searchParams.get("max");
-  const page = parseInt(request.nextUrl.searchParams.get("page") || "1");
-  const pageSize = 3;
-
-  let where = {};
-  if (categoryId) where.category = categoryId;
-
-  if (min && max) {
-    where.salePrice = { gte: parseFloat(min), lte: parseFloat(max) };
-  } else if (min) {
-    where.salePrice = { gte: parseFloat(min) };
-  } else if (max) {
-    where.salePrice = { lte: parseFloat(max) };
-  }
-
   try {
-    const products = await prisma.products.findMany({
+    const url = request.nextUrl;
+    const categoryId = url.searchParams.get("catId");
+    const sortBy = url.searchParams.get("sort") || "desc";
+    const min = url.searchParams.get("min");
+    const max = url.searchParams.get("max");
+    const page = parseInt(url.searchParams.get("page") || "1");
+
+    // Build where clause
+    const where = {};
+    if (categoryId) where.categoryId = categoryId;
+    if (min || max) where.salePrice = {};
+    if (min) where.salePrice.gte = parseFloat(min);
+    if (max) where.salePrice.lte = parseFloat(max);
+
+    // Fetch products
+    const products = await db.product.findMany({
       where,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      orderBy: sortBy === "asc" ? { salePrice: "asc" } : { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      orderBy: sortBy === "asc" ? { salePrice: "asc" } : { salePrice: "desc" },
     });
 
-    return NextResponse.json(products);
+    return NextResponse.json({ success: true, data: products });
   } catch (error) {
-    console.error("Failed to fetch products:", error);
+    console.error(error);
     return NextResponse.json(
-      { message: "Failed to Fetch Products", error: error.message },
+      { success: false, message: "Failed to fetch products", error },
       { status: 500 }
     );
   }

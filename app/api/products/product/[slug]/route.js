@@ -1,17 +1,12 @@
+import { prisma } from "@/lib/prismadb"; // Use prisma client
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prismadb";
 
-export async function GET(req, { params }) {
+// GET product by slug
+export async function GET(request, { params: { slug } }) {
   try {
-    const { slug } = params;
-
     const product = await prisma.product.findUnique({
       where: { slug },
-      include: {
-        category: true,
-        productImages: true,
-        user: true, // farmer/vendor
-      },
+      include: { category: true, farmer: true },
     });
 
     if (!product) {
@@ -21,36 +16,79 @@ export async function GET(req, { params }) {
       );
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          id: product.id,
-          title: product.title,
-          slug: product.slug,
-          description: product.description,
-          sku: product.sku,
-          productPrice: product.productPrice,
-          salePrice: product.salePrice,
-          productStock: product.productStock,
-          categoryId: product.categoryId,
-          imageUrl: product.imageUrl,
-          productImages: product.productImages,
-          category: product.category,
-          vendor: product.user,
-          createdAt: product.createdAt,
-        },
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: true, data: product });
   } catch (error) {
-    console.error("Product details error:", error);
+    console.log(error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Unable to load product details",
-        error: error.message,
+      { success: false, message: "Failed to fetch product", error },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE product by ID
+export async function DELETE(request, { params: { id } }) {
+  try {
+    const existingProduct = await prisma.product.findUnique({ where: { id } });
+    if (!existingProduct) {
+      return NextResponse.json(
+        { success: false, message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    const deletedProduct = await prisma.product.delete({ where: { id } });
+    return NextResponse.json({ success: true, data: deletedProduct });
+  } catch (error) {
+    console.log(error);
+    return NextResponse.json(
+      { success: false, message: "Failed to delete product", error },
+      { status: 500 }
+    );
+  }
+}
+
+// UPDATE product by ID
+export async function PUT(request, { params: { id } }) {
+  try {
+    const data = await request.json();
+
+    const existingProduct = await prisma.product.findUnique({ where: { id } });
+    if (!existingProduct) {
+      return NextResponse.json(
+        { success: false, message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    // Parse numeric fields safely
+    const numericFields = ["productPrice", "salePrice", "wholesalePrice", "wholesaleQty", "productStock", "qty"];
+    numericFields.forEach((field) => {
+      if (data[field] !== undefined && data[field] !== null) {
+        if (field.includes("Qty") || field === "productStock" || field === "qty") {
+          data[field] = parseInt(data[field]);
+        } else {
+          data[field] = parseFloat(data[field]);
+        }
+      }
+    });
+
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: {
+        ...data,
+        farmerId: data.farmerId || null,
+        categoryId: data.categoryId || null,
+        productImages: data.productImages || [],
+        tags: data.tags || [],
       },
+    });
+
+    return NextResponse.json({ success: true, data: updatedProduct });
+  } catch (error) {
+    console.log(error);
+    return NextResponse.json(
+      { success: false, message: "Failed to update product", error },
       { status: 500 }
     );
   }
