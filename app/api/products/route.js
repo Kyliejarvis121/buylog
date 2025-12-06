@@ -1,64 +1,33 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-
-const PAGE_SIZE = 3;
 
 export async function POST(request) {
   try {
-    const {
-      barcode,
-      categoryId,
-      description,
-      farmerId,
-      isActive,
-      isWholesale,
-      productCode,
-      productPrice,
-      salePrice,
-      sku,
-      slug,
-      tags,
-      title,
-      unit,
-      wholesalePrice,
-      wholesaleQty,
-      productStock,
-      qty,
-      productImages,
-    } = await request.json();
+    const body = await request.json();
 
-    // Check if product already exists
-    const existingProduct = await db.product.findUnique({ where: { slug } });
+    // Check if product exists
+    const existingProduct = await prisma.product.findUnique({
+      where: { slug: body.slug },
+    });
+
     if (existingProduct) {
       return NextResponse.json(
-        { success: false, data: null, message: `Product (${title}) already exists` },
+        { data: null, message: `Product (${body.title}) already exists` },
         { status: 409 }
       );
     }
 
-    // Create new product
-    const newProduct = await db.product.create({
+    const newProduct = await prisma.product.create({
       data: {
-        barcode,
-        categoryId,
-        description,
-        userId: farmerId,
-        productImages,
-        imageUrl: productImages?.[0] || "",
-        isActive,
-        isWholesale,
-        productCode,
-        productPrice: parseFloat(productPrice),
-        salePrice: parseFloat(salePrice),
-        sku,
-        slug,
-        tags,
-        title,
-        unit,
-        wholesalePrice: parseFloat(wholesalePrice),
-        wholesaleQty: parseInt(wholesaleQty),
-        productStock: parseInt(productStock),
-        qty: parseInt(qty),
+        ...body,
+        userId: body.farmerId,
+        productPrice: parseFloat(body.productPrice),
+        salePrice: parseFloat(body.salePrice),
+        wholesalePrice: parseFloat(body.wholesalePrice),
+        wholesaleQty: parseInt(body.wholesaleQty),
+        productStock: parseInt(body.productStock),
+        qty: parseInt(body.qty),
+        imageUrl: body.productImages[0],
       },
     });
 
@@ -76,24 +45,32 @@ export async function GET(request) {
   try {
     const url = request.nextUrl;
     const categoryId = url.searchParams.get("catId");
-    const sortBy = url.searchParams.get("sort") || "desc";
+    const sortBy = url.searchParams.get("sort");
     const min = url.searchParams.get("min");
     const max = url.searchParams.get("max");
     const page = parseInt(url.searchParams.get("page") || "1");
+    const pageSize = 3;
 
-    // Build where clause
-    const where = {};
-    if (categoryId) where.categoryId = categoryId;
-    if (min || max) where.salePrice = {};
-    if (min) where.salePrice.gte = parseFloat(min);
-    if (max) where.salePrice.lte = parseFloat(max);
+    // ❌ Removed :any
+    const where = categoryId ? { categoryId } : {};
 
-    // Fetch products
-    const products = await db.product.findMany({
+    if (min || max) {
+      where.salePrice = {};
+      if (min) where.salePrice.gte = parseFloat(min);
+      if (max) where.salePrice.lte = parseFloat(max);
+    }
+
+    const products = await prisma.product.findMany({
       where,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      orderBy: sortBy === "asc" ? { salePrice: "asc" } : { salePrice: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: sortBy
+        ? { salePrice: sortBy === "asc" ? "asc" : "desc" }
+        : { createdAt: "desc" },
+      include: {
+        category: true,
+        farmer: true,
+      },
     });
 
     return NextResponse.json({ success: true, data: products });
