@@ -1,26 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
-
-// GET all farmers
-export async function GET() {
-  try {
-    const farmers = await prisma.farmer.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-
-    return NextResponse.json({ success: true, data: farmers });
-  } catch (error) {
-    console.error("FETCH FARMERS ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Error fetching farmers" },
-      { status: 500 }
-    );
-  }
-}
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
 
 // CREATE farmer
 export async function POST(req) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: "You must be logged in" },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id; // get userId from session
     const data = await req.json();
 
     const {
@@ -38,13 +33,12 @@ export async function POST(req) {
       notes,
       isActive,
       code,
-      userId,
     } = data;
 
     // Required validation
-    if (!name || !phone || !userId) {
+    if (!name || !phone) {
       return NextResponse.json(
-        { success: false, message: "Name, phone, and userId are required" },
+        { success: false, message: "Name and phone are required" },
         { status: 400 }
       );
     }
@@ -65,7 +59,7 @@ export async function POST(req) {
         notes,
         isActive: Boolean(isActive),
         code,
-        userId,
+        userId, // linked automatically to logged-in user
       },
     });
 
