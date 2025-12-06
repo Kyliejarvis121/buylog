@@ -1,4 +1,3 @@
-// Force this page to be dynamic because we use server-side data
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -13,8 +12,6 @@ import { redirect } from "next/navigation";
 
 export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
-
-  // Redirect if not logged in
   if (!session) redirect("/login");
 
   const role = session.user.role;
@@ -26,14 +23,23 @@ export default async function ProductsPage() {
     if (role === "ADMIN") {
       products = await prisma.product.findMany({
         orderBy: { createdAt: "desc" },
-        include: { category: true, user: true },
+        include: {
+          category: true,
+          farmer: {
+            include: { user: true }, // optional: include farmer's user info
+          },
+        },
       });
-    } else {
-      // For farmer: get only their products
+    } else if (role === "FARMER") {
       products = await prisma.product.findMany({
-        where: { userId },
+        where: { farmerId: userId }, // must use farmerId
         orderBy: { createdAt: "desc" },
-        include: { category: true, user: true },
+        include: {
+          category: true,
+          farmer: {
+            include: { user: true },
+          },
+        },
       });
     }
   } catch (error) {
