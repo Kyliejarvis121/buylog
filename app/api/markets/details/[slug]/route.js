@@ -1,13 +1,16 @@
-import db from "@/lib/db";
+import { prisma } from "@/lib/prismadb"; // <-- FIXED
 import { NextResponse } from "next/server";
 
-export async function GET(req, { params }) {
+export async function GET(request, { params }) {
   try {
     const { slug } = params;
 
-    const market = await db.market.findUnique({
+    const market = await prisma.market.findUnique({
       where: { slug },
-      include: { categories: true, products: true },
+      include: {
+        categories: true,
+        products: true,
+      },
     });
 
     if (!market) {
