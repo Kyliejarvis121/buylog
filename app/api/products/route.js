@@ -1,6 +1,10 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
+// CREATE PRODUCT
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -41,9 +45,11 @@ export async function POST(request) {
   }
 }
 
+// GET PRODUCTS
 export async function GET(request) {
   try {
     const url = request.nextUrl;
+
     const categoryId = url.searchParams.get("catId");
     const sortBy = url.searchParams.get("sort");
     const min = url.searchParams.get("min");
@@ -51,8 +57,12 @@ export async function GET(request) {
     const page = parseInt(url.searchParams.get("page") || "1");
     const pageSize = 3;
 
-    // ❌ Removed :any
-    const where = categoryId ? { categoryId } : {};
+    // Build WHERE object
+    let where = {};
+
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
 
     if (min || max) {
       where.salePrice = {};
