@@ -1,4 +1,7 @@
-import { prisma } from "@/lib/prismadb"; // Use prisma client
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import { prisma } from "@/lib/prismadb"; 
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -41,7 +44,7 @@ export async function GET(request) {
       orderBy: {
         salePrice: sortBy === "asc" ? "asc" : "desc",
       },
-      include: { category: true, farmer: true }, // Include relations for frontend
+      include: { category: true, farmer: true },
     });
 
     return NextResponse.json({ success: true, data: products });
