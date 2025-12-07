@@ -1,49 +1,9 @@
+// app/api/products/route.js
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// GET /api/products
-export async function GET(req) {
-  try {
-    const url = new URL(req.url);
-    const categoryId = url.searchParams.get("catId");
-    const sortBy = url.searchParams.get("sort");
-    const min = url.searchParams.get("min");
-    const max = url.searchParams.get("max");
-    const page = parseInt(url.searchParams.get("page") || "1");
-    const pageSize = 10;
-
-    const where = {};
-
-    if (categoryId) where.categoryId = categoryId;
-    if (min || max) {
-      where.price = {};
-      if (min) where.price.gte = Number(min);
-      if (max) where.price.lte = Number(max);
-    }
-
-    const products = await prisma.product.findMany({
-      where,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      orderBy: sortBy
-        ? { price: sortBy === "asc" ? "asc" : "desc" }
-        : { createdAt: "desc" },
-      include: { category: true, farmer: true },
-    });
-
-    return NextResponse.json({ success: true, data: products });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { success: false, message: "Failed to fetch products", error: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-// POST /api/products
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
@@ -63,6 +23,7 @@ export async function POST(req) {
 
     const body = await req.json();
 
+    // Required fields
     if (!body.slug || !body.title || !body.price) {
       return NextResponse.json(
         { success: false, message: "Title, slug, and price are required" },
@@ -70,11 +31,9 @@ export async function POST(req) {
       );
     }
 
-    const existingProduct = await prisma.product.findUnique({
-      where: { slug: body.slug },
-    });
-
-    if (existingProduct) {
+    // Prevent duplicate slug
+    const existing = await prisma.product.findUnique({ where: { slug: body.slug } });
+    if (existing) {
       return NextResponse.json(
         { success: false, message: `Product (${body.title}) already exists` },
         { status: 409 }
@@ -85,13 +44,13 @@ export async function POST(req) {
       data: {
         title: body.title,
         slug: body.slug,
+        description: body.description || "",
         price: Number(body.price),
         salePrice: body.salePrice ? Number(body.salePrice) : null,
-        description: body.description || "",
         categoryId: body.categoryId || null,
-        farmerId: session.user.id,
-        imageUrl: body.productImages?.[0] || "",
+        farmerId: session.user.id, // link to logged-in farmer
         productImages: body.productImages || [],
+        imageUrl: body.productImages?.[0] || "",
         tags: body.tags || [],
         isActive: body.isActive ?? true,
         isWholesale: body.isWholesale ?? false,
@@ -105,7 +64,7 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, data: newProduct }, { status: 201 });
   } catch (error) {
-    console.error(error);
+    console.error("PRODUCT CREATE ERROR:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create product", error: error.message },
       { status: 500 }
