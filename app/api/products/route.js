@@ -3,10 +3,49 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
+// GET /api/products
+export async function GET(req) {
+  try {
+    const url = new URL(req.url);
+    const categoryId = url.searchParams.get("catId");
+    const sortBy = url.searchParams.get("sort");
+    const min = url.searchParams.get("min");
+    const max = url.searchParams.get("max");
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const pageSize = 10;
+
+    const where = {};
+
+    if (categoryId) where.categoryId = categoryId;
+    if (min || max) {
+      where.price = {};
+      if (min) where.price.gte = Number(min);
+      if (max) where.price.lte = Number(max);
+    }
+
+    const products = await prisma.product.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: sortBy
+        ? { price: sortBy === "asc" ? "asc" : "desc" }
+        : { createdAt: "desc" },
+      include: { category: true, farmer: true },
+    });
+
+    return NextResponse.json({ success: true, data: products });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch products", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
 // POST /api/products
 export async function POST(req) {
   try {
-    // Get session
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
       return NextResponse.json(
@@ -15,7 +54,6 @@ export async function POST(req) {
       );
     }
 
-    // Only FARMER can create products
     if (session.user.role !== "FARMER") {
       return NextResponse.json(
         { success: false, message: "Only farmers can upload products" },
@@ -23,7 +61,6 @@ export async function POST(req) {
       );
     }
 
-    // Parse request body
     const body = await req.json();
 
     if (!body.slug || !body.title || !body.price) {
@@ -33,7 +70,6 @@ export async function POST(req) {
       );
     }
 
-    // Check for existing product
     const existingProduct = await prisma.product.findUnique({
       where: { slug: body.slug },
     });
@@ -45,7 +81,6 @@ export async function POST(req) {
       );
     }
 
-    // Create product
     const newProduct = await prisma.product.create({
       data: {
         title: body.title,
@@ -54,7 +89,7 @@ export async function POST(req) {
         salePrice: body.salePrice ? Number(body.salePrice) : null,
         description: body.description || "",
         categoryId: body.categoryId || null,
-        farmerId: session.user.id, // logged-in farmer
+        farmerId: session.user.id,
         imageUrl: body.productImages?.[0] || "",
         productImages: body.productImages || [],
         tags: body.tags || [],
