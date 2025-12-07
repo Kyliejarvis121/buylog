@@ -1,20 +1,13 @@
-// app/api/products/route.js
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
+// POST /api/products
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, message: "You must be logged in to upload products" },
-        { status: 401 }
-      );
-    }
-
-    if (session.user.role !== "FARMER") {
+    if (!session || session.user.role !== "FARMER") {
       return NextResponse.json(
         { success: false, message: "Only farmers can upload products" },
         { status: 403 }
@@ -23,19 +16,22 @@ export async function POST(req) {
 
     const body = await req.json();
 
-    // Required fields
-    if (!body.slug || !body.title || !body.price) {
-      return NextResponse.json(
-        { success: false, message: "Title, slug, and price are required" },
-        { status: 400 }
-      );
+    // Validate required fields
+    const requiredFields = ["title", "slug", "price"];
+    for (const field of requiredFields) {
+      if (!body[field]) {
+        return NextResponse.json(
+          { success: false, message: `${field} is required` },
+          { status: 400 }
+        );
+      }
     }
 
-    // Prevent duplicate slug
+    // Check for duplicate slug
     const existing = await prisma.product.findUnique({ where: { slug: body.slug } });
     if (existing) {
       return NextResponse.json(
-        { success: false, message: `Product (${body.title}) already exists` },
+        { success: false, message: `Product with slug ${body.slug} already exists` },
         { status: 409 }
       );
     }
@@ -44,13 +40,13 @@ export async function POST(req) {
       data: {
         title: body.title,
         slug: body.slug,
-        description: body.description || "",
         price: Number(body.price),
         salePrice: body.salePrice ? Number(body.salePrice) : null,
+        description: body.description || "",
         categoryId: body.categoryId || null,
-        farmerId: session.user.id, // link to logged-in farmer
-        productImages: body.productImages || [],
+        farmerId: session.user.id,
         imageUrl: body.productImages?.[0] || "",
+        productImages: body.productImages || [],
         tags: body.tags || [],
         isActive: body.isActive ?? true,
         isWholesale: body.isWholesale ?? false,
@@ -64,7 +60,7 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, data: newProduct }, { status: 201 });
   } catch (error) {
-    console.error("PRODUCT CREATE ERROR:", error);
+    console.error(error);
     return NextResponse.json(
       { success: false, message: "Failed to create product", error: error.message },
       { status: 500 }

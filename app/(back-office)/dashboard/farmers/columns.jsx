@@ -1,64 +1,39 @@
+// app/(back-office)/dashboard/farmers/products/columns.js
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import DateColumn from "@/components/DataTableColumns/DateColumn";
-import ImageColumn from "@/components/DataTableColumns/ImageColumn";
 import SortableColumn from "@/components/DataTableColumns/SortableColumn";
+import ImageColumn from "@/components/DataTableColumns/ImageColumn";
 import ActionColumn from "@/components/DataTableColumns/ActionColumn";
 import Status from "@/components/DataTableColumns/Status";
+import DateColumn from "@/components/DataTableColumns/DateColumn";
+
 export const columns = [
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
+    accessorKey: "imageUrl",
+    header: "Image",
+    cell: ({ row }) => <ImageColumn row={row} accessorKey="imageUrl" />,
   },
   {
-    accessorKey: "name",
-    header: ({ column }) => <SortableColumn column={column} title="Name" />,
-  },
-  // {
-  //   accessorKey: "profileImageUrl",
-  //   header: "Profile Image",
-  //   cell: ({ row }) => <ImageColumn row={row} accessorKey="profileImageUrl" />,
-  // },
-  {
-    accessorKey: "email",
-    header: "Email",
+    accessorKey: "title",
+    header: ({ column }) => <SortableColumn column={column} title="Title" />,
   },
   {
-    accessorKey: "role",
-    header: "Role",
+    accessorKey: "slug",
+    header: "Slug",
   },
   {
-    accessorKey: "plan",
-    header: "Plan",
+    accessorKey: "price",
+    header: "Price",
   },
   {
-    accessorKey: "status",
+    accessorKey: "productStock",
+    header: "Stock",
+  },
+  {
+    accessorKey: "isActive",
     header: "Status",
-    cell: ({ row }) => <Status row={row} accessorKey="status" />,
+    cell: ({ row }) => <Status row={row} accessorKey="isActive" />,
   },
-  // {
-  //   accessorKey: "isActive",
-  //   header: "Active",
-  // },
   {
     accessorKey: "createdAt",
     header: "Date Created",
@@ -67,13 +42,13 @@ export const columns = [
   {
     id: "actions",
     cell: ({ row }) => {
-      const farmer = row.original;
+      const product = row.original;
       return (
         <ActionColumn
           row={row}
-          title="Farmer"
-          editEndpoint={`farmers/update/${farmer.id}`}
-          endpoint={`farmers/${farmer.id}`}
+          title="Product"
+          editEndpoint={`farmers/products/update/${product.id}`}
+          endpoint={`farmers/products/${product.id}`}
         />
       );
     },

@@ -1,60 +1,203 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import TextInput from "../FormInputs/TextInput";
-import TextareaInput from "../FormInputs/TextAreaInput";
-import ToggleInput from "../FormInputs/ToggleInput";
-import SubmitButton from "../FormInputs/SubmitButton";
-import ImageInput from "../FormInputs/ImageInput";
-import ArrayItemsInput from "../FormInputs/ArrayItemsInput";
+import { useRouter } from "next/navigation";
+import TextInput from "@/components/FormInputs/TextInput";
+import TextareaInput from "@/components/FormInputs/TextAreaInput";
+import ImageInput from "@/components/FormInputs/ImageInput";
+import ToggleInput from "@/components/FormInputs/ToggleInput";
+import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
+import SubmitButton from "@/components/FormInputs/SubmitButton";
 import { makePostRequest } from "@/lib/apiRequest";
-import { generateSlug } from "@/lib/generateSlug";
 
-export default function NewProductForm({ categories }) {
+export default function NewProductForm({ categories = [], updateData = null }) {
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
-  const [productImages, setProductImages] = useState([]);
-  const [tags, setTags] = useState([]);
+  const [imageUrl, setImageUrl] = useState(updateData?.imageUrl || "");
+  const [productImages, setProductImages] = useState(updateData?.productImages || []);
+  const [tags, setTags] = useState(updateData?.tags || []);
+  const router = useRouter();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
-    defaultValues: { isActive: true },
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      title: updateData?.title || "",
+      slug: updateData?.slug || "",
+      description: updateData?.description || "",
+      price: updateData?.price || "",
+      salePrice: updateData?.salePrice || "",
+      isActive: updateData?.isActive ?? true,
+      isWholesale: updateData?.isWholesale ?? false,
+      wholesalePrice: updateData?.wholesalePrice || "",
+      wholesaleQty: updateData?.wholesaleQty || "",
+      productStock: updateData?.productStock || 0,
+      qty: updateData?.qty || 0,
+      productCode: updateData?.productCode || "",
+      categoryId: updateData?.categoryId || (categories[0]?.id || ""),
+    },
   });
 
+  const isActive = watch("isActive");
+  const isWholesale = watch("isWholesale");
+
   const onSubmit = async (data) => {
-    data.slug = generateSlug(data.title);
-    data.productImages = productImages;
     data.imageUrl = imageUrl;
+    data.productImages = productImages;
     data.tags = tags;
 
-    makePostRequest(
+    const endpoint = updateData ? `products/${updateData.id}` : "products";
+
+    await makePostRequest(
       setLoading,
-      "/api/products",
+      `/api/${endpoint}`,
       data,
-      "Product",
-      reset
+      updateData ? "Product Updated" : "Product Created",
+      reset,
+      () => router.push("/farmer/products")
     );
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="p-6 bg-white rounded shadow-md">
-      <TextInput label="Title" name="title" register={register} errors={errors} />
-      <TextInput label="Price" name="price" type="number" register={register} errors={errors} />
-      <TextInput label="Sale Price" name="salePrice" type="number" register={register} errors={errors} />
-      <TextareaInput label="Description" name="description" register={register} errors={errors} />
-      
-      <select {...register("categoryId")}>
-        <option value="">Select Category</option>
-        {categories.map(cat => (
-          <option key={cat.id} value={cat.id}>{cat.title}</option>
-        ))}
-      </select>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3"
+    >
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+        <TextInput
+          label="Product Title"
+          name="title"
+          register={register}
+          errors={errors}
+          className="w-full"
+        />
+        <TextInput
+          label="Slug"
+          name="slug"
+          register={register}
+          errors={errors}
+          className="w-full"
+        />
+        <TextInput
+          label="Price"
+          name="price"
+          type="number"
+          register={register}
+          errors={errors}
+          className="w-full"
+        />
+        <TextInput
+          label="Sale Price"
+          name="salePrice"
+          type="number"
+          register={register}
+          errors={errors}
+          className="w-full"
+        />
+        <TextInput
+          label="Product Stock"
+          name="productStock"
+          type="number"
+          register={register}
+          errors={errors}
+          className="w-full"
+        />
+        <TextInput
+          label="Quantity"
+          name="qty"
+          type="number"
+          register={register}
+          errors={errors}
+          className="w-full"
+        />
+        <TextInput
+          label="Product Code"
+          name="productCode"
+          register={register}
+          errors={errors}
+          className="w-full"
+        />
+        <select
+          {...register("categoryId")}
+          className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
+        >
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.title}
+            </option>
+          ))}
+        </select>
 
-      <ArrayItemsInput items={productImages} setItems={setProductImages} itemTitle="Product Image URL" />
-      <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
-      <ToggleInput label="Active" name="isActive" register={register} />
+        <TextareaInput
+          label="Description"
+          name="description"
+          register={register}
+          errors={errors}
+        />
 
-      <SubmitButton isLoading={loading} buttonTitle="Upload Product" loadingButtonTitle="Uploading..." />
+        <ToggleInput
+          label="Active"
+          name="isActive"
+          register={register}
+          trueTitle="Active"
+          falseTitle="Inactive"
+        />
+
+        <ToggleInput
+          label="Is Wholesale"
+          name="isWholesale"
+          register={register}
+          trueTitle="Yes"
+          falseTitle="No"
+        />
+
+        {isWholesale && (
+          <>
+            <TextInput
+              label="Wholesale Price"
+              name="wholesalePrice"
+              type="number"
+              register={register}
+              errors={errors}
+              className="w-full"
+            />
+            <TextInput
+              label="Wholesale Quantity"
+              name="wholesaleQty"
+              type="number"
+              register={register}
+              errors={errors}
+              className="w-full"
+            />
+          </>
+        )}
+
+        <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
+        <ArrayItemsInput
+          items={productImages}
+          setItems={setProductImages}
+          itemTitle="Product Image URL"
+        />
+
+        <ImageInput
+          imageUrl={imageUrl}
+          setImageUrl={setImageUrl}
+          endpoint="productUploader"
+          label="Main Product Image"
+        />
+      </div>
+
+      <SubmitButton
+        isLoading={loading}
+        buttonTitle={updateData ? "Update Product" : "Add Product"}
+        loadingButtonTitle={
+          updateData ? "Updating Product..." : "Creating Product..."
+        }
+      />
     </form>
   );
 }
