@@ -3,14 +3,15 @@ import Heading from "./Heading";
 import LargeCards from "./LargeCards";
 import SmallCards from "./SmallCards";
 import DashboardCharts from "./DashboardCharts";
-import ProductUpload from "./Farmer/ProductUpload"; // the improved upload component
+import ProductUpload from "./Farmer/ProductUpload"; // improved upload component
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-export default async function FarmerDashboard({ sales, products, supports, farmerId }) {
-  // get logged-in user's ID
+export default async function FarmerDashboard({ sales, products, supports }) {
   const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  if (!session) return <div>Please login to view your dashboard</div>;
+
+  const userId = session.user.id;
 
   return (
     <div className="p-6">
@@ -21,7 +22,7 @@ export default async function FarmerDashboard({ sales, products, supports, farme
 
       <div className="mt-8">
         <Heading title="Upload New Product" />
-        <ProductUpload farmerId={farmerId} userId={userId} /> {/* pass userId */}
+        <ProductUpload farmerId={userId} /> {/* farmerId from session */}
       </div>
     </div>
   );

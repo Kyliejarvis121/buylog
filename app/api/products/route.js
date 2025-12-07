@@ -3,40 +3,23 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// POST /api/products
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== "FARMER") {
-      return NextResponse.json(
-        { success: false, message: "Only farmers can upload products" },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 403 });
     }
 
     const body = await req.json();
 
-    // Validate required fields
-    const requiredFields = ["title", "slug", "price"];
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { success: false, message: `${field} is required` },
-          { status: 400 }
-        );
-      }
+    if (!body.title || !body.slug || !body.price) {
+      return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
 
-    // Check for duplicate slug
     const existing = await prisma.product.findUnique({ where: { slug: body.slug } });
-    if (existing) {
-      return NextResponse.json(
-        { success: false, message: `Product with slug ${body.slug} already exists` },
-        { status: 409 }
-      );
-    }
+    if (existing) return NextResponse.json({ success: false, message: "Slug already exists" }, { status: 409 });
 
-    const newProduct = await prisma.product.create({
+    const product = await prisma.product.create({
       data: {
         title: body.title,
         slug: body.slug,
@@ -58,12 +41,9 @@ export async function POST(req) {
       },
     });
 
-    return NextResponse.json({ success: true, data: newProduct }, { status: 201 });
+    return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { success: false, message: "Failed to create product", error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "Failed to create product", error: error.message }, { status: 500 });
   }
 }
