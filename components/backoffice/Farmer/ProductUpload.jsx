@@ -23,7 +23,7 @@ export default function ProductUpload({ farmerId, categories = [] }) {
 
     try {
       setUploadingMain(true);
-      const uploaded = await uploadFiles([mainImageFile]);
+      const uploaded = await uploadFiles("productImageUploader", [mainImageFile]);
       console.log("Main image uploaded:", uploaded);
       setMainImageUrl(uploaded[0].fileUrl);
       alert("Main image uploaded successfully!");
@@ -41,7 +41,7 @@ export default function ProductUpload({ farmerId, categories = [] }) {
 
     try {
       setUploadingProducts(true);
-      const uploaded = await uploadFiles(productImagesFiles);
+      const uploaded = await uploadFiles("multipleProductsUploader", productImagesFiles);
       console.log("Product images uploaded:", uploaded);
       setProductImagesUrls(uploaded.map((f) => f.fileUrl));
       alert("Product images uploaded successfully!");
