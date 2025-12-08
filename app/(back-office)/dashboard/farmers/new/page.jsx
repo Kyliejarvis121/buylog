@@ -1,35 +1,34 @@
-// app/(back-office)/dashboard/farmers/new/page.jsx
 "use client";
 
-import FormHeader from "@/components/backoffice/FormHeader";
-import NewFarmerForm from "@/components/backoffice/NewFarmerForm";
-import { getData } from "@/lib/getData";
 import React from "react";
+import FormHeader from "@/components/backoffice/FormHeader";
+import NewProductForm from "@/components/backoffice/NewProductForm";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
+import { redirect } from "next/navigation";
 
-export default async function NewFarmerPage() {
-  // Fetch categories safely
-  const categoriesData = (await getData("categories")) || [];
-  const categories = Array.isArray(categoriesData)
-    ? categoriesData.map((category) => ({
-        id: category.id,
-        title: category.title,
-      }))
-    : [];
+export default async function FarmerNewProductPage() {
+  const session = await getServerSession(authOptions);
+  if (!session) redirect("/login");
 
-  // Fetch users safely
-  const usersData = (await getData("users")) || [];
-  const farmersData = Array.isArray(usersData)
-    ? usersData.filter((user) => user.role === "FARMER")
+  // Only allow FARMER role
+  if (session.user.role !== "FARMER") {
+    redirect("/dashboard"); // non-farmers go to dashboard
+  }
+
+  const farmerId = session.user.id;
+
+  // Fetch categories for the form
+  const categoriesRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/categories`);
+  const categoriesData = await categoriesRes.json();
+  const categories = Array.isArray(categoriesData?.data)
+    ? categoriesData.data.map((c) => ({ id: c.id, title: c.title }))
     : [];
-  const farmers = farmersData.map((farmer) => ({
-    id: farmer.id,
-    title: farmer.name,
-  }));
 
   return (
     <div>
-      <FormHeader title="New Farmer" />
-      <NewFarmerForm categories={categories} farmers={farmers} />
+      <FormHeader title="Upload New Product" />
+      <NewProductForm categories={categories} farmers={[{ id: farmerId, title: session.user.name }]} />
     </div>
   );
 }

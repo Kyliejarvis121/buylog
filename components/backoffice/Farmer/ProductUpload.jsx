@@ -3,187 +3,219 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { uploadFiles } from "@/utils/uploadthing";
 
-export default function ProductUpload({ farmerId, categories = [] }) {
-  const { register, handleSubmit, reset } = useForm();
+// UI Components (your design system)
+import TextInput from "@/components/FormInputs/TextInput";
+import TextareaInput from "@/components/FormInputs/TextAreaInput";
+import SelectInput from "@/components/FormInputs/SelectInput";
+import ToggleInput from "@/components/FormInputs/ToggleInput";
+import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
+import SubmitButton from "@/components/FormInputs/SubmitButton";
+import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
+
+import { generateSlug } from "@/lib/generateSlug";
+import { generateUserCode } from "@/lib/generateUserCode";
+import { makePostRequest } from "@/lib/apiRequest";
+
+export default function ProductUpload({ farmerId, categories }) {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const [mainImageFile, setMainImageFile] = useState(null);
-  const [mainImageUrl, setMainImageUrl] = useState("");
-  const [uploadingMain, setUploadingMain] = useState(false);
+  const [tags, setTags] = useState([]);
+  const [productImages, setProductImages] = useState([]);
 
-  const [productImagesFiles, setProductImagesFiles] = useState([]);
-  const [productImagesUrls, setProductImagesUrls] = useState([]);
-  const [uploadingProducts, setUploadingProducts] = useState(false);
+  const {
+    register,
+    watch,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      isActive: true,
+      isWholesale: false,
+    },
+  });
 
-  // Upload single main image
-  const handleMainImageUpload = async () => {
-    if (!mainImageFile) return alert("Please select an image first");
+  const isWholesale = watch("isWholesale");
 
-    try {
-      setUploadingMain(true);
-      const uploaded = await uploadFiles("productImageUploader", [mainImageFile]);
-      console.log("Main image uploaded:", uploaded);
-      setMainImageUrl(uploaded[0].fileUrl);
-      alert("Main image uploaded successfully!");
-    } catch (err) {
-      console.error("Main image upload failed:", err);
-      alert("Upload failed, check console");
-    } finally {
-      setUploadingMain(false);
-    }
-  };
-
-  // Upload multiple product images
-  const handleProductImagesUpload = async () => {
-    if (!productImagesFiles.length) return alert("Select product images first");
-
-    try {
-      setUploadingProducts(true);
-      const uploaded = await uploadFiles("multipleProductsUploader", productImagesFiles);
-      console.log("Product images uploaded:", uploaded);
-      setProductImagesUrls(uploaded.map((f) => f.fileUrl));
-      alert("Product images uploaded successfully!");
-    } catch (err) {
-      console.error("Product images upload failed:", err);
-      alert("Upload failed, check console");
-    } finally {
-      setUploadingProducts(false);
-    }
-  };
-
-  // Submit product to backend
+  // -------------------------------
+  // 🔥 SUBMIT PRODUCT
+  // -------------------------------
   const onSubmit = async (data) => {
-    if (!mainImageUrl) return alert("Upload main image first");
+    if (productImages.length === 0)
+      return alert("Upload at least one product image");
+
+    const slug = generateSlug(data.title);
+    const productCode = generateUserCode("LLP", data.title);
 
     const payload = {
       ...data,
       farmerId,
-      imageUrl: mainImageUrl,
-      productImages: productImagesUrls,
-      tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
-      isActive: data.isActive ?? true,
+      slug,
+      tags,
+      productImages,
+      productCode,
+      qty: 1,
     };
 
-    try {
-      console.log("Submitting product:", payload);
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    console.log("Submitting payload:", payload);
 
-      const result = await res.json();
-      if (!res.ok) {
-        console.error("Backend error:", result);
-        return alert(result.message || "Failed to add product");
-      }
-
-      alert("Product added successfully!");
-      reset();
-      setMainImageFile(null);
-      setMainImageUrl("");
-      setProductImagesFiles([]);
-      setProductImagesUrls([]);
-      router.push("/farmer/products");
-    } catch (err) {
-      console.error("Error submitting product:", err);
-      alert("Error submitting product, check console");
-    }
+    makePostRequest(
+      setLoading,
+      "/api/products",
+      payload,
+      "Product",
+      () => {
+        reset();
+        setTags([]);
+        setProductImages([]);
+      },
+      () => router.push("/dashboard/farmer/products")
+    );
   };
 
   return (
-    <div className="p-4 bg-white border rounded shadow-md max-w-4xl mx-auto my-4">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <input
-            {...register("title")}
-            placeholder="Product Title"
-            className="border px-2 py-1 rounded"
-          />
-          <input
-            {...register("slug")}
-            placeholder="Slug"
-            className="border px-2 py-1 rounded"
-          />
-          <input
-            {...register("price")}
-            type="number"
-            placeholder="Price"
-            className="border px-2 py-1 rounded"
-          />
-          <input
-            {...register("salePrice")}
-            type="number"
-            placeholder="Sale Price"
-            className="border px-2 py-1 rounded"
-          />
-          <select {...register("categoryId")} className="border px-2 py-1 rounded">
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.title}
-              </option>
-            ))}
-          </select>
-        </div>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-4"
+    >
+      <h2 className="text-xl font-semibold mb-4">Upload New Product</h2>
 
-        <textarea
-          {...register("description")}
-          placeholder="Description"
-          className="w-full border mt-2 px-2 py-1 rounded"
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+        {/* TITLE */}
+        <TextInput
+          label="Product Title"
+          name="title"
+          register={register}
+          errors={errors}
         />
 
-        <div className="mt-4">
-          <label>Main Image:</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setMainImageFile(e.target.files[0])}
-          />
-          <button
-            type="button"
-            onClick={handleMainImageUpload}
-            disabled={uploadingMain}
-            className="ml-2 px-4 py-1 bg-blue-500 text-white rounded"
-          >
-            {uploadingMain ? "Uploading..." : "Upload Main Image"}
-          </button>
-          {mainImageUrl && (
-            <img src={mainImageUrl} alt="Main" className="mt-2 h-20" />
-          )}
-        </div>
+        {/* SKU */}
+        <TextInput
+          label="Product SKU"
+          name="sku"
+          register={register}
+          errors={errors}
+        />
 
-        <div className="mt-4">
-          <label>Product Images (multiple):</label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={(e) => setProductImagesFiles([...e.target.files])}
-          />
-          <button
-            type="button"
-            onClick={handleProductImagesUpload}
-            disabled={uploadingProducts}
-            className="ml-2 px-4 py-1 bg-blue-500 text-white rounded"
-          >
-            {uploadingProducts ? "Uploading..." : "Upload Product Images"}
-          </button>
-          <div className="flex flex-wrap mt-2 gap-2">
-            {productImagesUrls.map((url, i) => (
-              <img key={i} src={url} alt={`Product ${i}`} className="h-20" />
-            ))}
-          </div>
-        </div>
+        {/* BARCODE */}
+        <TextInput
+          label="Product Barcode"
+          name="barcode"
+          register={register}
+          errors={errors}
+        />
 
-        <button
-          type="submit"
-          className="mt-4 px-6 py-2 bg-green-500 text-white rounded"
-        >
-          Add Product
-        </button>
-      </form>
-    </div>
+        {/* PRODUCT PRICE */}
+        <TextInput
+          label="Product Price"
+          name="productPrice"
+          register={register}
+          errors={errors}
+          type="number"
+        />
+
+        {/* SALE PRICE */}
+        <TextInput
+          label="Discounted Price"
+          name="salePrice"
+          register={register}
+          errors={errors}
+          type="number"
+        />
+
+        {/* STOCK */}
+        <TextInput
+          label="Product Stock"
+          name="productStock"
+          type="number"
+          register={register}
+          errors={errors}
+        />
+
+        {/* UNIT */}
+        <TextInput
+          label="Unit (e.g. KG, Bags)"
+          name="unit"
+          register={register}
+          errors={errors}
+        />
+
+        {/* CATEGORY SELECTION */}
+        <SelectInput
+          label="Select Category"
+          name="categoryId"
+          register={register}
+          errors={errors}
+          options={categories}
+        />
+
+        {/* WHOLESALE TOGGLE */}
+        <ToggleInput
+          label="Supports Wholesale"
+          name="isWholesale"
+          trueTitle="Enabled"
+          falseTitle="Disabled"
+          register={register}
+        />
+
+        {/* WHOLESALE BLOCK */}
+        {isWholesale && (
+          <>
+            <TextInput
+              label="Wholesale Price"
+              name="wholesalePrice"
+              register={register}
+              errors={errors}
+              type="number"
+            />
+
+            <TextInput
+              label="Minimum Wholesale Qty"
+              name="wholesaleQty"
+              register={register}
+              errors={errors}
+              type="number"
+            />
+          </>
+        )}
+
+        {/* PRODUCT IMAGES */}
+        <MultipleImageInput
+          imageUrls={productImages}
+          setImageUrls={setProductImages}
+          endpoint="multipleProductsUploader"
+          label="Product Images"
+        />
+
+        {/* TAGS */}
+        <ArrayItemsInput setItems={setTags} items={tags} itemTitle="Tag" />
+
+        {/* DESCRIPTION */}
+        <TextareaInput
+          label="Product Description"
+          name="description"
+          register={register}
+          errors={errors}
+        />
+
+        {/* IS ACTIVE */}
+        <ToggleInput
+          label="Publish Product"
+          name="isActive"
+          trueTitle="Active"
+          falseTitle="Draft"
+          register={register}
+        />
+      </div>
+
+      {/* SUBMIT BUTTON */}
+      <SubmitButton
+        isLoading={loading}
+        buttonTitle="Add Product"
+        loadingButtonTitle="Uploading Product..."
+      />
+    </form>
   );
 }

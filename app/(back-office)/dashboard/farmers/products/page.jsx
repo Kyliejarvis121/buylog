@@ -7,24 +7,36 @@ import { getData } from "@/lib/getData";
 
 export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
-  if (!session) return null;
+  if (!session) return <p>Please login to view your products</p>;
 
-  const allProducts = await getData("products");
+  let allProducts = [];
+  try {
+    const res = await getData("products");
+    allProducts = res?.data || [];
+  } catch (err) {
+    console.error("Failed to fetch products:", err);
+    return <p className="text-red-600">Failed to load products.</p>;
+  }
+
+  // Filter only farmer's products
   const farmerProducts = allProducts.filter(
     (product) => product.farmerId === session.user.id
   );
 
   return (
-    <div>
+    <div className="container mx-auto py-8">
       <PageHeader
         heading="My Products"
-        href="/farmer/products/new"
+        href="/farmer/new"
         linkTitle="Add Product"
       />
       <div className="py-8">
-        <DataTable data={farmerProducts} columns={columns} />
+        {farmerProducts.length === 0 ? (
+          <p className="text-gray-600">You haven’t uploaded any products yet.</p>
+        ) : (
+          <DataTable data={farmerProducts} columns={columns} />
+        )}
       </div>
     </div>
   );
 }
-
