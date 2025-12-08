@@ -17,7 +17,6 @@ export default async function FarmerDashboard({ sales, products, supports }) {
     <div className="p-6">
       <Heading title="Farmer Dashboard" />
 
-      {/* Summary Cards */}
       <LargeCards sales={sales || []} products={products || []} />
       <SmallCards orders={[]} supports={supports || []} />
       <DashboardCharts sales={sales || []} />
@@ -33,7 +32,6 @@ export default async function FarmerDashboard({ sales, products, supports }) {
         </Link>
       </div>
 
-      {/* Product List Table */}
       <div className="mt-6">
         {products.length === 0 ? (
           <p className="text-gray-600">No products uploaded yet.</p>
@@ -67,3 +65,4 @@ export default async function FarmerDashboard({ sales, products, supports }) {
     </div>
   );
 }
+
