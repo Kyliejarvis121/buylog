@@ -28,7 +28,7 @@ export default async function ProductsPage() {
     <div className="container mx-auto py-8">
       <PageHeader
         heading="My Products"
-        href="/backoffice/dashboard/farmers/products/new" // correct Add Product link
+        href="/back-office/dashboard/farmers/products/new" // correct Add Product link
         linkTitle="Add Product"
       />
 
