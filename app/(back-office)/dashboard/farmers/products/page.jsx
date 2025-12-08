@@ -2,7 +2,7 @@ import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { columns } from "@/backoffice/dashboard/(category)/products/columns"; // fixed path
+import { columns } from "@/app/backoffice/dashboard/(category)/products/columns";
 import { getData } from "@/lib/getData";
 
 export default async function ProductsPage() {
@@ -27,12 +27,14 @@ export default async function ProductsPage() {
     <div className="container mx-auto py-8">
       <PageHeader
         heading="My Products"
-        href="/backoffice/dashboard/farmers/products/new" // correct Add Product link
+        href="/backoffice/dashboard/farmers/products/new"
         linkTitle="Add Product"
       />
       <div className="py-8">
         {farmerProducts.length === 0 ? (
-          <p className="text-gray-600">You haven’t uploaded any products yet.</p>
+          <p className="text-gray-600">
+            You haven’t uploaded any products yet.
+          </p>
         ) : (
           <DataTable data={farmerProducts} columns={columns} />
         )}
