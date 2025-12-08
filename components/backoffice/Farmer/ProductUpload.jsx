@@ -3,128 +3,189 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import TextInput from "@/components/FormInputs/TextInput";
-import TextareaInput from "@/components/FormInputs/TextAreaInput";
-import ToggleInput from "@/components/FormInputs/ToggleInput";
-import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
-import SubmitButton from "@/components/FormInputs/SubmitButton";
-import { UploadButton } from "@uploadthing/react";
-import { ourFileRouter } from "@/utils/uploadthing";
-import { makePostRequest } from "@/lib/apiRequest";
+import { generateReactHelpers } from "@uploadthing/react/hooks"; // assuming latest UploadThing
+import { ourFileRouter } from "@/utils/uploadthing"; // adjust if your path differs
 
 export default function ProductUpload({ farmerId, categories = [] }) {
-  const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
-  const [productImages, setProductImages] = useState([]);
-  const [tags, setTags] = useState([]);
+  const { register, handleSubmit, reset } = useForm();
   const router = useRouter();
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
-    defaultValues: {
-      title: "",
-      slug: "",
-      description: "",
-      price: "",
-      salePrice: "",
-      isActive: true,
-      isWholesale: false,
-      wholesalePrice: "",
-      wholesaleQty: "",
-      productStock: 0,
-      qty: 0,
-      productCode: "",
-      categoryId: categories[0]?.id || "",
-    },
-  });
+  const [mainImageFile, setMainImageFile] = useState(null);
+  const [mainImageUrl, setMainImageUrl] = useState("");
+  const [uploadingMain, setUploadingMain] = useState(false);
 
-  const isActive = watch("isActive");
-  const isWholesale = watch("isWholesale");
+  const [productImagesFiles, setProductImagesFiles] = useState([]);
+  const [productImagesUrls, setProductImagesUrls] = useState([]);
+  const [uploadingProducts, setUploadingProducts] = useState(false);
 
-  const onSubmit = async (data) => {
-    if (!imageUrl) {
-      alert("Please upload a main product image first.");
-      return;
+  // UploadThing hooks
+  const { uploadFiles } = generateReactHelpers(ourFileRouter);
+
+  // Upload single main image
+  const handleMainImageUpload = async () => {
+    if (!mainImageFile) return alert("Please select an image first");
+    try {
+      setUploadingMain(true);
+      const uploaded = await uploadFiles("productImageUploader", [mainImageFile]);
+      console.log("Main image uploaded:", uploaded);
+      setMainImageUrl(uploaded[0].fileUrl);
+      alert("Main image uploaded successfully!");
+    } catch (err) {
+      console.error("Main image upload failed:", err);
+      alert("Upload failed, check console");
+    } finally {
+      setUploadingMain(false);
     }
+  };
 
-    data.imageUrl = imageUrl;
-    data.productImages = productImages;
-    data.tags = tags;
-    data.farmerId = farmerId;
+  // Upload multiple product images
+  const handleProductImagesUpload = async () => {
+    if (!productImagesFiles.length) return alert("Select product images first");
+    try {
+      setUploadingProducts(true);
+      const uploaded = await uploadFiles("multipleProductsUploader", productImagesFiles);
+      console.log("Product images uploaded:", uploaded);
+      setProductImagesUrls(uploaded.map((f) => f.fileUrl));
+      alert("Product images uploaded successfully!");
+    } catch (err) {
+      console.error("Product images upload failed:", err);
+      alert("Upload failed, check console");
+    } finally {
+      setUploadingProducts(false);
+    }
+  };
 
-    await makePostRequest(
-      setLoading,
-      "/api/products",
-      data,
-      "Product Created",
-      reset,
-      () => router.refresh()
-    );
+  // Submit product to backend
+  const onSubmit = async (data) => {
+    if (!mainImageUrl) return alert("Upload main image first");
+
+    const payload = {
+      ...data,
+      farmerId,
+      imageUrl: mainImageUrl,
+      productImages: productImagesUrls,
+      tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
+      isActive: data.isActive ?? true,
+    };
+
+    try {
+      console.log("Submitting product:", payload);
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+      if (!res.ok) {
+        console.error("Backend error:", result);
+        return alert(result.message || "Failed to add product");
+      }
+
+      alert("Product added successfully!");
+      reset();
+      setMainImageFile(null);
+      setMainImageUrl("");
+      setProductImagesFiles([]);
+      setProductImagesUrls([]);
+      router.push("/farmer/products");
+    } catch (err) {
+      console.error("Error submitting product:", err);
+      alert("Error submitting product, check console");
+    }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3"
-    >
-      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        {/* Product Details */}
-        <TextInput label="Product Title" name="title" register={register} errors={errors} />
-        <TextInput label="Slug" name="slug" register={register} errors={errors} />
-        <TextInput label="Price" name="price" type="number" register={register} errors={errors} />
-        <TextInput label="Sale Price" name="salePrice" type="number" register={register} errors={errors} />
-        <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} />
-        <TextInput label="Quantity" name="qty" type="number" register={register} errors={errors} />
-        <TextInput label="Product Code" name="productCode" register={register} errors={errors} />
-
-        <select {...register("categoryId")} className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600">
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.title}</option>
-          ))}
-        </select>
-
-        <TextareaInput label="Description" name="description" register={register} errors={errors} />
-
-        <ToggleInput label="Active" name="isActive" register={register} trueTitle="Active" falseTitle="Inactive" />
-        <ToggleInput label="Is Wholesale" name="isWholesale" register={register} trueTitle="Yes" falseTitle="No" />
-
-        {isWholesale && (
-          <>
-            <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} />
-            <TextInput label="Wholesale Quantity" name="wholesaleQty" type="number" register={register} errors={errors} />
-          </>
-        )}
-
-        {/* Tags */}
-        <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
-
-        {/* Product Images */}
-        <ArrayItemsInput items={productImages} setItems={setProductImages} itemTitle="Product Image URL" />
-
-        {/* UploadThing Button */}
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Main Product Image</label>
-          <UploadButton
-            endpoint="productImageUploader" // must match your UploadThing router
-            onClientUploadComplete={(res) => {
-              if (res && res[0]?.fileUrl) setImageUrl(res[0].fileUrl);
-            }}
-            onUploadError={(err) => {
-              console.error(err);
-              alert("Upload failed. See console for details.");
-            }}
+    <div className="p-4 bg-white border rounded shadow-md max-w-4xl mx-auto my-4">
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <input
+            {...register("title")}
+            placeholder="Product Title"
+            className="border px-2 py-1 rounded"
           />
-          {imageUrl && (
-            <img src={imageUrl} alt="Uploaded Product" className="mt-2 w-32 h-32 object-cover rounded" />
+          <input
+            {...register("slug")}
+            placeholder="Slug"
+            className="border px-2 py-1 rounded"
+          />
+          <input
+            {...register("price")}
+            type="number"
+            placeholder="Price"
+            className="border px-2 py-1 rounded"
+          />
+          <input
+            {...register("salePrice")}
+            type="number"
+            placeholder="Sale Price"
+            className="border px-2 py-1 rounded"
+          />
+          <select {...register("categoryId")} className="border px-2 py-1 rounded">
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.title}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <textarea
+          {...register("description")}
+          placeholder="Description"
+          className="w-full border mt-2 px-2 py-1 rounded"
+        />
+
+        <div className="mt-4">
+          <label>Main Image:</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setMainImageFile(e.target.files[0])}
+          />
+          <button
+            type="button"
+            onClick={handleMainImageUpload}
+            disabled={uploadingMain}
+            className="ml-2 px-4 py-1 bg-blue-500 text-white rounded"
+          >
+            {uploadingMain ? "Uploading..." : "Upload Main Image"}
+          </button>
+          {mainImageUrl && (
+            <img src={mainImageUrl} alt="Main" className="mt-2 h-20" />
           )}
         </div>
-      </div>
 
-      {/* Submit Button */}
-      <SubmitButton
-        isLoading={loading}
-        buttonTitle="Add Product"
-        loadingButtonTitle="Creating Product..."
-      />
-    </form>
+        <div className="mt-4">
+          <label>Product Images (multiple):</label>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={(e) => setProductImagesFiles([...e.target.files])}
+          />
+          <button
+            type="button"
+            onClick={handleProductImagesUpload}
+            disabled={uploadingProducts}
+            className="ml-2 px-4 py-1 bg-blue-500 text-white rounded"
+          >
+            {uploadingProducts ? "Uploading..." : "Upload Product Images"}
+          </button>
+          <div className="flex flex-wrap mt-2 gap-2">
+            {productImagesUrls.map((url, i) => (
+              <img key={i} src={url} alt={`Product ${i}`} className="h-20" />
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="mt-4 px-6 py-2 bg-green-500 text-white rounded"
+        >
+          Add Product
+        </button>
+      </form>
+    </div>
   );
 }
