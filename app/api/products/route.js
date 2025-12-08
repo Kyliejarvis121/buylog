@@ -1,27 +1,20 @@
-import { NextResponse } from "next/server";
+// app/api/products/route.js
 import { prisma } from "@/lib/prismadb";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || session.user.role !== "FARMER") {
-      return NextResponse.json(
-        { message: "Unauthorized — only farmers can upload products" },
-        { status: 401 }
-      );
-    }
-
-    const body = await req.json();
     const {
       title,
       slug,
+      description,
       price,
       salePrice,
-      description,
+      productStock,
+      qty,
+      productCode,
       categoryId,
+      farmerId,
       imageUrl,
       productImages,
       tags,
@@ -29,48 +22,37 @@ export async function POST(req) {
       isWholesale,
       wholesalePrice,
       wholesaleQty,
-      productStock,
-      qty,
-      productCode,
-    } = body;
+    } = await req.json();
 
-    const farmerId = session.user.id;
+    // Ensure category and farmer exist
+    const category = categoryId ? { connect: { id: categoryId } } : undefined;
+    const farmer = farmerId ? { connect: { id: farmerId } } : undefined;
 
     const newProduct = await prisma.product.create({
       data: {
         title,
         slug,
-        price,
-        salePrice,
         description,
-        imageUrl,
-        productImages,
-        tags,
-        isActive,
-        isWholesale,
-        wholesalePrice,
-        wholesaleQty,
-        productStock,
-        qty,
+        price: Number(price),
+        salePrice: salePrice ? Number(salePrice) : null,
+        productStock: productStock ? Number(productStock) : 0,
+        qty: qty ? Number(qty) : 0,
         productCode,
-
-        farmer: {
-          connect: { id: farmerId },
-        },
-
-        // IMPORTANT: category must use relation syntax
-        category: {
-          connect: { id: categoryId },
-        },
+        isActive: isActive ?? true,
+        isWholesale: isWholesale ?? false,
+        wholesalePrice: wholesalePrice ? Number(wholesalePrice) : null,
+        wholesaleQty: wholesaleQty ? Number(wholesaleQty) : null,
+        imageUrl,
+        productImages: productImages || [],
+        tags: tags || [],
+        category,
+        farmer,
       },
     });
 
-    return NextResponse.json(newProduct);
+    return NextResponse.json({ success: true, data: newProduct });
   } catch (error) {
-    console.log(error);
-    return NextResponse.json(
-      { message: "Failed to create product", error: error.message },
-      { status: 500 }
-    );
+    console.error(error);
+    return NextResponse.json({ success: false, message: "Failed to create product", error }, { status: 500 });
   }
 }
