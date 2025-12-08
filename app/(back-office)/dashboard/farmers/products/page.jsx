@@ -2,12 +2,13 @@ import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { columns } from "@/app/backoffice/dashboard/columns"; // <-- updated path
+import { columns } from "@/app/backoffice/dashboard/columns"; // shared columns
 import { getData } from "@/lib/getData";
 
 export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
-  if (!session) return <p>Please login to view your products</p>;
+  if (!session)
+    return <p className="text-red-600">Please login to view your products</p>;
 
   let allProducts = [];
   try {
@@ -18,6 +19,7 @@ export default async function ProductsPage() {
     return <p className="text-red-600">Failed to load products.</p>;
   }
 
+  // Filter only products belonging to the logged-in farmer
   const farmerProducts = allProducts.filter(
     (product) => product.farmerId === session.user.id
   );
@@ -26,12 +28,15 @@ export default async function ProductsPage() {
     <div className="container mx-auto py-8">
       <PageHeader
         heading="My Products"
-        href="/backoffice/dashboard/farmers/products/new" // correct link
+        href="/backoffice/dashboard/farmers/products/new" // correct Add Product link
         linkTitle="Add Product"
       />
+
       <div className="py-8">
         {farmerProducts.length === 0 ? (
-          <p className="text-gray-600">You haven’t uploaded any products yet.</p>
+          <p className="text-gray-600">
+            You haven’t uploaded any products yet.
+          </p>
         ) : (
           <DataTable data={farmerProducts} columns={columns} />
         )}
