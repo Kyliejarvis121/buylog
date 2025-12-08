@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { generateReactHelpers } from "@uploadthing/react/hooks"; // assuming latest UploadThing
-import { ourFileRouter } from "@/utils/uploadthing"; // adjust if your path differs
+import { uploadFiles } from "@/utils/uploadthing";
 
 export default function ProductUpload({ farmerId, categories = [] }) {
   const { register, handleSubmit, reset } = useForm();
@@ -18,15 +17,13 @@ export default function ProductUpload({ farmerId, categories = [] }) {
   const [productImagesUrls, setProductImagesUrls] = useState([]);
   const [uploadingProducts, setUploadingProducts] = useState(false);
 
-  // UploadThing hooks
-  const { uploadFiles } = generateReactHelpers(ourFileRouter);
-
   // Upload single main image
   const handleMainImageUpload = async () => {
     if (!mainImageFile) return alert("Please select an image first");
+
     try {
       setUploadingMain(true);
-      const uploaded = await uploadFiles("productImageUploader", [mainImageFile]);
+      const uploaded = await uploadFiles([mainImageFile]);
       console.log("Main image uploaded:", uploaded);
       setMainImageUrl(uploaded[0].fileUrl);
       alert("Main image uploaded successfully!");
@@ -41,9 +38,10 @@ export default function ProductUpload({ farmerId, categories = [] }) {
   // Upload multiple product images
   const handleProductImagesUpload = async () => {
     if (!productImagesFiles.length) return alert("Select product images first");
+
     try {
       setUploadingProducts(true);
-      const uploaded = await uploadFiles("multipleProductsUploader", productImagesFiles);
+      const uploaded = await uploadFiles(productImagesFiles);
       console.log("Product images uploaded:", uploaded);
       setProductImagesUrls(uploaded.map((f) => f.fileUrl));
       alert("Product images uploaded successfully!");
