@@ -26,7 +26,7 @@ export default async function FarmerDashboard({ sales, products, supports }) {
       <div className="mt-8 flex justify-between items-center">
         <Heading title="Products" />
         <Link
-          href="/backoffice/dashboard/farmer/new"
+          href="/backoffice/dashboard/farmers/products/new"
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
         >
           Add New Product
@@ -35,8 +35,6 @@ export default async function FarmerDashboard({ sales, products, supports }) {
 
       {/* Product List Table */}
       <div className="mt-6">
-        {/* You can reuse your DataTable component here if needed */}
-        {/* Example: <DataTable data={products} columns={productColumns} /> */}
         {products.length === 0 ? (
           <p className="text-gray-600">No products uploaded yet.</p>
         ) : (
