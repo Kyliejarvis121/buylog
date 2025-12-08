@@ -1,31 +1,54 @@
 "use client";
 
 import React, { useState } from "react";
-import { OurFileRouter } from "@/utils/uploadthing"; // ensure this is exported
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
+import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
+import { UploadButton } from "@uploadthing/react";
+import { ourFileRouter } from "@/utils/uploadthing";
 import { makePostRequest } from "@/lib/apiRequest";
 
-export default function ProductUpload({ farmerId }) {
-  const router = useRouter();
-  const [mainImageFile, setMainImageFile] = useState(null);
-  const [mainImageUrl, setMainImageUrl] = useState("");
-  const [uploading, setUploading] = useState(false);
+export default function ProductUpload({ farmerId, categories = [] }) {
   const [loading, setLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [productImages, setProductImages] = useState([]);
+  const [tags, setTags] = useState([]);
+  const router = useRouter();
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm();
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
+    defaultValues: {
+      title: "",
+      slug: "",
+      description: "",
+      price: "",
+      salePrice: "",
+      isActive: true,
+      isWholesale: false,
+      wholesalePrice: "",
+      wholesaleQty: "",
+      productStock: 0,
+      qty: 0,
+      productCode: "",
+      categoryId: categories[0]?.id || "",
+    },
+  });
+
+  const isActive = watch("isActive");
+  const isWholesale = watch("isWholesale");
 
   const onSubmit = async (data) => {
-    if (!mainImageUrl) {
-      alert("Please upload the main product image first!");
+    if (!imageUrl) {
+      alert("Please upload a main product image first.");
       return;
     }
 
-    data.imageUrl = mainImageUrl;
+    data.imageUrl = imageUrl;
+    data.productImages = productImages;
+    data.tags = tags;
     data.farmerId = farmerId;
 
     await makePostRequest(
@@ -38,76 +61,70 @@ export default function ProductUpload({ farmerId }) {
     );
   };
 
-  const handleImageSelect = (e) => {
-    setMainImageFile(e.target.files[0]);
-  };
-
-  const handleUploadImage = async () => {
-    if (!mainImageFile) {
-      alert("Select an image first");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      // Upload using UploadThing API
-      const formData = new FormData();
-      formData.append("file", mainImageFile);
-
-      const res = await fetch("/api/uploadthing/productImageUploader", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await res.json();
-      if (res.ok) {
-        setMainImageUrl(result.url);
-        alert("Image uploaded successfully!");
-      } else {
-        console.error(result);
-        alert("Failed to upload image");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error uploading image");
-    }
-    setUploading(false);
-  };
-
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-3xl p-6 bg-white border rounded shadow mx-auto"
+      className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3"
     >
-      <div className="grid gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+        {/* Product Details */}
         <TextInput label="Product Title" name="title" register={register} errors={errors} />
         <TextInput label="Slug" name="slug" register={register} errors={errors} />
         <TextInput label="Price" name="price" type="number" register={register} errors={errors} />
         <TextInput label="Sale Price" name="salePrice" type="number" register={register} errors={errors} />
-        <TextInput label="Stock Quantity" name="productStock" type="number" register={register} errors={errors} />
+        <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} />
+        <TextInput label="Quantity" name="qty" type="number" register={register} errors={errors} />
+        <TextInput label="Product Code" name="productCode" register={register} errors={errors} />
+
+        <select {...register("categoryId")} className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600">
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.title}</option>
+          ))}
+        </select>
+
         <TextareaInput label="Description" name="description" register={register} errors={errors} />
+
         <ToggleInput label="Active" name="isActive" register={register} trueTitle="Active" falseTitle="Inactive" />
+        <ToggleInput label="Is Wholesale" name="isWholesale" register={register} trueTitle="Yes" falseTitle="No" />
 
-        <div>
-          <label className="block mb-1 font-semibold">Main Product Image</label>
-          <input type="file" onChange={handleImageSelect} />
-          <button
-            type="button"
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
-            onClick={handleUploadImage}
-            disabled={uploading}
-          >
-            {uploading ? "Uploading..." : "Upload Image"}
-          </button>
-          {mainImageUrl && <p className="mt-2 text-green-600">Image uploaded: {mainImageUrl}</p>}
+        {isWholesale && (
+          <>
+            <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} />
+            <TextInput label="Wholesale Quantity" name="wholesaleQty" type="number" register={register} errors={errors} />
+          </>
+        )}
+
+        {/* Tags */}
+        <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
+
+        {/* Product Images */}
+        <ArrayItemsInput items={productImages} setItems={setProductImages} itemTitle="Product Image URL" />
+
+        {/* UploadThing Button */}
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Main Product Image</label>
+          <UploadButton
+            endpoint="productImageUploader" // must match your UploadThing router
+            onClientUploadComplete={(res) => {
+              if (res && res[0]?.fileUrl) setImageUrl(res[0].fileUrl);
+            }}
+            onUploadError={(err) => {
+              console.error(err);
+              alert("Upload failed. See console for details.");
+            }}
+          />
+          {imageUrl && (
+            <img src={imageUrl} alt="Uploaded Product" className="mt-2 w-32 h-32 object-cover rounded" />
+          )}
         </div>
-
-        <SubmitButton
-          isLoading={loading}
-          buttonTitle="Add Product"
-          loadingButtonTitle="Creating Product..."
-        />
       </div>
+
+      {/* Submit Button */}
+      <SubmitButton
+        isLoading={loading}
+        buttonTitle="Add Product"
+        loadingButtonTitle="Creating Product..."
+      />
     </form>
   );
 }
