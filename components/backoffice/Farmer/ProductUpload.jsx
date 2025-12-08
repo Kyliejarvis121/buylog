@@ -3,86 +3,103 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { ourFileRouter } from "@/utils/uploadthing";
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
+import { ourFileRouter } from "@/utils/uploadthing"; // Correct import
+import { useUploadThing } from "uploadthing/react";
 import { makePostRequest } from "@/lib/apiRequest";
 
-export default function ProductUpload({ userId, categories = [] }) {
+export default function ProductUpload({ categories = [], farmerId, updateData = null }) {
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
-  const [productImages, setProductImages] = useState([]);
-  const [tags, setTags] = useState([]);
+  const [tags, setTags] = useState(updateData?.tags || []);
+  const [productImages, setProductImages] = useState(updateData?.productImages || []);
+  const [imageUrl, setImageUrl] = useState(updateData?.imageUrl || "");
   const router = useRouter();
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
-      title: "",
-      slug: "",
-      description: "",
-      price: 0,
-      salePrice: 0,
-      isActive: true,
-      isWholesale: false,
-      wholesalePrice: 0,
-      wholesaleQty: 0,
-      productStock: 0,
-      qty: 0,
-      productCode: "",
-      categoryId: categories[0]?.id || "",
+      title: updateData?.title || "",
+      slug: updateData?.slug || "",
+      description: updateData?.description || "",
+      price: updateData?.price || "",
+      salePrice: updateData?.salePrice || "",
+      productStock: updateData?.productStock || 0,
+      qty: updateData?.qty || 0,
+      productCode: updateData?.productCode || "",
+      isActive: updateData?.isActive ?? true,
+      isWholesale: updateData?.isWholesale ?? false,
+      wholesalePrice: updateData?.wholesalePrice || "",
+      wholesaleQty: updateData?.wholesaleQty || "",
+      categoryId: updateData?.categoryId || (categories[0]?.id || ""),
     },
   });
 
-  const isActive = watch("isActive");
   const isWholesale = watch("isWholesale");
 
-  // File upload handler
-  const handleUpload = async (file) => {
-    if (!file) return;
-    const uploaded = await ourFileRouter.productImageUploader.onUploadComplete({
-      metadata: {},
-      file,
-    });
-    setImageUrl(uploaded.file.url);
+  // UploadThing hooks
+  const { startUpload: startMainUpload } = useUploadThing("productImageUploader");
+  const { startUpload: startMultipleUpload } = useUploadThing("multipleProductsUploader");
+
+  const handleMainImageUpload = async (files) => {
+    const res = await startMainUpload(files);
+    if (res?.length) setImageUrl(res[0].fileUrl);
   };
 
-  const handleSubmitForm = async (data) => {
-    setLoading(true);
+  const handleMultipleUpload = async (files) => {
+    const res = await startMultipleUpload(files);
+    if (res?.length) setProductImages(res.map((file) => file.fileUrl));
+  };
+
+  const onSubmit = async (data) => {
     data.imageUrl = imageUrl;
     data.productImages = productImages;
     data.tags = tags;
-    data.farmerId = userId; // Assign current farmer
-    data.categoryId = data.categoryId || (categories[0]?.id || null);
+    data.farmerId = farmerId;
 
-    try {
-      await makePostRequest(
-        setLoading,
-        "/api/products",
-        data,
-        "Product Created",
-        null,
-        () => router.push("/dashboard/farmers/products")
-      );
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
-    }
+    const endpoint = updateData ? `products/${updateData.id}` : "products";
+
+    await makePostRequest(
+      setLoading,
+      `/api/${endpoint}`,
+      data,
+      updateData ? "Product Updated" : "Product Created",
+      reset,
+      () => router.push("/dashboard/farmers/products")
+    );
   };
 
   return (
     <form
-      onSubmit={handleSubmit(handleSubmitForm)}
+      onSubmit={handleSubmit(onSubmit)}
       className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3"
     >
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
         <TextInput label="Product Title" name="title" register={register} errors={errors} />
         <TextInput label="Slug" name="slug" register={register} errors={errors} />
         <TextInput label="Price" name="price" type="number" register={register} errors={errors} />
-        <TextInput label="Sale Price" name="salePrice" type="number" register={register} errors={errors} />
-        <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} />
+        <TextInput
+          label="Sale Price"
+          name="salePrice"
+          type="number"
+          register={register}
+          errors={errors}
+        />
+        <TextInput
+          label="Product Stock"
+          name="productStock"
+          type="number"
+          register={register}
+          errors={errors}
+        />
         <TextInput label="Quantity" name="qty" type="number" register={register} errors={errors} />
         <TextInput label="Product Code" name="productCode" register={register} errors={errors} />
 
@@ -100,6 +117,7 @@ export default function ProductUpload({ userId, categories = [] }) {
         <TextareaInput label="Description" name="description" register={register} errors={errors} />
 
         <ToggleInput label="Active" name="isActive" register={register} trueTitle="Active" falseTitle="Inactive" />
+
         <ToggleInput label="Is Wholesale" name="isWholesale" register={register} trueTitle="Yes" falseTitle="No" />
 
         {isWholesale && (
@@ -110,25 +128,33 @@ export default function ProductUpload({ userId, categories = [] }) {
         )}
 
         <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
-        <ArrayItemsInput items={productImages} setItems={setProductImages} itemTitle="Product Image URL" />
 
-        <div className="col-span-full">
-          <label className="block mb-2 font-medium text-gray-900 dark:text-gray-200">Main Product Image</label>
+        <div className="col-span-2">
+          <label className="block mb-1 font-medium text-gray-700 dark:text-gray-300">Main Product Image</label>
           <input
             type="file"
-            onChange={(e) => handleUpload(e.target.files[0])}
-            className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
+            accept="image/*"
+            onChange={(e) => handleMainImageUpload(e.target.files)}
+            className="w-full border rounded px-3 py-2"
           />
-          {imageUrl && (
-            <img src={imageUrl} alt="Uploaded" className="mt-2 w-32 h-32 object-cover rounded" />
-          )}
+        </div>
+
+        <div className="col-span-2">
+          <label className="block mb-1 font-medium text-gray-700 dark:text-gray-300">Product Images</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => handleMultipleUpload(e.target.files)}
+            className="w-full border rounded px-3 py-2"
+          />
         </div>
       </div>
 
       <SubmitButton
         isLoading={loading}
-        buttonTitle="Upload Product"
-        loadingButtonTitle="Uploading Product..."
+        buttonTitle={updateData ? "Update Product" : "Add Product"}
+        loadingButtonTitle={updateData ? "Updating Product..." : "Creating Product..."}
       />
     </form>
   );
