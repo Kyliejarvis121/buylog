@@ -1,31 +1,31 @@
+"use client";
+
 import PageHeader from "@/components/backoffice/PageHeader";
-import DataTable from "@/components/data-table-components/DataTable";
+import ProductUpload from "@/components/backoffice/Farmer/ProductUpload"; // Your upload component
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { columns } from "./columns";
-import { getData } from "@/lib/getData";
 
-export default async function ProductsPage() {
+export default async function NewProductPage() {
   const session = await getServerSession(authOptions);
-  if (!session) return null;
 
-  // Fetch all products
-  const allProducts = await getData("products");
+  if (!session) {
+    return <p>Please login to upload a product</p>;
+  }
 
-  // Filter only farmer's products
-  const farmerProducts = allProducts.filter(
-    (product) => product.farmerId === session.user.id
-  );
+  const userId = session.user.id;
 
   return (
-    <div>
+    <div className="container mx-auto py-8">
+      {/* Page header with corrected link */}
       <PageHeader
-        heading="My Products"
-        href="/backoffice/dashboard/farmers/products/new"  // ✅ Correct upload page
-        linkTitle="Add Product"
+        heading="Add New Product"
+        href="/backoffice/dashboard/farmer/products"
+        linkTitle="Back to Products"
       />
-      <div className="py-8">
-        <DataTable data={farmerProducts} columns={columns} />
+
+      <div className="mt-8">
+        {/* Upload component */}
+        <ProductUpload farmerId={userId} />
       </div>
     </div>
   );
