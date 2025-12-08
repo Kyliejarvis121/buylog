@@ -2,10 +2,8 @@ import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { columns } from "@/app/backoffice/dashboard/columns"; // <-- updated path
 import { getData } from "@/lib/getData";
-
-// Correct import path for your columns
-import { columns } from "@/app/backoffice/dashboard/(category)/products/columns";
 
 export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
@@ -20,7 +18,6 @@ export default async function ProductsPage() {
     return <p className="text-red-600">Failed to load products.</p>;
   }
 
-  // Filter only farmer's products
   const farmerProducts = allProducts.filter(
     (product) => product.farmerId === session.user.id
   );
@@ -29,7 +26,7 @@ export default async function ProductsPage() {
     <div className="container mx-auto py-8">
       <PageHeader
         heading="My Products"
-        href="/backoffice/dashboard/farmer/products/new" // fixed link
+        href="/backoffice/dashboard/farmers/products/new" // correct link
         linkTitle="Add Product"
       />
       <div className="py-8">
