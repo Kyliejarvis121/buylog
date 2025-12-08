@@ -3,7 +3,9 @@ import DataTable from "@/components/data-table-components/DataTable";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { getData } from "@/lib/getData";
-import { columns } from "@/backoffice/dashboard/(category)/products/columns"; // ✅ Corrected path
+
+// Correct import path for your columns
+import { columns } from "@/app/backoffice/dashboard/(category)/products/columns";
 
 export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
@@ -27,7 +29,7 @@ export default async function ProductsPage() {
     <div className="container mx-auto py-8">
       <PageHeader
         heading="My Products"
-        href="/backoffice/dashboard/farmers/products/new" // ✅ Correct add product link
+        href="/backoffice/dashboard/farmer/products/new" // fixed link
         linkTitle="Add Product"
       />
       <div className="py-8">
