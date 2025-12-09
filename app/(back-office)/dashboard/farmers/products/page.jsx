@@ -1,34 +1,41 @@
-import PageHeader from "@/components/backoffice/PageHeader";
+import PageHeader from "@/components/back-office/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { columns } from "../columns";  // ✅ correct path
+import { columns } from "./columns";  // ✅ correct path for products list
 import { getData } from "@/lib/getData";
 
 export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
-  if (!session)
-    return <p className="text-red-600">Please login to view your products</p>;
+
+  if (!session) {
+    return (
+      <p className="text-red-600">
+        Please login to view your products
+      </p>
+    );
+  }
 
   let allProducts = [];
+
   try {
     const res = await getData("products");
     allProducts = res?.data || [];
-  } catch (err) {
-    console.error("Failed to fetch products:", err);
+  } catch (error) {
+    console.error("❌ Failed to fetch products:", error);
     return <p className="text-red-600">Failed to load products.</p>;
   }
 
-  // Filter only products belonging to the logged-in farmer
+  // ✅ Filter products that belong to the logged-in farmer (vendor)
   const farmerProducts = allProducts.filter(
-    (product) => product.farmerId === session.user.id
+    (product) => product.farmerId === session?.user?.id
   );
 
   return (
     <div className="container mx-auto py-8">
       <PageHeader
         heading="My Products"
-        href="/back-office/dashboard/farmers/products/new" // correct Add Product link
+        href="/dashboard/farmers/products/new"  // ✅ Fully correct path
         linkTitle="Add Product"
       />
 
