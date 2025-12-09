@@ -1,9 +1,10 @@
-// components/backoffice/Farmer/ProductUpload.jsx
 "use client";
 
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+
+// UI Components
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import SelectInput from "@/components/FormInputs/SelectInput";
@@ -11,84 +12,186 @@ import ToggleInput from "@/components/FormInputs/ToggleInput";
 import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
 import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
+
 import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
+import { makePostRequest } from "@/lib/apiRequest";
 
 export default function ProductUpload({ farmerId, categories }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
   const [tags, setTags] = useState([]);
   const [productImages, setProductImages] = useState([]);
 
-  const { register, watch, handleSubmit, reset, formState: { errors } } = useForm({
-    defaultValues: { isActive: true, isWholesale: false },
+  const {
+    register,
+    watch,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      isActive: true,
+      isWholesale: false,
+    },
   });
 
   const isWholesale = watch("isWholesale");
 
   const onSubmit = async (data) => {
-    if (!productImages.length) return alert("Upload at least one product image");
+    if (!data.productPrice) return alert("Product Price is required");
+    if (productImages.length === 0) return alert("Upload at least one product image");
+
+    const slug = generateSlug(data.title);
+    const productCode = generateUserCode("LLP", data.title);
 
     const payload = {
       ...data,
       farmerId,
-      slug: generateSlug(data.title),
-      productCode: generateUserCode("LLP", data.title),
+      slug,
       tags,
       productImages,
-      qty: 1,
+      productCode,
     };
 
-    try {
-      setLoading(true);
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    console.log("Submitting payload:", payload);
 
-      const result = await res.json();
-
-      if (!res.ok) throw new Error(result.message || "Failed to upload product");
-
-      reset();
-      setTags([]);
-      setProductImages([]);
-      router.push("/back-office/dashboard/farmers/products");
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+    makePostRequest(
+      setLoading,
+      "/api/products",
+      payload,
+      "Product",
+      () => {
+        reset();
+        setTags([]);
+        setProductImages([]);
+      },
+      () => router.push("/back-office/dashboard/farmers/products")
+    );
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-4xl p-6 bg-white rounded shadow mx-auto">
-      <TextInput label="Product Title" name="title" register={register} errors={errors} />
-      <TextInput label="SKU" name="sku" register={register} errors={errors} />
-      <TextInput label="Barcode" name="barcode" register={register} errors={errors} />
-      <TextInput label="Price" name="price" type="number" register={register} errors={errors} />
-      <TextInput label="Sale Price" name="salePrice" type="number" register={register} errors={errors} />
-      <TextInput label="Stock" name="productStock" type="number" register={register} errors={errors} />
-      <TextInput label="Unit" name="unit" register={register} errors={errors} />
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="w-full max-w-4xl p-6 bg-gray-900 border border-gray-700 rounded-lg shadow mx-auto my-4 text-white"
+    >
+      <h2 className="text-2xl font-semibold mb-6">Upload New Product</h2>
 
-      {/* Category Dropdown */}
-      <SelectInput label="Category" name="categoryId" register={register} errors={errors} options={categories} />
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+        {/* TITLE */}
+        <TextInput label="Product Title" name="title" register={register} errors={errors} />
 
-      <ToggleInput label="Supports Wholesale" name="isWholesale" trueTitle="Yes" falseTitle="No" register={register} />
-      {isWholesale && (
-        <>
-          <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} />
-          <TextInput label="Minimum Wholesale Qty" name="wholesaleQty" type="number" register={register} errors={errors} />
-        </>
-      )}
+        {/* SKU */}
+        <TextInput label="Product SKU" name="sku" register={register} errors={errors} />
 
-      <MultipleImageInput imageUrls={productImages} setImageUrls={setProductImages} endpoint="multipleProductsUploader" label="Product Images" />
-      <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
-      <TextareaInput label="Description" name="description" register={register} errors={errors} />
-      <ToggleInput label="Publish Product" name="isActive" trueTitle="Active" falseTitle="Draft" register={register} />
+        {/* BARCODE */}
+        <TextInput label="Product Barcode" name="barcode" register={register} errors={errors} />
 
-      <SubmitButton isLoading={loading} buttonTitle="Add Product" loadingButtonTitle="Uploading..." />
+        {/* PRODUCT PRICE */}
+        <TextInput
+          label="Product Price"
+          name="productPrice"
+          register={register}
+          errors={errors}
+          type="number"
+        />
+
+        {/* SALE PRICE */}
+        <TextInput
+          label="Discounted Price"
+          name="salePrice"
+          register={register}
+          errors={errors}
+          type="number"
+        />
+
+        {/* STOCK */}
+        <TextInput
+          label="Product Stock"
+          name="productStock"
+          type="number"
+          register={register}
+          errors={errors}
+        />
+
+        {/* UNIT */}
+        <TextInput label="Unit (e.g. KG, Bags)" name="unit" register={register} errors={errors} />
+
+        {/* CATEGORY SELECTION */}
+        <SelectInput
+          label="Select Category"
+          name="categoryId"
+          register={register}
+          errors={errors}
+          options={categories.map((c) => ({ value: c.id, label: c.title }))}
+        />
+
+        {/* WHOLESALE TOGGLE */}
+        <ToggleInput
+          label="Supports Wholesale"
+          name="isWholesale"
+          trueTitle="Enabled"
+          falseTitle="Disabled"
+          register={register}
+        />
+
+        {/* WHOLESALE BLOCK */}
+        {isWholesale && (
+          <>
+            <TextInput
+              label="Wholesale Price"
+              name="wholesalePrice"
+              register={register}
+              errors={errors}
+              type="number"
+            />
+
+            <TextInput
+              label="Minimum Wholesale Qty"
+              name="wholesaleQty"
+              register={register}
+              errors={errors}
+              type="number"
+            />
+          </>
+        )}
+
+        {/* PRODUCT IMAGES */}
+        <MultipleImageInput
+          imageUrls={productImages}
+          setImageUrls={setProductImages}
+          endpoint="multipleProductsUploader"
+          label="Product Images"
+        />
+
+        {/* TAGS */}
+        <ArrayItemsInput setItems={setTags} items={tags} itemTitle="Tag" />
+
+        {/* DESCRIPTION */}
+        <TextareaInput
+          label="Product Description"
+          name="description"
+          register={register}
+          errors={errors}
+        />
+
+        {/* IS ACTIVE */}
+        <ToggleInput
+          label="Publish Product"
+          name="isActive"
+          trueTitle="Active"
+          falseTitle="Draft"
+          register={register}
+        />
+      </div>
+
+      {/* SUBMIT BUTTON */}
+      <SubmitButton
+        isLoading={loading}
+        buttonTitle="Add Product"
+        loadingButtonTitle="Uploading Product..."
+      />
     </form>
   );
 }
