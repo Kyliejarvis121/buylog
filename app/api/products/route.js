@@ -1,35 +1,7 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// -----------------------------------
-// GET ALL PRODUCTS
-// -----------------------------------
-export async function GET() {
-  try {
-    const products = await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        category: true,
-        farmer: true,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: products,
-    });
-  } catch (error) {
-    console.error("GET PRODUCTS ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Failed to fetch products", error: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-// -----------------------------------
 // CREATE NEW PRODUCT
-// -----------------------------------
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -54,9 +26,10 @@ export async function POST(req) {
       sku,
       barcode,
       unit,
+      imageUrl,
     } = body;
 
-    // Required fields check
+    // Validate required fields
     if (!title || !price || !farmerId) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -67,32 +40,31 @@ export async function POST(req) {
     const newProduct = await prisma.product.create({
       data: {
         title,
-        slug: slug || "",
+        slug,
         description: description || "",
         price: parseFloat(price),
         salePrice: salePrice ? parseFloat(salePrice) : null,
-        categoryId: categoryId || null,
-        farmerId,
-        productImages: productImages || [],
-        tags: tags || [],
-        isActive: isActive ?? true,
-        isWholesale: isWholesale ?? false,
-        wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
-        wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
         productStock: productStock ? parseInt(productStock) : 0,
         qty: qty ? parseInt(qty) : 0,
         productCode: productCode || "",
         sku: sku || "",
         barcode: barcode || "",
         unit: unit || "",
+        imageUrl: imageUrl || null,
+        productImages: productImages || [],
+        tags: tags || [],
+        isActive: isActive ?? true,
+        isWholesale: isWholesale ?? false,
+        wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
+        wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
+
+        // **Connect relations properly**
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
+        farmer: { connect: { id: farmerId } },
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: newProduct,
-      message: "Product created successfully",
-    });
+    return NextResponse.json({ success: true, data: newProduct });
   } catch (error) {
     console.error("CREATE PRODUCT ERROR:", error);
     return NextResponse.json(
