@@ -2,7 +2,7 @@ import PageHeader from "@/components/back-office/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import { columns } from "./columns";  // ✅ correct path for products list
+import { columns } from "./columns";
 import { getData } from "@/lib/getData";
 
 export default async function ProductsPage() {
