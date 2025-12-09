@@ -1,6 +1,26 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
+// GET ALL PRODUCTS
+export async function GET() {
+  try {
+    const products = await prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        category: true,
+        farmer: true,
+      },
+    });
+    return NextResponse.json({ success: true, data: products });
+  } catch (error) {
+    console.error("GET PRODUCTS ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch products" },
+      { status: 500 }
+    );
+  }
+}
+
 // CREATE NEW PRODUCT
 export async function POST(req) {
   try {
@@ -21,7 +41,6 @@ export async function POST(req) {
       wholesalePrice,
       wholesaleQty,
       productStock,
-      qty,
       productCode,
       sku,
       barcode,
@@ -29,7 +48,7 @@ export async function POST(req) {
       imageUrl,
     } = body;
 
-    // Validate required fields
+    // Required fields check
     if (!title || !price || !farmerId) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -41,11 +60,10 @@ export async function POST(req) {
       data: {
         title,
         slug,
-        description: description || "",
+        description,
         price: parseFloat(price),
         salePrice: salePrice ? parseFloat(salePrice) : null,
         productStock: productStock ? parseInt(productStock) : 0,
-        qty: qty ? parseInt(qty) : 0,
         productCode: productCode || "",
         sku: sku || "",
         barcode: barcode || "",
@@ -57,8 +75,6 @@ export async function POST(req) {
         isWholesale: isWholesale ?? false,
         wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
         wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
-
-        // **Connect relations properly**
         category: categoryId ? { connect: { id: categoryId } } : undefined,
         farmer: { connect: { id: farmerId } },
       },
