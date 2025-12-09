@@ -26,7 +26,6 @@ export default async function FarmerDashboard({ sales, products, supports }) {
         <Heading title="Products" />
         <Link
           href="/dashboard/farmers/products/new"
-          
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
         >
           Add New Product
@@ -51,9 +50,11 @@ export default async function FarmerDashboard({ sales, products, supports }) {
               {products.map((product) => (
                 <tr key={product.id} className="text-center">
                   <td className="p-2 border">{product.title}</td>
-                  <td className="p-2 border">{product.category?.title}</td>
-                  <td className="p-2 border">{product.productPrice}</td>
-                  <td className="p-2 border">{product.productStock}</td>
+                  <td className="p-2 border">
+                    {product.category?.title || "No Category"}
+                  </td>
+                  <td className="p-2 border">{product.price}</td>
+                  <td className="p-2 border">{product.productStock ?? 0}</td>
                   <td className="p-2 border">
                     {product.isActive ? "Active" : "Draft"}
                   </td>
@@ -66,4 +67,3 @@ export default async function FarmerDashboard({ sales, products, supports }) {
     </div>
   );
 }
-

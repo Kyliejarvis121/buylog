@@ -4,11 +4,14 @@ export const revalidate = 0;
 import React from "react";
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
-import { columns } from "./columns";
+import { columns } from "../../columns";
 import { prisma } from "@/lib/prismadb"; // server-only prisma
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { redirect } from "next/navigation";
+import PageHeader from "@/components/backoffice/PageHeader";
+import DataTable from "@/components/data-table-components/DataTable";
+import { columns } from "./columns"; // make sure columns matches the updated schema
 
 export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
@@ -21,18 +24,20 @@ export default async function ProductsPage() {
 
   try {
     if (role === "ADMIN") {
+      // Admin sees all products
       products = await prisma.product.findMany({
         orderBy: { createdAt: "desc" },
         include: {
           category: true,
           farmer: {
-            include: { user: true }, // optional: include farmer's user info
+            include: { user: true }, // farmer's user info
           },
         },
       });
     } else if (role === "FARMER") {
+      // Farmer sees only their products
       products = await prisma.product.findMany({
-        where: { farmerId: userId }, // must use farmerId
+        where: { farmerId: userId },
         orderBy: { createdAt: "desc" },
         include: {
           category: true,
@@ -51,6 +56,18 @@ export default async function ProductsPage() {
     );
   }
 
+  // Optional: map to match columns expected by DataTable
+  const mappedProducts = products.map((p) => ({
+    id: p.id,
+    title: p.title,
+    category: p.category?.title || "N/A",
+    price: p.price || 0,
+    salePrice: p.salePrice || null,
+    stock: p.productStock || 0,
+    isActive: p.isActive,
+    farmerName: p.farmer?.name || p.farmer?.user?.name || "N/A",
+  }));
+
   return (
     <div className="container mx-auto py-8">
       <PageHeader
@@ -59,7 +76,7 @@ export default async function ProductsPage() {
         linkTitle="Add Product"
       />
       <div className="py-8">
-        <DataTable data={products} columns={columns} />
+        <DataTable data={mappedProducts} columns={columns} />
       </div>
     </div>
   );

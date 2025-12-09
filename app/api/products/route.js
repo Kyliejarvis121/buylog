@@ -21,7 +21,7 @@ export async function GET() {
   } catch (error) {
     console.error("GET PRODUCTS ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products" },
+      { success: false, message: "Failed to fetch products", error: error.message },
       { status: 500 }
     );
   }
@@ -38,7 +38,7 @@ export async function POST(req) {
       title,
       slug,
       description,
-      productPrice,
+      price,
       salePrice,
       categoryId,
       farmerId,
@@ -57,7 +57,7 @@ export async function POST(req) {
     } = body;
 
     // Required fields check
-    if (!title || !productPrice || !farmerId) {
+    if (!title || !price || !farmerId) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
@@ -67,26 +67,20 @@ export async function POST(req) {
     const newProduct = await prisma.product.create({
       data: {
         title,
-        slug,
-        description,
-        productPrice: parseFloat(productPrice),
+        slug: slug || "",
+        description: description || "",
+        price: parseFloat(price),
         salePrice: salePrice ? parseFloat(salePrice) : null,
-
         categoryId: categoryId || null,
         farmerId,
-
         productImages: productImages || [],
         tags: tags || [],
-
         isActive: isActive ?? true,
         isWholesale: isWholesale ?? false,
-
         wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
         wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
-
         productStock: productStock ? parseInt(productStock) : 0,
         qty: qty ? parseInt(qty) : 0,
-
         productCode: productCode || "",
         sku: sku || "",
         barcode: barcode || "",
@@ -97,6 +91,7 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       data: newProduct,
+      message: "Product created successfully",
     });
   } catch (error) {
     console.error("CREATE PRODUCT ERROR:", error);

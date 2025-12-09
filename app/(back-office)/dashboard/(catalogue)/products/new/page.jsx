@@ -17,17 +17,21 @@ export default async function NewProduct() {
   let farmers = [];
 
   try {
+    // Fetch all active categories for the dropdown
     categories = await prisma.category.findMany({
+      where: { isActive: true },
       select: { id: true, title: true },
       orderBy: { title: "asc" },
     });
 
+    // Fetch all users with role FARMER
     const users = await prisma.user.findMany({
       where: { role: "FARMER" },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     });
 
+    // Map farmers for the dropdown
     farmers = users.map((f) => ({ id: f.id, title: f.name }));
   } catch (error) {
     console.error("Failed to fetch categories/farmers:", error);

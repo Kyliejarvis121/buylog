@@ -1,132 +1,90 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
-import slugify from "slugify";
 
-// CREATE PRODUCT (FARMER)
-export async function POST(req) {
+// GET all products for a farmer
+export async function GET(req) {
   try {
-    const body = await req.json();
-
-    const {
-      title,
-      description,
-      productPrice,
-      salePrice,
-      categoryId,
-      farmerId,
-      productImages,
-      tags,
-      isWholesale,
-      wholesalePrice,
-      wholesaleQty,
-      productStock,
-      qty,
-      sku,
-      barcode,
-      unit
-    } = body;
-
-    // Required fields
-    if (!title || !productPrice || !categoryId || !farmerId) {
+    const farmerId = req.nextUrl.searchParams.get("farmerId");
+    if (!farmerId) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Missing required fields (title, price, category, farmer)",
-        },
+        { success: false, message: "farmerId is required" },
         { status: 400 }
       );
     }
 
-    // Generate slug
-    const slug = slugify(title, {
-      lower: true,
-      strict: true,
+    const products = await prisma.product.findMany({
+      where: { farmerId },
+      include: { category: true },
+      orderBy: { createdAt: "desc" },
     });
 
-    // Generate product code
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[-:TZ.]/g, "")
-      .slice(0, 14);
-
-    const productCode = `LLP-${title.substring(0, 1).toUpperCase()}-${timestamp}`;
-
-    // CREATE product
-    const newProduct = await prisma.product.create({
-      data: {
-        title,
-        slug,
-        description: description || "",
-        productPrice: parseFloat(productPrice),
-        salePrice: salePrice ? parseFloat(salePrice) : null,
-        categoryId,
-        farmerId,
-
-        // Images & tags
-        productImages: productImages || [],
-        tags: tags || [],
-
-        productStock: productStock ? parseInt(productStock) : 0,
-        qty: qty ? parseInt(qty) : 1,
-
-        sku: sku || null,
-        barcode: barcode || null,
-        unit: unit || null,
-
-        // Wholesale options
-        isWholesale: Boolean(isWholesale),
-        wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
-        wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
-
-        productCode,
-      },
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Farmer product created successfully",
-        data: newProduct,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, data: products });
   } catch (error) {
-    console.error("FARMER PRODUCT CREATE ERROR:", error);
-
+    console.error("FETCH PRODUCTS ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to create farmer product",
-        error: error.message,
-      },
+      { success: false, message: "Failed to fetch products", error: error.message },
       { status: 500 }
     );
   }
 }
 
-// GET all farmer products
-export async function GET() {
+// POST new product
+export async function POST(req) {
   try {
-    const products = await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        category: true,
-        farmer: true,
+    const body = await req.json();
+    const {
+      title,
+      slug,
+      description,
+      price,
+      salePrice,
+      productStock,
+      categoryId,
+      farmerId,
+      imageUrl,
+      productImages,
+      tags,
+      isActive,
+      isWholesale,
+      wholesalePrice,
+      wholesaleQty,
+      productCode,
+    } = body;
+
+    // Required fields check
+    if (!title || !price || !farmerId) {
+      return NextResponse.json(
+        { success: false, message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const newProduct = await prisma.product.create({
+      data: {
+        title,
+        slug,
+        description: description || "",
+        price: parseFloat(price),
+        salePrice: salePrice ? parseFloat(salePrice) : null,
+        productStock: productStock ? parseInt(productStock) : 0,
+        categoryId: categoryId || null,
+        farmerId,
+        imageUrl: imageUrl || (productImages?.[0] ?? null),
+        productImages: productImages || [],
+        tags: tags || [],
+        isActive: isActive ?? true,
+        isWholesale: isWholesale ?? false,
+        wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
+        wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
+        productCode: productCode || "",
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: products,
-    });
+    return NextResponse.json({ success: true, data: newProduct });
   } catch (error) {
-    console.error("FETCH FARMER PRODUCTS ERROR:", error);
-
+    console.error("CREATE PRODUCT ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch farmer products",
-      },
+      { success: false, message: "Failed to create product", error: error.message },
       { status: 500 }
     );
   }
