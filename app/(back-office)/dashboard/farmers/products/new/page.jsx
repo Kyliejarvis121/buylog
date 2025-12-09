@@ -21,15 +21,15 @@ export default async function NewProductPage() {
     console.error("Failed to fetch categories:", err);
   }
 
-  // Map categories to proper dropdown format
-  const dropdownCategories = categories.map(c => ({
+  // Map categories to proper format for SelectInput
+  const dropdownCategories = categories.map((c) => ({
     value: c.id,
-    label: c.title
+    label: c.title,
   }));
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-semibold mb-6 text-white">Upload New Product</h1>
+    <div className="container mx-auto py-8 bg-gray-900 min-h-screen text-white">
+      <h1 className="text-2xl font-semibold mb-6">Upload New Product</h1>
       <ProductUpload farmerId={userId} categories={dropdownCategories} />
     </div>
   );

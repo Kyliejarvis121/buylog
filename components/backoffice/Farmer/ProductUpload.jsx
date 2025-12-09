@@ -20,7 +20,6 @@ import { makePostRequest } from "@/lib/apiRequest";
 export default function ProductUpload({ farmerId, categories }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-
   const [tags, setTags] = useState([]);
   const [productImages, setProductImages] = useState([]);
 
@@ -40,8 +39,8 @@ export default function ProductUpload({ farmerId, categories }) {
   const isWholesale = watch("isWholesale");
 
   const onSubmit = async (data) => {
-    if (!data.productPrice) return alert("Product Price is required");
-    if (productImages.length === 0) return alert("Upload at least one product image");
+    if (productImages.length === 0)
+      return alert("Upload at least one product image");
 
     const slug = generateSlug(data.title);
     const productCode = generateUserCode("LLP", data.title);
@@ -53,6 +52,7 @@ export default function ProductUpload({ farmerId, categories }) {
       tags,
       productImages,
       productCode,
+      qty: 1,
     };
 
     console.log("Submitting payload:", payload);
@@ -74,21 +74,29 @@ export default function ProductUpload({ farmerId, categories }) {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-4xl p-6 bg-gray-900 border border-gray-700 rounded-lg shadow mx-auto my-4 text-white"
+      className="w-full max-w-4xl p-6 bg-gray-800 border border-gray-700 rounded-lg shadow mx-auto my-4"
     >
-      <h2 className="text-2xl font-semibold mb-6">Upload New Product</h2>
+      <h2 className="text-xl font-semibold mb-4">Upload New Product</h2>
 
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        {/* TITLE */}
-        <TextInput label="Product Title" name="title" register={register} errors={errors} />
-
-        {/* SKU */}
-        <TextInput label="Product SKU" name="sku" register={register} errors={errors} />
-
-        {/* BARCODE */}
-        <TextInput label="Product Barcode" name="barcode" register={register} errors={errors} />
-
-        {/* PRODUCT PRICE */}
+        <TextInput
+          label="Product Title"
+          name="title"
+          register={register}
+          errors={errors}
+        />
+        <TextInput
+          label="Product SKU"
+          name="sku"
+          register={register}
+          errors={errors}
+        />
+        <TextInput
+          label="Product Barcode"
+          name="barcode"
+          register={register}
+          errors={errors}
+        />
         <TextInput
           label="Product Price"
           name="productPrice"
@@ -96,8 +104,6 @@ export default function ProductUpload({ farmerId, categories }) {
           errors={errors}
           type="number"
         />
-
-        {/* SALE PRICE */}
         <TextInput
           label="Discounted Price"
           name="salePrice"
@@ -105,8 +111,6 @@ export default function ProductUpload({ farmerId, categories }) {
           errors={errors}
           type="number"
         />
-
-        {/* STOCK */}
         <TextInput
           label="Product Stock"
           name="productStock"
@@ -114,20 +118,19 @@ export default function ProductUpload({ farmerId, categories }) {
           register={register}
           errors={errors}
         />
-
-        {/* UNIT */}
-        <TextInput label="Unit (e.g. KG, Bags)" name="unit" register={register} errors={errors} />
-
-        {/* CATEGORY SELECTION */}
+        <TextInput
+          label="Unit (e.g. KG, Bags)"
+          name="unit"
+          register={register}
+          errors={errors}
+        />
         <SelectInput
           label="Select Category"
           name="categoryId"
           register={register}
           errors={errors}
-          options={categories.map((c) => ({ value: c.id, label: c.title }))}
+          options={categories} // use the passed prop
         />
-
-        {/* WHOLESALE TOGGLE */}
         <ToggleInput
           label="Supports Wholesale"
           name="isWholesale"
@@ -135,8 +138,6 @@ export default function ProductUpload({ farmerId, categories }) {
           falseTitle="Disabled"
           register={register}
         />
-
-        {/* WHOLESALE BLOCK */}
         {isWholesale && (
           <>
             <TextInput
@@ -146,7 +147,6 @@ export default function ProductUpload({ farmerId, categories }) {
               errors={errors}
               type="number"
             />
-
             <TextInput
               label="Minimum Wholesale Qty"
               name="wholesaleQty"
@@ -156,27 +156,19 @@ export default function ProductUpload({ farmerId, categories }) {
             />
           </>
         )}
-
-        {/* PRODUCT IMAGES */}
         <MultipleImageInput
           imageUrls={productImages}
           setImageUrls={setProductImages}
           endpoint="multipleProductsUploader"
           label="Product Images"
         />
-
-        {/* TAGS */}
         <ArrayItemsInput setItems={setTags} items={tags} itemTitle="Tag" />
-
-        {/* DESCRIPTION */}
         <TextareaInput
           label="Product Description"
           name="description"
           register={register}
           errors={errors}
         />
-
-        {/* IS ACTIVE */}
         <ToggleInput
           label="Publish Product"
           name="isActive"
@@ -186,7 +178,6 @@ export default function ProductUpload({ farmerId, categories }) {
         />
       </div>
 
-      {/* SUBMIT BUTTON */}
       <SubmitButton
         isLoading={loading}
         buttonTitle="Add Product"
