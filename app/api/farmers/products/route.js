@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
+import slugify from "slugify";
 
-// CREATE PRODUCT
+// CREATE PRODUCT (FARMER)
 export async function POST(req) {
   try {
     const body = await req.json();
 
     const {
       title,
-      slug,
       description,
       productPrice,
       salePrice,
@@ -16,7 +16,6 @@ export async function POST(req) {
       farmerId,
       productImages,
       tags,
-      isActive,
       isWholesale,
       wholesalePrice,
       wholesaleQty,
@@ -24,59 +23,109 @@ export async function POST(req) {
       qty,
       sku,
       barcode,
-      unit,
+      unit
     } = body;
 
-    // VALIDATION (must match real required fields)
-    if (!title || !slug || !productPrice || !categoryId || !farmerId) {
+    // Required fields
+    if (!title || !productPrice || !categoryId || !farmerId) {
       return NextResponse.json(
         {
           success: false,
-          message: "Missing required fields",
+          message: "Missing required fields (title, price, category, farmer)",
         },
         { status: 400 }
       );
     }
 
-    // CREATE PRODUCT
+    // Generate slug
+    const slug = slugify(title, {
+      lower: true,
+      strict: true,
+    });
+
+    // Generate product code
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:TZ.]/g, "")
+      .slice(0, 14);
+
+    const productCode = `LLP-${title.substring(0, 1).toUpperCase()}-${timestamp}`;
+
+    // CREATE product
     const newProduct = await prisma.product.create({
       data: {
         title,
         slug,
         description: description || "",
-        productPrice: Number(productPrice),
-        salePrice: salePrice ? Number(salePrice) : null,
+        productPrice: parseFloat(productPrice),
+        salePrice: salePrice ? parseFloat(salePrice) : null,
         categoryId,
         farmerId,
 
+        // Images & tags
         productImages: productImages || [],
         tags: tags || [],
 
-        isActive: isActive ?? true,
-        isWholesale: isWholesale ?? false,
-        wholesalePrice: wholesalePrice ? Number(wholesalePrice) : null,
-        wholesaleQty: wholesaleQty ? Number(wholesaleQty) : null,
+        productStock: productStock ? parseInt(productStock) : 0,
+        qty: qty ? parseInt(qty) : 1,
 
-        productStock: Number(productStock) || 0,
-        qty: Number(qty) || 1,
+        sku: sku || null,
+        barcode: barcode || null,
+        unit: unit || null,
 
-        sku: sku || "",
-        barcode: barcode || "",
-        unit: unit || "",
+        // Wholesale options
+        isWholesale: Boolean(isWholesale),
+        wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
+        wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
+
+        productCode,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Farmer product created successfully",
+        data: newProduct,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("FARMER PRODUCT CREATE ERROR:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to create farmer product",
+        error: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// GET all farmer products
+export async function GET() {
+  try {
+    const products = await prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        category: true,
+        farmer: true,
       },
     });
 
     return NextResponse.json({
       success: true,
-      data: newProduct,
+      data: products,
     });
   } catch (error) {
-    console.error("CREATE PRODUCT ERROR:", error);
+    console.error("FETCH FARMER PRODUCTS ERROR:", error);
+
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create product",
-        error: error.message,
+        message: "Failed to fetch farmer products",
       },
       { status: 500 }
     );

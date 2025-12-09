@@ -93,22 +93,31 @@ model Coupon {
 
 //
 // ===============================
-// PRODUCTS
+// PRODUCTS (UPDATED)
 // ===============================
 model Product {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   slug          String?  @unique
   title         String
   description   String?
-  price         Float
-  salePrice     Float?
+
+  // Corrected pricing structure
+  productPrice  Float      // REQUIRED
+  salePrice     Float?     // OPTIONAL
+
   productStock  Int?
-  categoryId    String?  @db.ObjectId
-  farmerId      String?  @db.ObjectId
+  qty           Int?
+
+  // Product identifiers
+  sku           String?
+  barcode       String?
+  unit          String?
+
+  // Images
   imageUrl      String?
   productImages String[]
 
-  // NEW FIELDS
+  // NEW FIELDS from your request
   tags          String[]
   productCode   String?
   isWholesale   Boolean? @default(false)
@@ -120,8 +129,11 @@ model Product {
   updatedAt     DateTime @updatedAt
 
   // RELATIONS
-  category Category? @relation(fields: [categoryId], references: [id])
-  farmer   Farmer?   @relation(fields: [farmerId], references: [id])
+  categoryId    String?  @db.ObjectId
+  category      Category? @relation(fields: [categoryId], references: [id])
+
+  farmerId      String?  @db.ObjectId
+  farmer        Farmer?   @relation(fields: [farmerId], references: [id])
 }
 
 //
