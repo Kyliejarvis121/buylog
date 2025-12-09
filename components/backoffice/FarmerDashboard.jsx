@@ -25,7 +25,7 @@ export default async function FarmerDashboard({ sales, products, supports }) {
       <div className="mt-8 flex justify-between items-center">
         <Heading title="Products" />
         <Link
-          href="/backoffice/dashboard/farmers/products/new"
+          href="/back-office/dashboard/farmers/products/new"
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
         >
           Add New Product
