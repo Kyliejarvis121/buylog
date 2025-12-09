@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
-// UI Components (your design system)
+// UI Components
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import SelectInput from "@/components/FormInputs/SelectInput";
@@ -20,7 +20,6 @@ import { makePostRequest } from "@/lib/apiRequest";
 export default function ProductUpload({ farmerId, categories }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-
   const [tags, setTags] = useState([]);
   const [productImages, setProductImages] = useState([]);
 
@@ -39,9 +38,6 @@ export default function ProductUpload({ farmerId, categories }) {
 
   const isWholesale = watch("isWholesale");
 
-  // -------------------------------
-  // 🔥 SUBMIT PRODUCT
-  // -------------------------------
   const onSubmit = async (data) => {
     if (productImages.length === 0)
       return alert("Upload at least one product image");
@@ -50,13 +46,28 @@ export default function ProductUpload({ farmerId, categories }) {
     const productCode = generateUserCode("LLP", data.title);
 
     const payload = {
-      ...data,
-      farmerId,
+      title: data.title,
       slug,
-      tags,
-      productImages,
-      productCode,
+      description: data.description,
+      price: parseFloat(data.productPrice),          // ✅ Prisma price field
+      salePrice: data.salePrice ? parseFloat(data.salePrice) : null,
+      categoryId: data.categoryId || null,
+      farmerId,
+      imageUrl: productImages[0] || "",
+      productImages: productImages || [],
+      tags: tags || [],
+      isActive: data.isActive ?? true,
+      isWholesale: data.isWholesale ?? false,
+      wholesalePrice: data.wholesalePrice
+        ? parseFloat(data.wholesalePrice)
+        : null,
+      wholesaleQty: data.wholesaleQty ? parseInt(data.wholesaleQty) : null,
+      productStock: data.productStock ? parseInt(data.productStock) : 0,
       qty: 1,
+      productCode,
+      sku: data.sku || "",
+      barcode: data.barcode || "",
+      unit: data.unit || "",
     };
 
     console.log("Submitting payload:", payload);
@@ -71,7 +82,7 @@ export default function ProductUpload({ farmerId, categories }) {
         setTags([]);
         setProductImages([]);
       },
-      () => router.push("/dashboard/farmer/products")
+      () => router.push("/back-office/dashboard/farmers/products") // ✅ Correct redirect
     );
   };
 
@@ -83,139 +94,30 @@ export default function ProductUpload({ farmerId, categories }) {
       <h2 className="text-xl font-semibold mb-4">Upload New Product</h2>
 
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        {/* TITLE */}
-        <TextInput
-          label="Product Title"
-          name="title"
-          register={register}
-          errors={errors}
-        />
+        <TextInput label="Product Title" name="title" register={register} errors={errors} />
+        <TextInput label="SKU" name="sku" register={register} errors={errors} />
+        <TextInput label="Barcode" name="barcode" register={register} errors={errors} />
+        <TextInput label="Price" name="productPrice" register={register} errors={errors} type="number" />
+        <TextInput label="Discounted Price" name="salePrice" register={register} errors={errors} type="number" />
+        <TextInput label="Stock" name="productStock" register={register} errors={errors} type="number" />
+        <TextInput label="Unit" name="unit" register={register} errors={errors} />
+        <SelectInput label="Category" name="categoryId" register={register} errors={errors} options={categories} />
+        <ToggleInput label="Supports Wholesale" name="isWholesale" trueTitle="Enabled" falseTitle="Disabled" register={register} />
 
-        {/* SKU */}
-        <TextInput
-          label="Product SKU"
-          name="sku"
-          register={register}
-          errors={errors}
-        />
-
-        {/* BARCODE */}
-        <TextInput
-          label="Product Barcode"
-          name="barcode"
-          register={register}
-          errors={errors}
-        />
-
-        {/* PRODUCT PRICE */}
-        <TextInput
-          label="Product Price"
-          name="productPrice"
-          register={register}
-          errors={errors}
-          type="number"
-        />
-
-        {/* SALE PRICE */}
-        <TextInput
-          label="Discounted Price"
-          name="salePrice"
-          register={register}
-          errors={errors}
-          type="number"
-        />
-
-        {/* STOCK */}
-        <TextInput
-          label="Product Stock"
-          name="productStock"
-          type="number"
-          register={register}
-          errors={errors}
-        />
-
-        {/* UNIT */}
-        <TextInput
-          label="Unit (e.g. KG, Bags)"
-          name="unit"
-          register={register}
-          errors={errors}
-        />
-
-        {/* CATEGORY SELECTION */}
-        <SelectInput
-          label="Select Category"
-          name="categoryId"
-          register={register}
-          errors={errors}
-          options={categories}
-        />
-
-        {/* WHOLESALE TOGGLE */}
-        <ToggleInput
-          label="Supports Wholesale"
-          name="isWholesale"
-          trueTitle="Enabled"
-          falseTitle="Disabled"
-          register={register}
-        />
-
-        {/* WHOLESALE BLOCK */}
         {isWholesale && (
           <>
-            <TextInput
-              label="Wholesale Price"
-              name="wholesalePrice"
-              register={register}
-              errors={errors}
-              type="number"
-            />
-
-            <TextInput
-              label="Minimum Wholesale Qty"
-              name="wholesaleQty"
-              register={register}
-              errors={errors}
-              type="number"
-            />
+            <TextInput label="Wholesale Price" name="wholesalePrice" register={register} errors={errors} type="number" />
+            <TextInput label="Minimum Wholesale Qty" name="wholesaleQty" register={register} errors={errors} type="number" />
           </>
         )}
 
-        {/* PRODUCT IMAGES */}
-        <MultipleImageInput
-          imageUrls={productImages}
-          setImageUrls={setProductImages}
-          endpoint="multipleProductsUploader"
-          label="Product Images"
-        />
-
-        {/* TAGS */}
+        <MultipleImageInput imageUrls={productImages} setImageUrls={setProductImages} endpoint="multipleProductsUploader" label="Product Images" />
         <ArrayItemsInput setItems={setTags} items={tags} itemTitle="Tag" />
-
-        {/* DESCRIPTION */}
-        <TextareaInput
-          label="Product Description"
-          name="description"
-          register={register}
-          errors={errors}
-        />
-
-        {/* IS ACTIVE */}
-        <ToggleInput
-          label="Publish Product"
-          name="isActive"
-          trueTitle="Active"
-          falseTitle="Draft"
-          register={register}
-        />
+        <TextareaInput label="Description" name="description" register={register} errors={errors} />
+        <ToggleInput label="Publish Product" name="isActive" trueTitle="Active" falseTitle="Draft" register={register} />
       </div>
 
-      {/* SUBMIT BUTTON */}
-      <SubmitButton
-        isLoading={loading}
-        buttonTitle="Add Product"
-        loadingButtonTitle="Uploading Product..."
-      />
+      <SubmitButton isLoading={loading} buttonTitle="Add Product" loadingButtonTitle="Uploading Product..." />
     </form>
   );
 }
