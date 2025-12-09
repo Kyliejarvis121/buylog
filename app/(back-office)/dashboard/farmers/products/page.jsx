@@ -1,4 +1,4 @@
-import PageHeader from "@/components/back-office/PageHeader";
+import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
