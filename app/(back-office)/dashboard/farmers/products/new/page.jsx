@@ -1,9 +1,8 @@
-// app/(back-office)/dashboard/farmers/products/new/page.jsx
+import ProductUpload from "@/components/backoffice/Farmer/ProductUpload";
 import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { redirect } from "next/navigation";
-import ProductUpload from "@/components/backoffice/Farmer/ProductUpload";
 
 export default async function NewProductPage() {
   const session = await getServerSession(authOptions);
@@ -22,11 +21,16 @@ export default async function NewProductPage() {
     console.error("Failed to fetch categories:", err);
   }
 
+  // Map categories to proper dropdown format
+  const dropdownCategories = categories.map(c => ({
+    value: c.id,
+    label: c.title
+  }));
+
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-semibold mb-6">Upload New Product</h1>
-      {/* Client-side upload form */}
-      <ProductUpload farmerId={userId} categories={categories} />
+      <h1 className="text-2xl font-semibold mb-6 text-white">Upload New Product</h1>
+      <ProductUpload farmerId={userId} categories={dropdownCategories} />
     </div>
   );
 }
