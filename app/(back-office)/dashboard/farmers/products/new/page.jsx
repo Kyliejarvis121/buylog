@@ -1,4 +1,4 @@
-import ProductUpload from "@/components/back-office/farmers/ProductUpload";
+import ProductUpload from "@/components/backoffice/Farmer/ProductUpload";
 import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
