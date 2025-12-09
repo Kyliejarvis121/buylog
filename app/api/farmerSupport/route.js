@@ -3,19 +3,14 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const supportTickets = await prisma.farmerSupport.findMany({
+    const supports = await prisma.farmerSupport.findMany({
       orderBy: { createdAt: "desc" },
-      include: { farmer: true },
     });
-
-    return NextResponse.json({
-      data: supportTickets,
-      message: "Farmer support tickets fetched successfully",
-    });
+    return NextResponse.json({ success: true, data: supports });
   } catch (error) {
-    console.error("GET /api/farmerSupport failed:", error);
+    console.error("FARMER SUPPORT ERROR:", error);
     return NextResponse.json(
-      { data: null, message: "Failed to fetch farmer support tickets", error: error.message },
+      { success: false, message: "Failed to fetch farmer support" },
       { status: 500 }
     );
   }

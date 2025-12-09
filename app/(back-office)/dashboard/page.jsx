@@ -1,4 +1,5 @@
 // app/backoffice/dashboard/page.jsx
+import React from "react";
 import Heading from "@/components/backoffice/Heading";
 import LargeCards from "@/components/backoffice/LargeCards";
 import SmallCards from "@/components/backoffice/SmallCards";
@@ -13,7 +14,6 @@ import { authOptions } from "@/lib/authOptions";
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
-  // Default to USER role if session missing
   const role = session?.user?.role ?? "USER";
   const userId = session?.user?.id;
 
@@ -21,15 +21,14 @@ export default async function DashboardPage() {
   async function safe(endpoint) {
     try {
       const res = await getData(endpoint);
-      // unwrap 'data' property; fallback to empty array
-      return res?.data ?? [];
+      return Array.isArray(res?.data) ? res.data : [];
     } catch (e) {
-      console.error("FAILED:", endpoint, e.message);
+      console.error("FAILED FETCH:", endpoint, e.message);
       return [];
     }
   }
 
-  // Fetch all needed data concurrently
+  // Fetch all data concurrently
   const [sales, orders, products, farmers, supports, users] = await Promise.all([
     safe("sales"),
     safe("orders"),
@@ -39,57 +38,58 @@ export default async function DashboardPage() {
     safe("users"),
   ]);
 
-  // USER DASHBOARD
+  // USER dashboard
   if (role === "USER") {
     return <UserDashboard orders={orders} />;
   }
 
-  // FARMER DASHBOARD
+  // FARMER dashboard
   if (role === "FARMER") {
+    const farmerSales = sales.filter((s) => s.farmerId === userId);
+    const farmerProducts = products.filter((p) => p.farmerId === userId);
+    const farmerSupport = supports.filter((s) => s.farmerId === userId);
+
     return (
       <FarmerDashboard
-        sales={Array.isArray(sales) ? sales.filter((s) => s.vendorId === userId) : []}
-        products={Array.isArray(products) ? products.filter((p) => p.farmerId === userId) : []}
-        support={Array.isArray(supports) ? supports.filter((s) => s.farmerId === userId) : []}
+        sales={farmerSales}
+        products={farmerProducts}
+        supports={farmerSupport}
       />
     );
   }
 
-  // ADMIN DASHBOARD
+  // ADMIN dashboard
   return (
     <div className="p-6">
       <Heading title="Dashboard Overview" />
 
       <LargeCards
-        sales={Array.isArray(sales) ? sales : []}
-        products={Array.isArray(products) ? products : []}
-        farmers={Array.isArray(farmers) ? farmers : []}
+        sales={sales}
+        products={products}
+        farmers={farmers}
       />
 
       <SmallCards
-        orders={Array.isArray(orders) ? orders : []}
-        supports={Array.isArray(supports) ? supports : []}
+        orders={orders}
+        supports={supports}
       />
 
-      <DashboardCharts
-        sales={Array.isArray(sales) ? sales : []}
-      />
+      <DashboardCharts sales={sales} />
 
       <div className="mt-8">
         <Heading title="Recent Orders" />
-        <CustomDataTable data={Array.isArray(orders) ? orders : []} type="orders" />
+        <CustomDataTable data={orders} type="orders" />
       </div>
 
       <div className="mt-8">
         <Heading title="All Farmers (Pending & Active)" />
-        <CustomDataTable data={Array.isArray(farmers) ? farmers : []} type="farmers" />
+        <CustomDataTable data={farmers} type="farmers" />
       </div>
 
       <div className="mt-8">
         <Heading title="All Users" />
-        <CustomDataTable data={Array.isArray(users) ? users : []} type="users" />
+        <CustomDataTable data={users} type="users" />
       </div>
     </div>
   );
 }
-

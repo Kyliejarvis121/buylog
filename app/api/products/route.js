@@ -1,15 +1,12 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// GET ALL PRODUCTS
+// GET products
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: "desc" },
-      include: {
-        category: true,
-        farmer: true,
-      },
+      include: { category: true, farmer: true },
     });
     return NextResponse.json({ success: true, data: products });
   } catch (error) {
@@ -21,11 +18,10 @@ export async function GET() {
   }
 }
 
-// CREATE NEW PRODUCT
+// CREATE product
 export async function POST(req) {
   try {
     const body = await req.json();
-
     const {
       title,
       slug,
@@ -42,19 +38,14 @@ export async function POST(req) {
       wholesaleQty,
       productStock,
       productCode,
-      sku,
-      barcode,
-      unit,
       imageUrl,
     } = body;
 
-    // Required fields check
-    if (!title || !price || !farmerId) {
+    if (!title || !price || !farmerId)
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
       );
-    }
 
     const newProduct = await prisma.product.create({
       data: {
@@ -63,20 +54,17 @@ export async function POST(req) {
         description,
         price: parseFloat(price),
         salePrice: salePrice ? parseFloat(salePrice) : null,
-        productStock: productStock ? parseInt(productStock) : 0,
-        productCode: productCode || "",
-        sku: sku || "",
-        barcode: barcode || "",
-        unit: unit || "",
-        imageUrl: imageUrl || null,
+        categoryId: categoryId || null,
+        farmerId,
         productImages: productImages || [],
         tags: tags || [],
         isActive: isActive ?? true,
         isWholesale: isWholesale ?? false,
         wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
         wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
-        category: categoryId ? { connect: { id: categoryId } } : undefined,
-        farmer: { connect: { id: farmerId } },
+        productStock: productStock ? parseInt(productStock) : 0,
+        productCode: productCode || "",
+        imageUrl: imageUrl || null,
       },
     });
 

@@ -8,19 +8,14 @@ datasource db {
 }
 
 // ===============================
-// CATEGORIES
+// USERS
 // ===============================
-model Category {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String?   @unique
-  title       String
-  description String?
-  imageUrl    String?
-  isActive    Boolean?  @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  products Product[]
+model User {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  email    String?  @unique
+  password String
+  farmers  Farmer[]
 }
 
 // ===============================
@@ -37,14 +32,19 @@ model Farmer {
 }
 
 // ===============================
-// USERS
+// CATEGORIES
 // ===============================
-model User {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  name     String
-  email    String?  @unique
-  password String
-  farmers  Farmer[]
+model Category {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String?  @unique
+  description String?
+  imageUrl    String?
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
 }
 
 // ===============================
@@ -52,8 +52,8 @@ model User {
 // ===============================
 model Product {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  slug          String?   @unique
   title         String
+  slug          String?   @unique
   description   String?
   price         Float
   salePrice     Float?
@@ -71,7 +71,18 @@ model Product {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // Relations
   category Category? @relation(fields: [categoryId], references: [id])
   farmer   Farmer?   @relation(fields: [farmerId], references: [id])
+}
+
+// ===============================
+// FARMER SUPPORT (NEW)
+// ===============================
+model FarmerSupport {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  message   String
+  status    String?  @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
