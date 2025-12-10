@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+// app/api/products/route.js
 import { prisma } from "@/lib/prismadb";
+import { NextResponse } from "next/server";
 
-// =============================
+// -----------------------------------
 // GET ALL PRODUCTS
-// =============================
+// -----------------------------------
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
@@ -14,23 +15,32 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ success: true, data: products });
+    // Map any null price to 0 to avoid crashes
+    const safeProducts = products.map(p => ({
+      ...p,
+      price: p.price ?? 0,
+      salePrice: p.salePrice ?? 0,
+      productStock: p.productStock ?? 0,
+      tags: p.tags ?? [],
+      productImages: p.productImages ?? [],
+    }));
+
+    return NextResponse.json({ success: true, data: safeProducts });
   } catch (error) {
-    console.error("GET ALL PRODUCTS ERROR:", error);
+    console.error("GET PRODUCTS ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products" },
+      { success: false, message: "Failed to fetch products", error: error.message },
       { status: 500 }
     );
   }
 }
 
-// =============================
-// CREATE PRODUCT
-// =============================
+// -----------------------------------
+// CREATE NEW PRODUCT
+// -----------------------------------
 export async function POST(req) {
   try {
     const body = await req.json();
-
     const {
       title,
       slug,
@@ -47,7 +57,6 @@ export async function POST(req) {
       wholesaleQty,
       productStock,
       productCode,
-      imageUrl,
     } = body;
 
     if (!title || !price || !farmerId) {
@@ -63,19 +72,17 @@ export async function POST(req) {
         slug,
         description,
         price: parseFloat(price),
-        salePrice: salePrice ? parseFloat(salePrice) : null,
-        productStock: productStock ? parseInt(productStock) : 0,
-        productCode: productCode || "",
-        imageUrl: imageUrl || null,
+        salePrice: salePrice ? parseFloat(salePrice) : 0,
+        categoryId: categoryId || null,
+        farmerId,
         productImages: productImages || [],
         tags: tags || [],
         isActive: isActive ?? true,
         isWholesale: isWholesale ?? false,
         wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
         wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
-
-        category: categoryId ? { connect: { id: categoryId } } : undefined,
-        farmer: { connect: { id: farmerId } },
+        productStock: productStock ?? 0,
+        productCode: productCode || "",
       },
     });
 
@@ -83,7 +90,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("CREATE PRODUCT ERROR:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to create product" },
+      { success: false, message: error.message || "Something went wrong" },
       { status: 500 }
     );
   }

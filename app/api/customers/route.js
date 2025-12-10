@@ -1,22 +1,17 @@
+// app/api/customers/route.js
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const customers = await prisma.user.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
+    const users = await prisma.user.findMany({
+      orderBy: { name: "asc" }, // must use a valid field
     });
-
-    return NextResponse.json({ data: customers }, { status: 200 });
+    return NextResponse.json({ success: true, data: users });
   } catch (error) {
-    console.error("GET /api/users failed:", error);
+    console.error("CUSTOMERS API ERROR:", error);
     return NextResponse.json(
-      {
-        message: "Failed to fetch users",
-        error: error?.message ?? String(error),
-      },
+      { success: false, message: "Failed to fetch users", error: error.message },
       { status: 500 }
     );
   }
