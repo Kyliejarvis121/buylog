@@ -1,28 +1,26 @@
-"use client"; // <-- important
+"use client";
 
-// app/back-office/dashboard/category/banners/page.jsx
-import { prisma } from "@/lib/prismadb";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { redirect } from "next/navigation";
-import BannerTable from "./BannerTable";
+import React, { useEffect, useState } from "react";
+import { columns } from "./columns";
+import DataTable from "@/components/data-table-components/DataTable";
+import PageHeader from "@/components/backoffice/PageHeader";
 
-export default async function BannersPage() {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
+export default function BannersPage() {
+  const [banners, setBanners] = useState([]);
 
-  let allBanners = [];
-  try {
-    allBanners = await prisma.banner.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
-    return (
-      <div className="p-4 text-red-600">
-        Failed to fetch banners: {error?.message || "Unknown error"}
+  useEffect(() => {
+    fetch("/api/banners")
+      .then((res) => res.json())
+      .then((data) => setBanners(data))
+      .catch(console.error);
+  }, []);
+
+  return (
+    <div className="container mx-auto py-8">
+      <PageHeader heading="Banners" href="/dashboard/banners/new" linkTitle="Add Banner" />
+      <div className="py-8">
+        <DataTable data={banners} columns={columns} />
       </div>
-    );
-  }
-
-  return <BannerTable banners={allBanners} />;
+    </div>
+  );
 }
