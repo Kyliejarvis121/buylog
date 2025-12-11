@@ -1,10 +1,9 @@
-// app/api/products/route.js
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// -----------------------------------
-// GET ALL PRODUCTS
-// -----------------------------------
+// =====================================================
+// GET — Fetch ALL products (Admin + Public Homepage)
+// =====================================================
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
@@ -15,82 +14,95 @@ export async function GET() {
       },
     });
 
-    // Map any null price to 0 to avoid crashes
-    const safeProducts = products.map(p => ({
-      ...p,
-      price: p.price ?? 0,
-      salePrice: p.salePrice ?? 0,
-      productStock: p.productStock ?? 0,
-      tags: p.tags ?? [],
-      productImages: p.productImages ?? [],
-    }));
-
-    return NextResponse.json({ success: true, data: safeProducts });
+    return NextResponse.json({
+      success: true,
+      data: products ?? [],
+    });
   } catch (error) {
-    console.error("GET PRODUCTS ERROR:", error);
+    console.error("PRODUCTS GET ERROR:", error);
+
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products", error: error.message },
+      {
+        success: false,
+        message: "Failed to fetch products",
+        error: error.message,
+        data: [],
+      },
       { status: 500 }
     );
   }
 }
 
-// -----------------------------------
-// CREATE NEW PRODUCT
-// -----------------------------------
+// =====================================================
+// POST — Create New Product (Farmer or Admin)
+// =====================================================
 export async function POST(req) {
   try {
     const body = await req.json();
-    const {
-      title,
-      slug,
-      description,
-      price,
-      salePrice,
-      categoryId,
-      farmerId,
-      productImages,
-      tags,
-      isActive,
-      isWholesale,
-      wholesalePrice,
-      wholesaleQty,
-      productStock,
-      productCode,
-    } = body;
 
-    if (!title || !price || !farmerId) {
+    // Ensure price-related fields NEVER become null
+    const price = Number(body.price) || 0;
+    const salePrice = body.salePrice ? Number(body.salePrice) : null;
+    const wholesalePrice = body.wholesalePrice ? Number(body.wholesalePrice) : 0;
+    const wholesaleQty = body.wholesaleQty ? Number(body.wholesaleQty) : 0;
+
+    // Validate required fields
+    if (!body.title) {
       return NextResponse.json(
-        { success: false, message: "Missing required fields" },
+        { success: false, message: "Product title is required" },
         { status: 400 }
       );
     }
 
+    // Slug generator
+    const productSlug = body.slug
+      ? body.slug.toLowerCase().replace(/\s+/g, "-")
+      : body.title.toLowerCase().replace(/\s+/g, "-");
+
     const newProduct = await prisma.product.create({
       data: {
-        title,
-        slug,
-        description,
-        price: parseFloat(price),
-        salePrice: salePrice ? parseFloat(salePrice) : 0,
-        categoryId: categoryId || null,
-        farmerId,
-        productImages: productImages || [],
-        tags: tags || [],
-        isActive: isActive ?? true,
-        isWholesale: isWholesale ?? false,
-        wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
-        wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
-        productStock: productStock ?? 0,
-        productCode: productCode || "",
+        title: body.title,
+        slug: productSlug,
+        description: body.description || "",
+        price,
+        salePrice,
+        productStock: Number(body.productStock) || 0,
+
+        // Relations
+        categoryId: body.categoryId || null,
+        farmerId: body.farmerId || null,
+
+        // Images
+        imageUrl: body.imageUrl || "",
+        productImages: body.productImages || [],
+
+        tags: body.tags || [],
+        productCode: body.productCode || "",
+
+        // Wholesale
+        isWholesale: body.isWholesale || false,
+        wholesalePrice,
+        wholesaleQty,
+
+        // Status
+        isActive: body.isActive ?? true,
       },
     });
 
-    return NextResponse.json({ success: true, data: newProduct });
+    return NextResponse.json({
+      success: true,
+      message: "Product created successfully",
+      data: newProduct,
+    });
   } catch (error) {
-    console.error("CREATE PRODUCT ERROR:", error);
+    console.error("PRODUCT CREATE ERROR:", error);
+
     return NextResponse.json(
-      { success: false, message: error.message || "Something went wrong" },
+      {
+        success: false,
+        message: "Failed to create product",
+        error: error.message,
+      },
       { status: 500 }
     );
   }
