@@ -1,22 +1,30 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// =====================================================
-// GET — Fetch ALL products (Admin + Public Homepage)
-// =====================================================
+// ==============================
+// GET — Fetch All Products
+// ==============================
 export async function GET() {
   try {
+    // MongoDB allows ordering by createdAt, but make sure it exists
     const products = await prisma.product.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        category: true,
-        farmer: true,
+        category: true, // category may be null
+        farmer: true,   // farmer may be null
       },
     });
 
+    // Ensure all products have category/farmer objects
+    const safeProducts = products.map((p) => ({
+      ...p,
+      category: p.category ?? null,
+      farmer: p.farmer ?? null,
+    }));
+
     return NextResponse.json({
       success: true,
-      data: products ?? [],
+      data: safeProducts,
     });
   } catch (error) {
     console.error("PRODUCTS GET ERROR:", error);
@@ -33,20 +41,13 @@ export async function GET() {
   }
 }
 
-// =====================================================
-// POST — Create New Product (Farmer or Admin)
-// =====================================================
+// ==============================
+// POST — Create New Product
+// ==============================
 export async function POST(req) {
   try {
     const body = await req.json();
 
-    // Ensure price-related fields NEVER become null
-    const price = Number(body.price) || 0;
-    const salePrice = body.salePrice ? Number(body.salePrice) : null;
-    const wholesalePrice = body.wholesalePrice ? Number(body.wholesalePrice) : 0;
-    const wholesaleQty = body.wholesaleQty ? Number(body.wholesaleQty) : 0;
-
-    // Validate required fields
     if (!body.title) {
       return NextResponse.json(
         { success: false, message: "Product title is required" },
@@ -54,38 +55,39 @@ export async function POST(req) {
       );
     }
 
-    // Slug generator
-    const productSlug = body.slug
+    // Default numeric fields
+    const price = Number(body.price) || 0;
+    const salePrice = body.salePrice ? Number(body.salePrice) : 0;
+    const wholesalePrice = Number(body.wholesalePrice) || 0;
+    const wholesaleQty = Number(body.wholesaleQty) || 0;
+    const productStock = Number(body.productStock) || 0;
+
+    const slug = body.slug
       ? body.slug.toLowerCase().replace(/\s+/g, "-")
       : body.title.toLowerCase().replace(/\s+/g, "-");
 
     const newProduct = await prisma.product.create({
       data: {
         title: body.title,
-        slug: productSlug,
+        slug,
         description: body.description || "",
         price,
         salePrice,
-        productStock: Number(body.productStock) || 0,
-
-        // Relations
+        productStock,
         categoryId: body.categoryId || null,
         farmerId: body.farmerId || null,
-
-        // Images
         imageUrl: body.imageUrl || "",
         productImages: body.productImages || [],
-
         tags: body.tags || [],
         productCode: body.productCode || "",
-
-        // Wholesale
         isWholesale: body.isWholesale || false,
         wholesalePrice,
         wholesaleQty,
-
-        // Status
         isActive: body.isActive ?? true,
+      },
+      include: {
+        category: true,
+        farmer: true,
       },
     });
 
