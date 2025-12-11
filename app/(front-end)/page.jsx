@@ -7,15 +7,11 @@ import { getData } from "@/lib/getData";
 export default async function Home() {
   // Fetch banners
   const bannersRes = await getData("banners");
-  const banners = Array.isArray(bannersRes?.data)
-    ? bannersRes.data
-    : [];
+  const banners = Array.isArray(bannersRes?.data) ? bannersRes.data : [];
 
   // Fetch markets
   const marketsRes = await getData("markets");
-  const markets = Array.isArray(marketsRes?.data)
-    ? marketsRes.data
-    : [];
+  const markets = Array.isArray(marketsRes?.data) ? marketsRes.data : [];
 
   // Fetch categories
   const categoriesRes = await getData("categories");
@@ -23,12 +19,16 @@ export default async function Home() {
     ? categoriesRes.data
     : [];
 
-  // Optionally, fetch products count per category (safe)
+  // Fetch products per category safely
   const categories = await Promise.all(
     categoriesArray.map(async (cat) => {
       const productsRes = await getData(`products?catId=${cat.id}`);
       const products = Array.isArray(productsRes?.data)
-        ? productsRes.data
+        ? productsRes.data.map((p) => ({
+            ...p,
+            farmer: p.farmer ?? null,
+            category: p.category ?? null,
+          }))
         : [];
       return { ...cat, products };
     })
@@ -52,16 +52,31 @@ export default async function Home() {
 
       {/* Categories */}
       {filteredCategories.map((category, i) => (
-        <div className="py-8" key={i}>
-          <CategoryList isMarketPage={false} category={category} />
+        <div className="py-8" key={category.id || i}>
+          <CategoryList
+            isMarketPage={false}
+            category={{
+              ...category,
+              products: category.products.map((p) => ({
+                ...p,
+                title: p.title || "Untitled Product",
+                price: p.price ?? 0,
+                salePrice: p.salePrice ?? 0,
+                imageUrl: p.imageUrl || "",
+                farmer: p.farmer ?? { name: "Unknown Farmer" },
+              })),
+            }}
+          />
         </div>
       ))}
 
       {/* Trainings */}
-      <CommunityTrainings
-        title="Featured Trainings"
-        trainings={trainings.slice(0, 3)}
-      />
+      {trainings.length > 0 && (
+        <CommunityTrainings
+          title="Featured Trainings"
+          trainings={trainings.slice(0, 3)}
+        />
+      )}
     </div>
   );
 }
