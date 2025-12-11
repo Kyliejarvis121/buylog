@@ -1,7 +1,7 @@
-// app/api/products/route.js
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
+import { NextResponse } from "next/server";
 
+// CREATE NEW PRODUCT
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -12,74 +12,65 @@ export async function POST(req) {
       description,
       price,
       salePrice,
-      productStock,
       categoryId,
       farmerId,
-      imageUrl,
       productImages,
       tags,
-      sku,
-      barcode,
-      unit,
+      isActive,
       isWholesale,
       wholesalePrice,
       wholesaleQty,
+      productStock,
       qty,
-      isActive,
+      productCode,
+      sku,
+      barcode,
+      unit,
+      imageUrl,
     } = body;
 
-    // Prevent NaN
-    const safeWholesaleQty = Number(wholesaleQty) || 0;
-    const safeQty = Number(qty) || 0;
-
-    if (!title || !slug || !price || !farmerId) {
+    // Validate required fields
+    if (!title || !price || !farmerId) {
       return NextResponse.json(
-        { message: "Missing required fields", success: false },
+        { success: false, message: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const product = await prisma.product.create({
+    const newProduct = await prisma.product.create({
       data: {
         title,
         slug,
-        description,
-        price: Number(price),
-        salePrice: Number(salePrice) || 0,
-        productStock: Number(productStock) || 0,
+        description: description || "",
+        price: parseFloat(price),
+        salePrice: salePrice ? parseFloat(salePrice) : null,
+        productStock: productStock ? parseInt(productStock) : 0,
+        qty: qty ? parseInt(qty) : 0,
+        productCode: productCode || "",
+        sku: sku || "",
+        barcode: barcode || "",
+        unit: unit || "",
+        imageUrl: imageUrl || null,
+        productImages: productImages || [],
+        tags: tags || [],
+        isActive: isActive ?? true,
+        isWholesale: isWholesale ?? false,
+        wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
+        wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : null,
 
-        // IMPORTANT: THIS FIXES YOUR ERROR
-        category: categoryId
-          ? { connect: { id: categoryId } }
-          : undefined,
-
+        // **Connect relations properly**
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
         farmer: { connect: { id: farmerId } },
-
-        imageUrl,
-        productImages,
-        tags,
-
-        sku,
-        barcode,
-        unit,
-        isWholesale,
-        wholesalePrice: Number(wholesalePrice) || 0,
-        wholesaleQty: safeWholesaleQty,
-        qty: safeQty,
-        isActive,
       },
     });
 
-    return NextResponse.json({ success: true, data: product }, { status: 201 });
+    return NextResponse.json({ success: true, data: newProduct });
   } catch (error) {
-    console.error("PRODUCTS POST ERROR:", error);
+    console.error("CREATE PRODUCT ERROR:", error);
     return NextResponse.json(
-      {
-        message: "Server error",
-        success: false,
-        error: error.message,
-      },
+      { success: false, message: error.message || "Something went wrong" },
       { status: 500 }
     );
   }
 }
+
