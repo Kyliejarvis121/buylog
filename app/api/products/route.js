@@ -6,7 +6,6 @@ import { NextResponse } from "next/server";
 // ==============================
 export async function GET() {
   try {
-    // MongoDB allows ordering by createdAt, but make sure it exists
     const products = await prisma.product.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -15,7 +14,7 @@ export async function GET() {
       },
     });
 
-    // Ensure all products have category/farmer objects
+    // Ensure category and farmer are always defined (for frontend safety)
     const safeProducts = products.map((p) => ({
       ...p,
       category: p.category ?? null,
@@ -26,9 +25,8 @@ export async function GET() {
       success: true,
       data: safeProducts,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("PRODUCTS GET ERROR:", error);
-
     return NextResponse.json(
       {
         success: false,
@@ -44,7 +42,7 @@ export async function GET() {
 // ==============================
 // POST — Create New Product
 // ==============================
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
 
@@ -55,13 +53,14 @@ export async function POST(req) {
       );
     }
 
-    // Default numeric fields
+    // Ensure numeric fields are numbers
     const price = Number(body.price) || 0;
     const salePrice = body.salePrice ? Number(body.salePrice) : 0;
     const wholesalePrice = Number(body.wholesalePrice) || 0;
     const wholesaleQty = Number(body.wholesaleQty) || 0;
     const productStock = Number(body.productStock) || 0;
 
+    // Slug generator
     const slug = body.slug
       ? body.slug.toLowerCase().replace(/\s+/g, "-")
       : body.title.toLowerCase().replace(/\s+/g, "-");
@@ -87,7 +86,7 @@ export async function POST(req) {
       },
       include: {
         category: true,
-        farmer: true,
+        farmer: true, // only valid relations
       },
     });
 
@@ -96,9 +95,8 @@ export async function POST(req) {
       message: "Product created successfully",
       data: newProduct,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("PRODUCT CREATE ERROR:", error);
-
     return NextResponse.json(
       {
         success: false,
