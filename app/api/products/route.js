@@ -1,103 +1,62 @@
-import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prismadb";
 
-// GET — Fetch all products
-export async function GET() {
-  try {
-    const products = await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        category: true,
-        farmer: true,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: products.map((p) => ({
-        ...p,
-        category: p.category ?? null,
-        farmer: p.farmer ?? null,
-      })),
-    });
-  } catch (error) {
-    console.error("PRODUCTS GET ERROR:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch products",
-        error: error?.message || String(error),
-        data: [],
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// POST — Create new product
 export async function POST(req) {
   try {
     const body = await req.json();
 
-    if (!body.title) {
-      return NextResponse.json(
-        { success: false, message: "Product title is required" },
-        { status: 400 }
-      );
+    const {
+      title,
+      slug,
+      description,
+      price,
+      salePrice,
+      productStock,
+      categoryId,
+      farmerId,
+      productImages,
+      tags,
+      productCode,
+      isWholesale,
+      wholesalePrice,
+      wholesaleQty,
+      isActive,
+      unit,
+      sku,
+      barcode,
+    } = body;
+
+    if (!productImages || !Array.isArray(productImages) || productImages.length === 0) {
+      return NextResponse.json({ success: false, message: "Upload at least one product image" });
     }
 
-    // Parse numeric fields safely
-    const price = Number(body.price) || 0;
-    const salePrice = Number(body.salePrice) || 0;
-    const wholesalePrice = Number(body.wholesalePrice) || 0;
-    const wholesaleQty = Number(body.wholesaleQty) || 0;
-    const productStock = Number(body.productStock) || 0;
-
-    // Slug fallback
-    const slug =
-      body.slug && body.slug.trim() !== ""
-        ? body.slug.toLowerCase().replace(/\s+/g, "-")
-        : body.title.toLowerCase().replace(/\s+/g, "-");
-
-    const newProduct = await prisma.product.create({
+    const product = await prisma.product.create({
       data: {
-        title: body.title,
+        title,
         slug,
-        description: body.description || "",
+        description,
         price,
         salePrice,
         productStock,
-        categoryId: body.categoryId || null,
-        farmerId: body.farmerId || null,
-        imageUrl: body.imageUrl || "",
-        productImages: body.productImages || [],
-        tags: body.tags || [],
-        productCode: body.productCode || "",
-        isWholesale: body.isWholesale || false,
+        categoryId,
+        farmerId,
+        productImages, // ✅ MULTIPLE IMAGES
+        imageUrl: productImages[0], // ✅ Primary Image
+        tags,
+        productCode,
+        isWholesale,
         wholesalePrice,
         wholesaleQty,
-        isActive: body.isActive ?? true,
-      },
-      include: {
-        category: true,
-        farmer: true,
+        isActive,
+        sku,
+        barcode,
+        unit,
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Product created successfully",
-      data: newProduct,
-    });
-  } catch (error) {
-    console.error("PRODUCT CREATE ERROR:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to create product",
-        error: error?.message || String(error),
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, data: product });
+  } catch (err) {
+    console.error("PRODUCT POST ERROR:", err);
+    return NextResponse.json({ success: false, message: "Server error" });
   }
 }

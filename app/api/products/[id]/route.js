@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 
-// =============================
-// GET ONE PRODUCT
-// =============================
+/* =============================
+   GET ONE PRODUCT BY ID
+============================= */
 export async function GET(req, { params }) {
   try {
     const product = await prisma.product.findUnique({
@@ -25,56 +25,92 @@ export async function GET(req, { params }) {
   } catch (error) {
     console.error("GET PRODUCT ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Error fetching product" },
+      { success: false, message: "Error fetching product", error: error.message },
       { status: 500 }
     );
   }
 }
 
-// =============================
-// UPDATE PRODUCT
-// =============================
+/* =============================
+   UPDATE PRODUCT BY ID
+============================= */
 export async function PUT(req, { params }) {
   try {
     const body = await req.json();
 
+    // Extract multiple images if provided
+    const productImages = Array.isArray(body.productImages)
+      ? body.productImages
+      : undefined;
+
     const updated = await prisma.product.update({
       where: { id: params.id },
       data: {
-        ...body,
-        price: body.price ? parseFloat(body.price) : undefined,
-        salePrice: body.salePrice ? parseFloat(body.salePrice) : undefined,
-        productStock: body.productStock
-          ? parseInt(body.productStock)
-          : undefined,
-        wholesalePrice: body.wholesalePrice
-          ? parseFloat(body.wholesalePrice)
-          : undefined,
-        wholesaleQty: body.wholesaleQty
-          ? parseInt(body.wholesaleQty)
-          : undefined,
+        title: body.title,
+        slug: body.slug,
+        description: body.description,
 
-        category: body.categoryId
-          ? { connect: { id: body.categoryId } }
-          : undefined,
+        price: body.price !== undefined ? parseFloat(body.price) : undefined,
+        salePrice:
+          body.salePrice !== undefined ? parseFloat(body.salePrice) : undefined,
+        productStock:
+          body.productStock !== undefined
+            ? parseInt(body.productStock)
+            : undefined,
 
-        farmer: body.farmerId ? { connect: { id: body.farmerId } } : undefined,
+        // Wholesale fields
+        isWholesale: body.isWholesale,
+        wholesalePrice:
+          body.wholesalePrice !== undefined
+            ? parseFloat(body.wholesalePrice)
+            : undefined,
+        wholesaleQty:
+          body.wholesaleQty !== undefined
+            ? parseInt(body.wholesaleQty)
+            : undefined,
+
+        // Multiple Images
+        productImages: productImages,
+        imageUrl:
+          productImages && productImages.length > 0
+            ? productImages[0]
+            : undefined,
+
+        // Tags
+        tags: Array.isArray(body.tags) ? body.tags : undefined,
+
+        // Category relation
+        categoryId: body.categoryId ? body.categoryId : undefined,
+
+        // Farmer relation
+        farmerId: body.farmerId ? body.farmerId : undefined,
+
+        // Other fields
+        productCode: body.productCode,
+        unit: body.unit,
+        sku: body.sku,
+        barcode: body.barcode,
+        isActive: body.isActive,
       },
     });
 
-    return NextResponse.json({ success: true, data: updated });
+    return NextResponse.json({
+      success: true,
+      message: "Product updated successfully",
+      data: updated,
+    });
   } catch (error) {
     console.error("UPDATE PRODUCT ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to update product" },
+      { success: false, message: "Failed to update product", error: error.message },
       { status: 500 }
     );
   }
 }
 
-// =============================
-// DELETE PRODUCT
-// =============================
+/* =============================
+   DELETE PRODUCT
+============================= */
 export async function DELETE(req, { params }) {
   try {
     await prisma.product.delete({
@@ -88,7 +124,7 @@ export async function DELETE(req, { params }) {
   } catch (error) {
     console.error("DELETE PRODUCT ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to delete product" },
+      { success: false, message: "Failed to delete product", error: error.message },
       { status: 500 }
     );
   }
