@@ -7,17 +7,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//
 // ===============================
 // USERS
 // ===============================
 model User {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
   name     String
-  email    String?  @unique
+  email    String? @unique
   password String
-  farmers  Farmer[]
+  role     String  @default("user")
+
+  farmers Farmer[]
+  orders  Order[] // 👈 ADDED (Fixes relation)
 }
 
+//
 // ===============================
 // FARMERS
 // ===============================
@@ -31,6 +36,7 @@ model Farmer {
   user User @relation(fields: [userId], references: [id])
 }
 
+//
 // ===============================
 // CATEGORIES
 // ===============================
@@ -47,34 +53,37 @@ model Category {
   products Product[]
 }
 
+//
 // ===============================
 // PRODUCTS
 // ===============================
 model Product {
-  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
   title          String
-  slug           String?   @unique
+  slug           String?  @unique
   description    String?
-  price          Float?    @default(0)
-  salePrice      Float?    @default(0)
-  productStock   Int       @default(0)
-  categoryId     String?   @db.ObjectId
-  farmerId       String?   @db.ObjectId
+  price          Float?   @default(0)
+  salePrice      Float?   @default(0)
+  productStock   Int      @default(0)
+  categoryId     String?  @db.ObjectId
+  farmerId       String?  @db.ObjectId
   imageUrl       String?
-  productImages  String[]  @default([])
-  tags           String[]  @default([])
+  productImages  String[] @default([])
+  tags           String[] @default([])
   productCode    String?
-  isWholesale    Boolean?  @default(false)
-  wholesalePrice Float?    @default(0)
-  wholesaleQty   Int?      @default(0)
-  isActive       Boolean?  @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  isWholesale    Boolean? @default(false)
+  wholesalePrice Float?   @default(0)
+  wholesaleQty   Int?     @default(0)
+  isActive       Boolean? @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  category Category? @relation(fields: [categoryId], references: [id])
-  farmer   Farmer?   @relation(fields: [farmerId], references: [id])
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  farmer     Farmer?     @relation(fields: [farmerId], references: [id])
+  orderItems OrderItem[] // 👈 ADDED (Fixes relation)
 }
 
+//
 // ===============================
 // FARMER SUPPORT
 // ===============================
@@ -87,6 +96,7 @@ model FarmerSupport {
   updatedAt DateTime @updatedAt
 }
 
+//
 // ===============================
 // BANNERS
 // ===============================
@@ -100,6 +110,7 @@ model Banner {
   updatedAt DateTime @updatedAt
 }
 
+//
 // ===============================
 // MARKETS
 // ===============================
@@ -114,16 +125,49 @@ model Market {
   updatedAt   DateTime @updatedAt
 }
 
+//
 // ===============================
 // COUPONS
 // ===============================
 model Coupon {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  code        String   @unique
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  code        String    @unique
   description String?
   discount    Float
-  isActive    Boolean? @default(true)
+  isActive    Boolean?  @default(true)
   expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+//
+// ===============================
+// ORDERS
+// ===============================
+model Order {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  status      String   @default("pending")
+  totalAmount Float    @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  items OrderItem[]
+  user  User        @relation(fields: [userId], references: [id])
+}
+
+//
+// ===============================
+// ORDER ITEMS
+// ===============================
+model OrderItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String   @db.ObjectId
+  productId String   @db.ObjectId
+  quantity  Int      @default(1)
+  price     Float    @default(0)
+  createdAt DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }
