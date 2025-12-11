@@ -5,7 +5,9 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// GET all orders with pagination
+// ===============================
+// GET ALL ORDERS
+// ===============================
 export async function GET(request) {
   try {
     const url = new URL(request.url);
@@ -15,16 +17,23 @@ export async function GET(request) {
 
     const orders = await prisma.order.findMany({
       orderBy: { createdAt: "desc" },
-      include: { user: true, orderItems: true },
       skip,
       take: limit,
+      include: {
+        user: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
     });
 
     const total = await prisma.order.count();
 
     return NextResponse.json({
       success: true,
-      data: orders,     // ALWAYS array
+      data: orders,
       total,
       page,
       limit,
@@ -34,7 +43,7 @@ export async function GET(request) {
     return NextResponse.json(
       {
         success: false,
-        data: [],        // MUST be array
+        data: [],
         message: "Failed to fetch orders",
         error: error.message,
       },
@@ -43,7 +52,9 @@ export async function GET(request) {
   }
 }
 
-// POST: create an order
+// ===============================
+// CREATE AN ORDER
+// ===============================
 export async function POST(request) {
   try {
     const { checkoutFormData, orderItems } = await request.json();
@@ -69,12 +80,12 @@ export async function POST(request) {
       paymentMethod,
     } = checkoutFormData;
 
-    // Generate unique order number
+    // Generate random order number
     const orderNumber = Array.from({ length: 10 }, () =>
       "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 36)]
     ).join("");
 
-    const resultOrder = await prisma.$transaction(async (tx) => {
+    const createdOrder = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
           userId,
@@ -90,17 +101,15 @@ export async function POST(request) {
           paymentMethod,
           orderNumber,
           status: "pending",
+          totalAmount: 0,
         },
       });
 
-      const itemsToCreate = orderItems.map((it) => ({
+      const itemsToCreate = orderItems.map((item) => ({
         orderId: newOrder.id,
-        productId: it.id,
-        vendorId: it.vendorId ?? it.vendor ?? null,
-        quantity: Number(it.qty ?? it.quantity ?? 1),
-        price: Number(it.salePrice ?? it.price ?? 0),
-        title: it.title ?? it.name ?? "",
-        imageUrl: it.imageUrl ?? it.image ?? null,
+        productId: item.id,
+        quantity: Number(item.qty ?? item.quantity ?? 1),
+        price: Number(item.salePrice ?? item.price ?? 0),
       }));
 
       if (itemsToCreate.length > 0) {
@@ -111,22 +120,28 @@ export async function POST(request) {
     });
 
     const orderWithItems = await prisma.order.findUnique({
-      where: { id: resultOrder.id },
-      include: { orderItems: true, user: true },
+      where: { id: createdOrder.id },
+      include: {
+        user: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json({
       success: true,
-      data: orderWithItems ? [orderWithItems] : [],   // ALWAYS array
+      data: orderWithItems ? [orderWithItems] : [],
       message: "Order created",
     });
   } catch (error) {
     console.error("POST /api/orders failed:", error);
-
     return NextResponse.json(
       {
         success: false,
-        data: [],         // MUST be array
+        data: [],
         message: "Failed to create order",
         error: error.message,
       },
