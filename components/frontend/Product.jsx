@@ -1,4 +1,5 @@
 "use client";
+
 import { addToCart } from "@/redux/slices/cartSlice";
 import { BaggageClaim } from "lucide-react";
 import Image from "next/image";
@@ -9,32 +10,41 @@ import { useDispatch } from "react-redux";
 
 export default function Product({ product }) {
   const dispatch = useDispatch();
+
   function handleAddToCart() {
-    // Dispatch the reducer
     dispatch(addToCart(product));
-    toast.success("Item added Successfully");
+    toast.success("Item added successfully");
   }
+
+  // Choose the first image in productImages array or fallback to imageUrl or default
+  const mainImage =
+    product.productImages?.length > 0
+      ? product.productImages[0]
+      : product.imageUrl || "/no-image.png";
+
   return (
-    <div className="rounded-lg mr-3  bg-white dark:bg-slate-900 overflow-hidden border shadow">
+    <div className="rounded-lg mr-3 bg-white dark:bg-slate-900 overflow-hidden border shadow">
       <Link href={`/products/${product.slug}`}>
         <Image
-          src={product.imageUrl}
+          src={mainImage}
           alt={product.title}
           width={556}
           height={556}
           className="w-full h-48 object-cover"
         />
       </Link>
+
       <div className="px-4">
         <Link href={`/products/${product.slug}`}>
           <h2 className="text-center dark:text-slate-200 text-slate-800 my-2 font-semibold">
             {product.title}
           </h2>
         </Link>
+
         <div className="flex items-center justify-between gap-2 pb-3 dark:text-slate-200 text-slate-800">
-          <p>UGX {product.salePrice}</p>
+          <p>UGX {product.salePrice ?? product.price}</p>
           <button
-            onClick={() => handleAddToCart()}
+            onClick={handleAddToCart}
             className="flex items-center space-x-2 bg-lime-600 px-4 py-2 rounded-md text-white"
           >
             <BaggageClaim />
