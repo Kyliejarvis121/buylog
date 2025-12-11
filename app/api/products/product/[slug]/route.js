@@ -16,8 +16,8 @@ export async function GET(request, { params }) {
     const product = await prisma.product.findUnique({
       where: { slug },
       include: {
-        category: true,
-        vendor: true,
+        category: true, // include category
+        farmer: true,   // include farmer
       },
     });
 
@@ -35,9 +35,8 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error("GET PRODUCT ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Server error fetching product" },
+      { success: false, message: "Server error fetching product", error: error.message },
       { status: 500 }
     );
   }
 }
-
