@@ -8,43 +8,43 @@ import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { redirect } from "next/navigation";
-import { columns } from "./columns";
 
-export default async function ProductsPage() {
+// Define columns for banners
+const columns = [
+  { Header: "Title", accessor: "title" },
+  {
+    Header: "Image",
+    accessor: "imageUrl",
+    Cell: ({ value }) => (
+      <img src={value} alt="Banner" className="w-32 h-16 object-cover" />
+    ),
+  },
+  {
+    Header: "Link",
+    accessor: "link",
+    Cell: ({ value }) => (value ? <a href={value}>{value}</a> : "-"),
+  },
+  { Header: "Active", accessor: "isActive", Cell: ({ value }) => (value ? "Yes" : "No") },
+  {
+    Header: "Created At",
+    accessor: "createdAt",
+    Cell: ({ value }) => new Date(value).toLocaleString(),
+  },
+];
+
+export default async function BannersPage() {
   const session = await getServerSession(authOptions);
-
   if (!session) redirect("/login");
 
-  const { role, id: userId } = session.user;
-
-  let allProducts = [];
-
+  let allBanners = [];
   try {
-    if (role === "ADMIN") {
-      // Admin sees all products
-      allProducts = await prisma.product.findMany({
-        orderBy: { createdAt: "desc" },
-        include: { category: true },
-      });
-    } else {
-      // FARMER: first fetch all farmer profiles linked to this user
-      const farmers = await prisma.farmer.findMany({
-        where: { userId },
-        select: { id: true },
-      });
-      const farmerIds = farmers.map((f) => f.id);
-
-      // Fetch products owned by these farmers
-      allProducts = await prisma.product.findMany({
-        where: { farmerId: { in: farmerIds } },
-        orderBy: { createdAt: "desc" },
-        include: { category: true },
-      });
-    }
+    allBanners = await prisma.banner.findMany({
+      orderBy: { createdAt: "desc" },
+    });
   } catch (error) {
     return (
       <div className="p-4 text-red-600">
-        Failed to fetch products: {error?.message || "Unknown error"}
+        Failed to fetch banners: {error?.message || "Unknown error"}
       </div>
     );
   }
@@ -52,13 +52,12 @@ export default async function ProductsPage() {
   return (
     <div className="container mx-auto py-8">
       <PageHeader
-        heading="Products"
-        href="/dashboard/products/new"
-        linkTitle="Add Product"
+        heading="Banners"
+        href="/dashboard/banners/new" // Link to banner upload page
+        linkTitle="Add Banner"
       />
-
       <div className="py-8">
-        <DataTable data={allProducts} columns={columns} />
+        <DataTable data={allBanners} columns={columns} />
       </div>
     </div>
   );
