@@ -7,9 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ===============================
-// USERS
-// ===============================
 model User {
   id       String   @id @default(auto()) @map("_id") @db.ObjectId
   name     String
@@ -18,9 +15,6 @@ model User {
   farmers  Farmer[]
 }
 
-// ===============================
-// FARMERS
-// ===============================
 model Farmer {
   id       String    @id @default(auto()) @map("_id") @db.ObjectId
   name     String
@@ -31,9 +25,6 @@ model Farmer {
   user User @relation(fields: [userId], references: [id])
 }
 
-// ===============================
-// CATEGORIES
-// ===============================
 model Category {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
@@ -47,16 +38,13 @@ model Category {
   products Product[]
 }
 
-// ===============================
-// PRODUCTS
-// ===============================
 model Product {
   id             String    @id @default(auto()) @map("_id") @db.ObjectId
   title          String
   slug           String?   @unique
   description    String?
-  price          Float     @default(0)     // <<< ALWAYS HAS A VALUE
-  salePrice      Float?
+  price          Float?    @default(0)        // FIXED (nullable allowed)
+  salePrice      Float?    @default(0)
   productStock   Int       @default(0)
   categoryId     String?   @db.ObjectId
   farmerId       String?   @db.ObjectId
@@ -65,7 +53,7 @@ model Product {
   tags           String[]  @default([])
   productCode    String?
   isWholesale    Boolean?  @default(false)
-  wholesalePrice Float?    @default(0)     // <<< NEVER NULL
+  wholesalePrice Float?    @default(0)
   wholesaleQty   Int?      @default(0)
   isActive       Boolean?  @default(true)
   createdAt      DateTime  @default(now())
@@ -75,9 +63,6 @@ model Product {
   farmer   Farmer?   @relation(fields: [farmerId], references: [id])
 }
 
-// ===============================
-// FARMER SUPPORT
-// ===============================
 model FarmerSupport {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
