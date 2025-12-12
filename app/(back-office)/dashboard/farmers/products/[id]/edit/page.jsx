@@ -1,503 +1,213 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
+import Image from "next/image";
 
 export default function EditProductPage() {
+  const { id } = useParams();
   const router = useRouter();
-  const params = useParams();
-  const productId = params.id;
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadingMore, setUploadingMore] = useState(false);
 
-  const [form, setForm] = useState({
-    title: "",
-    slug: "",
-    price: "",
-    salePrice: "",
-    productStock: "",
-    description: "",
-    categoryId: "",
-    isActive: true,
-    imageUrl: "",
-    productImages: [],
-    sku: "",
-    barcode: "",
-    unit: "",
-    tags: [],
-    isWholesale: false,
-    wholesalePrice: "",
-    wholesaleQty: "",
-  });
+  const [newImages, setNewImages] = useState([]); // Add more images
 
-  // Fetch product + categories
   useEffect(() => {
-    async function fetchData() {
+    async function fetchProduct() {
       try {
-        const [productRes, categoryRes] = await Promise.all([
-          fetch(`/api/products/${productId}`),
-          fetch("/api/categories"),
-        ]);
+        const res = await fetch(`/api/products/${id}`);
+        const data = await res.json();
 
-        const prodJson = await productRes.json();
-        const catJson = await categoryRes.json();
-
-        if (!prodJson?.success || !prodJson?.data) {
-          alert("Product not found");
-          return router.push("/dashboard/farmers/products");
+        if (!data?.data) {
+          toast.error("Product not found");
+          return;
         }
 
-        const p = prodJson.data;
-
-        setForm({
-          title: p.title ?? "",
-          slug: p.slug ?? "",
-          price: p.price ?? "",
-          salePrice: p.salePrice ?? "",
-          productStock: p.productStock ?? 0,
-          description: p.description ?? "",
-          categoryId: p.categoryId ?? "",
-          isActive: p.isActive ?? true,
-          imageUrl: p.imageUrl ?? (Array.isArray(p.productImages) ? p.productImages[0] ?? "" : ""),
-          productImages: Array.isArray(p.productImages) ? p.productImages : [],
-          sku: p.sku ?? "",
-          barcode: p.barcode ?? "",
-          unit: p.unit ?? "",
-          tags: Array.isArray(p.tags) ? p.tags : [],
-          isWholesale: !!p.isWholesale,
-          wholesalePrice: p.wholesalePrice ?? "",
-          wholesaleQty: p.wholesaleQty ?? "",
-        });
-
-        setCategories(Array.isArray(catJson?.data) ? catJson.data : []);
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        alert("Failed to load product");
-        router.push("/dashboard/farmers/products");
+        setProduct(data.data);
+      } catch (error) {
+        toast.error("Failed to load product");
       }
     }
 
-    fetchData();
-  }, [productId, router]);
+    fetchProduct();
+  }, [id]);
 
-  // Handle input change
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === "checkbox") {
-      setForm((prev) => ({ ...prev, [name]: !!checked }));
+  // -------------------------------------------------------------
+  // Upload NEW additional images only
+  // -------------------------------------------------------------
+  const handleUploadAdditionalImages = async () => {
+    if (!newImages.length) {
+      toast.error("Select images first");
       return;
     }
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
-    }));
-  };
 
-  // Upload files to your UploadThing / custom endpoint
-  const handleImageUpload = async (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    setUploadingMore(true);
 
-    // Show some quick UI feedback
-    const uploadedUrls = [];
     try {
-      for (let file of Array.from(files)) {
-        const fd = new FormData();
-        fd.append("file", file);
+      const uploadedUrls = [];
 
-        // use your upload endpoint here (you previously had /api/uploadthing)
-        const uploadRes = await fetch("/api/uploadthing", {
+      for (const file of newImages) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_PRESET);
+
+        const cloud = await fetch(process.env.NEXT_PUBLIC_CLOUDINARY_URL, {
           method: "POST",
-          body: fd,
+          body: formData,
         });
 
-        const uploadJson = await uploadRes.json();
-
-        // support multiple possible response shapes
-        const url =
-          uploadJson?.fileUrl || uploadJson?.url || uploadJson?.data?.fileUrl || uploadJson?.data?.url;
-
-        if (url) uploadedUrls.push(url);
+        const res = await cloud.json();
+        if (res.secure_url) uploadedUrls.push(res.secure_url);
       }
 
-      if (uploadedUrls.length > 0) {
-        setForm((prev) => ({
-          ...prev,
-          productImages: [...prev.productImages, ...uploadedUrls],
-          // if no main image set, pick the first uploaded
-          imageUrl: prev.imageUrl || uploadedUrls[0] || prev.imageUrl,
-        }));
-      }
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("Image upload failed");
+      // Merge newly uploaded images into product
+      setProduct((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls],
+      }));
+
+      toast.success("Images uploaded successfully");
+      setNewImages([]);
+    } catch (error) {
+      toast.error("Image upload failed");
+    } finally {
+      setUploadingMore(false);
     }
   };
 
-  // Remove image from array
-  const removeImg = (url) => {
-    setForm((prev) => {
-      const nextImages = prev.productImages.filter((i) => i !== url);
-      const nextMain = prev.imageUrl === url ? nextImages[0] ?? "" : prev.imageUrl;
-      return { ...prev, productImages: nextImages, imageUrl: nextMain };
-    });
-  };
-
-  // Choose main image
-  const setMainImage = (url) => {
-    setForm((prev) => ({ ...prev, imageUrl: url }));
-  };
-
-  // Add tag
-  const addTag = (tag) => {
-    if (!tag) return;
-    setForm((prev) => ({ ...prev, tags: [...new Set([...prev.tags, tag])] }));
-  };
-
-  const removeTag = (tag) => {
-    setForm((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
-  };
-
-  // Handle submit (update)
+  // -------------------------------------------------------------
+  // UPDATE PRODUCT
+  // -------------------------------------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
+    setLoading(true);
 
     try {
-      // build payload (only fields we want to send)
-      const payload = {
-        title: String(form.title || ""),
-        slug: form.slug || undefined,
-        productPrice: form.price !== undefined ? Number(form.price) : undefined,
-        price: form.price !== undefined ? Number(form.price) : undefined,
-        salePrice: form.salePrice !== "" ? Number(form.salePrice) : null,
-        productStock: form.productStock !== "" ? Number(form.productStock) : 0,
-        description: form.description ?? "",
-        categoryId: form.categoryId || null,
-        isActive: !!form.isActive,
-        imageUrl: form.imageUrl || null,
-        productImages: Array.isArray(form.productImages) ? form.productImages : [form.productImages],
-        sku: form.sku || null,
-        barcode: form.barcode || null,
-        unit: form.unit || null,
-        tags: Array.isArray(form.tags) ? form.tags : [],
-        isWholesale: !!form.isWholesale,
-        wholesalePrice: form.wholesalePrice !== "" ? Number(form.wholesalePrice) : 0,
-        wholesaleQty: form.wholesaleQty !== "" ? Number(form.wholesaleQty) : 0,
-      };
-
-      const res = await fetch(`/api/products/${productId}`, {
+      const res = await fetch(`/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(product),
       });
 
       const data = await res.json();
 
-      if (data.success) {
-        alert("Product updated successfully");
-        router.push("/dashboard/farmers/products");
-      } else {
-        console.error("Update error:", data);
-        alert("Failed to update product: " + (data.message || "Unknown"));
+      if (!data.success) {
+        toast.error(data.message || "Update failed");
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong updating the product");
+
+      toast.success("Product updated");
+      router.push("/backoffice/dashboard");
+    } catch (error) {
+      toast.error("Something went wrong");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  // Delete product
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this product? This cannot be undone.")) return;
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/products/${productId}`, {
-        method: "DELETE",
-      });
-      const j = await res.json();
-      if (j.success) {
-        alert("Product deleted");
-        router.push("/dashboard/farmers/products");
-      } else {
-        alert("Delete failed: " + (j.message || "Unknown"));
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong while deleting");
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  if (loading) {
-    return <div className="p-6 bg-gray-900 min-h-screen text-white">Loading...</div>;
-  }
+  if (!product) return <p className="text-center text-white mt-20">Loading...</p>;
 
   return (
-    <div className="p-6 min-h-screen bg-gray-900 text-white">
-      <div className="max-w-4xl mx-auto bg-gray-800 border border-gray-700 rounded-lg p-6 shadow">
-        <h1 className="text-2xl font-semibold mb-4">Edit Product</h1>
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-6">
+      <div className="max-w-3xl mx-auto bg-[#111] p-6 rounded-xl shadow-xl border border-[#222]">
 
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        <h1 className="text-2xl font-bold mb-6 text-green-400">Edit Product</h1>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+
           {/* TITLE */}
           <div>
-            <label className="block text-sm mb-1">Title</label>
+            <label className="block mb-1">Title</label>
             <input
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-              placeholder="Product title"
-              required
+              type="text"
+              value={product.title}
+              onChange={(e) => setProduct({ ...product, title: e.target.value })}
+              className="w-full p-3 rounded bg-[#1a1a1a] border border-[#333] text-white"
             />
           </div>
 
-          {/* SLUG */}
+          {/* PRICE */}
           <div>
-            <label className="block text-sm mb-1">Slug (optional)</label>
-            <input
-              name="slug"
-              value={form.slug}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-              placeholder="product-slug"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* PRICE */}
-            <div>
-              <label className="block text-sm mb-1">Price</label>
-              <input
-                type="number"
-                name="price"
-                value={form.price}
-                onChange={handleChange}
-                className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-              />
-            </div>
-
-            {/* SALE PRICE */}
-            <div>
-              <label className="block text-sm mb-1">Sale Price</label>
-              <input
-                type="number"
-                name="salePrice"
-                value={form.salePrice}
-                onChange={handleChange}
-                className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-              />
-            </div>
-          </div>
-
-          {/* STOCK */}
-          <div>
-            <label className="block text-sm mb-1">Stock</label>
+            <label className="block mb-1">Price</label>
             <input
               type="number"
-              name="productStock"
-              value={form.productStock}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-            />
-          </div>
-
-          {/* SKU / BARCODE / UNIT */}
-          <div className="grid grid-cols-3 gap-4">
-            <input
-              name="sku"
-              value={form.sku}
-              onChange={handleChange}
-              placeholder="SKU"
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-            />
-            <input
-              name="barcode"
-              value={form.barcode}
-              onChange={handleChange}
-              placeholder="Barcode"
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-            />
-            <input
-              name="unit"
-              value={form.unit}
-              onChange={handleChange}
-              placeholder="Unit (e.g. 1kg)"
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-            />
-          </div>
-
-          {/* CATEGORY */}
-          <div>
-            <label className="block text-sm mb-1">Category</label>
-            <select
-              name="categoryId"
-              value={form.categoryId}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-            >
-              <option value="">No category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* WHOLESALE */}
-          <div className="grid grid-cols-3 gap-4 items-end">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="isWholesale"
-                checked={!!form.isWholesale}
-                onChange={handleChange}
-                className="accent-lime-500"
-              />
-              <span className="text-sm">Wholesale</span>
-            </label>
-            <input
-              name="wholesalePrice"
-              value={form.wholesalePrice}
-              onChange={handleChange}
-              placeholder="Wholesale price"
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-            />
-            <input
-              name="wholesaleQty"
-              value={form.wholesaleQty}
-              onChange={handleChange}
-              placeholder="Wholesale min qty"
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
+              value={product.price}
+              onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
+              className="w-full p-3 rounded bg-[#1a1a1a] border border-[#333] text-white"
             />
           </div>
 
           {/* DESCRIPTION */}
           <div>
-            <label className="block text-sm mb-1">Description</label>
+            <label className="block mb-1">Description</label>
             <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white h-32"
+              rows={4}
+              value={product.description}
+              onChange={(e) =>
+                setProduct({ ...product, description: e.target.value })
+              }
+              className="w-full p-3 rounded bg-[#1a1a1a] border border-[#333] text-white"
             />
           </div>
 
-          {/* TAGS */}
+          {/* SHOW EXISTING IMAGES */}
           <div>
-            <label className="block text-sm mb-1">Tags</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                id="newTag"
-                placeholder="Add a tag and press Enter"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const val = e.target.value.trim();
-                    if (val) {
-                      addTag(val);
-                      e.target.value = "";
-                    }
-                  }
-                }}
-                className="flex-1 p-3 bg-gray-900 border border-gray-700 rounded text-white"
-              />
-              <div className="inline-flex items-center gap-2">
-                {form.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="px-2 py-1 bg-gray-700 text-sm rounded flex items-center gap-2"
-                  >
-                    {t}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(t)}
-                      className="ml-2 text-xs text-red-400"
-                    >
-                      x
-                    </button>
-                  </span>
-                ))}
-              </div>
+            <label className="block mb-1">Current Images</label>
+
+            <div className="grid grid-cols-3 gap-3">
+              {product.images.map((img, i) => (
+                <Image
+                  key={i}
+                  src={img}
+                  width={120}
+                  height={120}
+                  alt="Product"
+                  className="rounded border border-[#333]"
+                />
+              ))}
             </div>
           </div>
 
-          {/* IMAGES UPLOAD */}
-          <div>
-            <label className="block text-sm mb-1">Upload More Images</label>
+          {/* ADD MORE IMAGES */}
+          <div className="bg-[#0f0f0f] p-4 rounded-lg border border-[#222]">
+            <label className="block mb-2 text-green-300">Add More Images</label>
+
             <input
               type="file"
               multiple
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="w-full text-sm text-white"
+              onChange={(e) => setNewImages([...e.target.files])}
+              className="w-full p-2 bg-[#1a1a1a] rounded border border-[#333] text-white"
             />
-          </div>
 
-          {/* IMAGES PREVIEW */}
-          <div className="grid grid-cols-3 gap-3 mt-2">
-            {form.productImages.length === 0 ? (
-              <div className="col-span-3 text-sm text-gray-400">No images yet</div>
-            ) : (
-              form.productImages.map((url, index) => (
-                <div key={index} className="relative group rounded overflow-hidden border border-gray-700">
-                  <img src={url} className="w-full h-32 object-cover" alt={`img-${index}`} />
-                  <div className="absolute left-1 top-1 flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setMainImage(url)}
-                      className={`text-xs px-2 py-1 rounded ${form.imageUrl === url ? "bg-lime-600 text-black" : "bg-gray-800 text-white"} m-2`}
-                    >
-                      {form.imageUrl === url ? "Main" : "Set main"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeImg(url)}
-                      className="text-xs px-2 py-1 rounded bg-red-600 text-white m-2"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              ))
+            {newImages.length > 0 && (
+              <p className="mt-2 text-sm text-gray-400">
+                {newImages.length} image(s) selected
+              </p>
             )}
-          </div>
 
-          {/* ACTIONS */}
-          <div className="flex gap-3 mt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 bg-lime-600 text-black rounded font-semibold"
-            >
-              {saving ? "Saving..." : "Update Product"}
-            </button>
-
+            {/* UPLOAD BUTTON */}
             <button
               type="button"
-              onClick={() => router.push("/dashboard/farmers/products")}
-              className="px-4 py-2 bg-gray-700 text-white rounded"
+              onClick={handleUploadAdditionalImages}
+              disabled={uploadingMore}
+              className="mt-4 w-full bg-green-600 hover:bg-green-700 p-3 rounded text-white font-semibold"
             >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="ml-auto px-4 py-2 bg-red-600 text-white rounded"
-            >
-              {deleting ? "Deleting..." : "Delete Product"}
+              {uploadingMore ? "Uploading..." : "Upload Images"}
             </button>
           </div>
+
+          {/* SUBMIT */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded text-white font-semibold"
+          >
+            {loading ? "Updating..." : "Update Product"}
+          </button>
         </form>
       </div>
     </div>
