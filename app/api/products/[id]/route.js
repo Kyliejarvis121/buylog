@@ -37,7 +37,6 @@ export async function GET(req, { params }) {
       );
     }
 
-    // SAFE IMAGE HANDLING — WORKS 100%
     const imageUrl =
       product.imageUrl ?? (product.productImages?.[0] ?? null);
 
@@ -68,88 +67,99 @@ export async function GET(req, { params }) {
 export async function PUT(req, { params }) {
   try {
     const { id } = params;
-    if (!id)
+
+    if (!id) {
       return NextResponse.json(
         { success: false, message: "Product id required" },
         { status: 400 }
       );
+    }
 
     const body = await req.json();
 
     const updates = {};
 
-    // --- FULL FIELD SUPPORT (NO FIELDS REMOVED) ---
+    // ========== BASIC FIELDS ==========
     if (body.title !== undefined) updates.title = body.title;
     if (body.slug !== undefined) updates.slug = body.slug;
     if (body.description !== undefined) updates.description = body.description;
 
-    // Price fields
+    // ========== PRICE ==========
     if (body.productPrice !== undefined)
       updates.price = toNumberSafe(body.productPrice);
     if (body.price !== undefined)
       updates.price = toNumberSafe(body.price);
-
     if (body.salePrice !== undefined)
       updates.salePrice = toNumberSafe(body.salePrice);
 
-    // Stock
+    // ========== STOCK ==========
     if (body.productStock !== undefined)
       updates.productStock = parseInt(body.productStock ?? 0);
 
-    // Category
-    if (body.categoryId !== undefined)
-      updates.categoryId = body.categoryId || null;
+    // ========== CATEGORY CONNECT ==========
+    if (body.categoryId !== undefined) {
+      updates.category = body.categoryId
+        ? { connect: { id: body.categoryId } }
+        : { disconnect: true };
+    }
 
-    // Farmer
-    if (body.farmerId !== undefined)
-      updates.farmerId = body.farmerId || null;
+    // ========== FARMER CONNECT ==========
+    if (body.farmerId !== undefined) {
+      updates.farmer = body.farmerId
+        ? { connect: { id: body.farmerId } }
+        : { disconnect: true };
+    }
 
-    // Images
+    // ========== IMAGES ==========
     if (body.imageUrl !== undefined)
       updates.imageUrl = body.imageUrl || null;
 
-    if (body.productImages !== undefined)
+    if (body.productImages !== undefined) {
       updates.productImages = Array.isArray(body.productImages)
         ? body.productImages
         : [body.productImages];
+    }
 
-    // Tags
+    // ========== TAGS ==========
     if (body.tags !== undefined)
       updates.tags = Array.isArray(body.tags) ? body.tags : [body.tags];
 
-    // SKU, barcode, unit
+    // ========== SKU, BARCODE, UNIT ==========
     if (body.sku !== undefined) updates.sku = body.sku;
     if (body.barcode !== undefined) updates.barcode = body.barcode;
     if (body.unit !== undefined) updates.unit = body.unit;
 
-    // Wholesale
-    if (body.isWholesale !== undefined)
-      updates.isWholesale = !!body.isWholesale;
-    if (body.wholesalePrice !== undefined)
-      updates.wholesalePrice = toNumberSafe(body.wholesalePrice);
-    if (body.wholesaleQty !== undefined)
-      updates.wholesaleQty = parseInt(body.wholesaleQty ?? 0);
-
-    // Product code
-    if (body.productCode !== undefined)
-      updates.productCode = body.productCode;
-
-    // Qty
+    // ========== QUANTITY FIELD ==========
     if (body.qty !== undefined)
       updates.qty = parseInt(body.qty ?? 0);
 
-    // Is Active
+    // ========== WHOLESALE ==========
+    if (body.isWholesale !== undefined)
+      updates.isWholesale = !!body.isWholesale;
+
+    if (body.wholesalePrice !== undefined)
+      updates.wholesalePrice = toNumberSafe(body.wholesalePrice);
+
+    if (body.wholesaleQty !== undefined)
+      updates.wholesaleQty = parseInt(body.wholesaleQty ?? 0);
+
+    // ========== PRODUCT CODE ==========
+    if (body.productCode !== undefined)
+      updates.productCode = body.productCode;
+
+    // ========== ACTIVE STATUS ==========
     if (body.isActive !== undefined)
       updates.isActive = !!body.isActive;
 
-    const updated = await prisma.product.update({
+    const updatedProduct = await prisma.product.update({
       where: { id },
       data: updates,
+      include: { category: true, farmer: true },
     });
 
     return NextResponse.json({
       success: true,
-      data: updated,
+      data: updatedProduct,
     });
   } catch (error) {
     console.error("PRODUCT [id] PUT ERROR:", error);
@@ -171,11 +181,12 @@ export async function DELETE(req, { params }) {
   try {
     const { id } = params;
 
-    if (!id)
+    if (!id) {
       return NextResponse.json(
         { success: false, message: "Product id required" },
         { status: 400 }
       );
+    }
 
     await prisma.product.delete({
       where: { id },
@@ -183,10 +194,11 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: "Product deleted",
+      message: "Product deleted successfully",
     });
   } catch (error) {
     console.error("PRODUCT [id] DELETE ERROR:", error);
+
     return NextResponse.json(
       {
         success: false,
