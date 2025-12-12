@@ -1,23 +1,51 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Heading from "./Heading";
 import LargeCards from "./LargeCards";
 import SmallCards from "./SmallCards";
 import DashboardCharts from "./DashboardCharts";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-export default async function FarmerDashboard({ sales = [], products = [], supports = [] }) {
-  const session = await getServerSession(authOptions);
+export default function FarmerDashboard({ sales = [], products = [], supports = [] }) {
+  const router = useRouter();
+  const session = getServerSession(authOptions);
   if (!session) return <div>Please login to view your dashboard</div>;
 
   const userId = session.user.id;
+
+  // State for products so table updates immediately after delete
+  const [productList, setProductList] = useState(products);
+
+  // Handle delete product
+  const handleDelete = async (productId) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProductList(productList.filter((p) => p.id !== productId));
+        alert("Product deleted successfully");
+      } else {
+        alert("Failed to delete product: " + data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    }
+  };
 
   return (
     <div className="p-6">
       <Heading title="Farmer Dashboard" />
 
-      <LargeCards sales={sales} products={products} />
+      <LargeCards sales={sales} products={productList} />
       <SmallCards orders={[]} supports={supports} />
       <DashboardCharts sales={sales} />
 
@@ -33,7 +61,7 @@ export default async function FarmerDashboard({ sales = [], products = [], suppo
       </div>
 
       <div className="mt-6 overflow-x-auto">
-        {products.length === 0 ? (
+        {productList.length === 0 ? (
           <p className="text-gray-600">No products uploaded yet.</p>
         ) : (
           <table className="min-w-full border-collapse border border-gray-200 rounded">
@@ -44,16 +72,31 @@ export default async function FarmerDashboard({ sales = [], products = [], suppo
                 <th className="p-2 border text-left">Price</th>
                 <th className="p-2 border text-left">Stock</th>
                 <th className="p-2 border text-left">Status</th>
+                <th className="p-2 border text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
+              {productList.map((product) => (
                 <tr key={product.id} className="text-center">
                   <td className="p-2 border">{product.title || "Untitled"}</td>
                   <td className="p-2 border">{product.category?.title || "No Category"}</td>
                   <td className="p-2 border">{product.price ?? 0}</td>
                   <td className="p-2 border">{product.productStock ?? 0}</td>
                   <td className="p-2 border">{product.isActive ? "Active" : "Draft"}</td>
+                  <td className="p-2 border flex gap-2 justify-center">
+                    <Link
+                      href={`/dashboard/farmers/products/${product.id}/edit`}
+                      className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -63,3 +106,4 @@ export default async function FarmerDashboard({ sales = [], products = [], suppo
     </div>
   );
 }
+
