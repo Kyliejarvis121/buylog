@@ -19,7 +19,7 @@ model User {
   role     String  @default("user")
 
   farmers Farmer[]
-  orders  Order[] // 👈 ADDED (Fixes relation)
+  orders  Order[]
 }
 
 //
@@ -71,6 +71,10 @@ model Product {
   productImages  String[] @default([])
   tags           String[] @default([])
   productCode    String?
+  sku            String?  // ✅ added
+  barcode        String?  // ✅ added
+  unit           String?  // ✅ added
+  qty            Int?     @default(1) // ✅ added
   isWholesale    Boolean? @default(false)
   wholesalePrice Float?   @default(0)
   wholesaleQty   Int?     @default(0)
@@ -80,7 +84,7 @@ model Product {
 
   category   Category?   @relation(fields: [categoryId], references: [id])
   farmer     Farmer?     @relation(fields: [farmerId], references: [id])
-  orderItems OrderItem[] // 👈 ADDED (Fixes relation)
+  orderItems OrderItem[]
 }
 
 //
