@@ -22,7 +22,13 @@ export default function ProductUpload({ farmerId, categories }) {
   const [tags, setTags] = useState([]);
   const [productImages, setProductImages] = useState([]);
 
-  const { register, watch, handleSubmit, reset, formState: { errors } } = useForm({
+  const {
+    register,
+    watch,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
     defaultValues: { isActive: true, isWholesale: false },
   });
 
@@ -30,24 +36,32 @@ export default function ProductUpload({ farmerId, categories }) {
 
   const onSubmit = async (data) => {
     if (productImages.length < 1) {
-      return alert("Upload at least one image");
+      return alert("Upload at least one product image");
     }
 
     const slug = generateSlug(data.title);
     const productCode = generateUserCode("LLP", data.title);
 
     const payload = {
-      ...data,
-      price: parseFloat(data.productPrice),
-      salePrice: data.salePrice ? parseFloat(data.salePrice) : null,
-      wholesalePrice: data.wholesalePrice ? parseFloat(data.wholesalePrice) : null,
-      wholesaleQty: data.wholesaleQty ? parseInt(data.wholesaleQty) : null,
-      farmerId,
+      title: data.title,
+      description: data.description ?? "",
       slug,
+      price: parseFloat(data.productPrice),
+      salePrice: data.salePrice ? parseFloat(data.salePrice) : 0,
+      productStock: parseInt(data.productStock ?? 0),
+      categoryId: data.categoryId || null,
+      farmerId,
+      imageUrl: productImages[0], // main image
+      productImages, // array
       tags,
-      productImages, // <-- MULTIPLE IMAGES ARRAY
-      qty: 1,
       productCode,
+      isWholesale: !!data.isWholesale,
+      wholesalePrice: data.wholesalePrice
+        ? parseFloat(data.wholesalePrice)
+        : 0,
+      wholesaleQty: data.wholesaleQty ? parseInt(data.wholesaleQty) : 0,
+      isActive: !!data.isActive,
+      qty: 1,
     };
 
     makePostRequest(
@@ -72,27 +86,48 @@ export default function ProductUpload({ farmerId, categories }) {
       <h2 className="text-xl font-semibold mb-4">Upload New Product</h2>
 
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        <TextInput label="Product Title" name="title" register={register} errors={errors} />
+        <TextInput
+          label="Product Title"
+          name="title"
+          register={register}
+          errors={errors}
+        />
 
-        <TextInput label="Product SKU" name="sku" register={register} errors={errors} />
-        <TextInput label="Product Barcode" name="barcode" register={register} errors={errors} />
+        <TextInput
+          label="Product Price"
+          name="productPrice"
+          type="number"
+          register={register}
+          errors={errors}
+        />
 
-        <TextInput label="Product Price" name="productPrice" type="number" register={register} errors={errors} />
-        <TextInput label="Discount Price" name="salePrice" type="number" register={register} errors={errors} />
+        <TextInput
+          label="Discount Price"
+          name="salePrice"
+          type="number"
+          register={register}
+          errors={errors}
+        />
 
-        <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} />
-
-        <TextInput label="Unit (e.g. 1kg, 500g)" name="unit" register={register} errors={errors} />
+        <TextInput
+          label="Product Stock"
+          name="productStock"
+          type="number"
+          register={register}
+          errors={errors}
+        />
 
         <SelectInput
           label="Select Category"
           name="categoryId"
           register={register}
           errors={errors}
-          options={categories.map((c) => ({ value: c.id, label: c.title }))}
+          options={categories.map((c) => ({
+            value: c.id,
+            label: c.title,
+          }))}
         />
 
-        {/* Wholesale Toggle */}
         <ToggleInput
           label="Supports Wholesale"
           name="isWholesale"
@@ -103,12 +138,24 @@ export default function ProductUpload({ farmerId, categories }) {
 
         {isWholesale && (
           <>
-            <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} />
-            <TextInput label="Minimum Wholesale Qty" name="wholesaleQty" type="number" register={register} errors={errors} />
+            <TextInput
+              label="Wholesale Price"
+              name="wholesalePrice"
+              type="number"
+              register={register}
+              errors={errors}
+            />
+
+            <TextInput
+              label="Minimum Wholesale Qty"
+              name="wholesaleQty"
+              type="number"
+              register={register}
+              errors={errors}
+            />
           </>
         )}
 
-        {/* MULTIPLE PRODUCT IMAGES */}
         <MultipleImageInput
           imageUrls={productImages}
           setImageUrls={setProductImages}
@@ -116,14 +163,33 @@ export default function ProductUpload({ farmerId, categories }) {
           label="Upload Product Images"
         />
 
-        <ArrayItemsInput setItems={setTags} items={tags} itemTitle="Tag" />
+        <ArrayItemsInput
+          setItems={setTags}
+          items={tags}
+          itemTitle="Tag"
+        />
 
-        <TextareaInput label="Product Description" name="description" register={register} errors={errors} />
+        <TextareaInput
+          label="Product Description"
+          name="description"
+          register={register}
+          errors={errors}
+        />
 
-        <ToggleInput label="Publish Product" name="isActive" trueTitle="Active" falseTitle="Draft" register={register} />
+        <ToggleInput
+          label="Publish Product"
+          name="isActive"
+          trueTitle="Active"
+          falseTitle="Draft"
+          register={register}
+        />
       </div>
 
-      <SubmitButton isLoading={loading} buttonTitle="Add Product" loadingButtonTitle="Uploading Product..." />
+      <SubmitButton
+        isLoading={loading}
+        buttonTitle="Add Product"
+        loadingButtonTitle="Uploading Product..."
+      />
     </form>
   );
 }
