@@ -8,9 +8,17 @@ export default async function NewProductPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
-  const userId = session.user.id;
+  // Get the farmer linked to the logged-in user
+  const farmer = await prisma.farmer.findFirst({
+    where: { userId: session.user.id },
+  });
 
-  // Fetch categories to populate the dropdown
+  if (!farmer) {
+    console.error("Farmer record not found for user", session.user.id);
+    redirect("/dashboard"); // Or show a message
+  }
+
+  // Fetch categories
   let categories = [];
   try {
     categories = await prisma.category.findMany({
@@ -23,8 +31,10 @@ export default async function NewProductPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-semibold mb-6 text-white">Upload New Product</h1>
-      <ProductUpload farmerId={userId} categories={categories} />
+      <h1 className="text-2xl font-semibold mb-6 text-white">
+        Upload New Product
+      </h1>
+      <ProductUpload farmerId={farmer.id} categories={categories} />
     </div>
   );
 }
