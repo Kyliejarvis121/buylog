@@ -7,20 +7,27 @@ import SmallCards from "./SmallCards";
 import DashboardCharts from "./DashboardCharts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { useSession } from "next-auth/react";
 
 export default function FarmerDashboard({ sales = [], products = [], supports = [] }) {
   const router = useRouter();
-  const session = getServerSession(authOptions);
-  if (!session) return <div>Please login to view your dashboard</div>;
+  const { data: session, status } = useSession();
+
+  // Loading state
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (!session?.user) {
+    return <div>Please login to view your dashboard</div>;
+  }
 
   const userId = session.user.id;
 
-  // State for products so table updates immediately after delete
+  // Local product state
   const [productList, setProductList] = useState(products);
 
-  // Handle delete product
+  // Delete product
   const handleDelete = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
@@ -49,7 +56,7 @@ export default function FarmerDashboard({ sales = [], products = [], supports = 
       <SmallCards orders={[]} supports={supports} />
       <DashboardCharts sales={sales} />
 
-      {/* New Product Section */}
+      {/* Products Section */}
       <div className="mt-8 flex justify-between items-center">
         <Heading title="Products" />
         <Link
@@ -106,4 +113,3 @@ export default function FarmerDashboard({ sales = [], products = [], supports = 
     </div>
   );
 }
-
