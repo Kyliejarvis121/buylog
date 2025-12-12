@@ -16,12 +16,27 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    // Validate required fields
+    // Check required fields
     if (!body.title || !body.farmerId) {
-      return NextResponse.json({ success: false, message: "Title and Farmer are required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Title and Farmer are required" },
+        { status: 400 }
+      );
     }
 
-    // Build Prisma create payload
+    // ❗ Verify the farmer actually exists
+    const farmer = await prisma.farmer.findUnique({
+      where: { id: body.farmerId }
+    });
+
+    if (!farmer) {
+      return NextResponse.json(
+        { success: false, message: "Invalid farmerId — farmer not found" },
+        { status: 404 }
+      );
+    }
+
+    // Build payload
     const payload = {
       title: body.title,
       slug: body.slug,
@@ -29,20 +44,34 @@ export async function POST(req) {
       price: toNumberSafe(body.price ?? body.productPrice, 0),
       salePrice: toNumberSafe(body.salePrice, 0),
       productStock: parseInt(body.productStock ?? 0),
+
       imageUrl: body.imageUrl || (body.productImages?.[0] ?? null),
-      productImages: Array.isArray(body.productImages) ? body.productImages : body.productImages ? [body.productImages] : [],
+
+      productImages: Array.isArray(body.productImages)
+        ? body.productImages
+        : body.productImages
+        ? [body.productImages]
+        : [],
+
       tags: Array.isArray(body.tags) ? body.tags : body.tags ? [body.tags] : [],
+
       productCode: body.productCode || null,
       sku: body.sku || null,
       barcode: body.barcode || null,
       unit: body.unit || null,
+
       qty: body.qty ? parseInt(body.qty) : 1,
+
       isWholesale: !!body.isWholesale,
       wholesalePrice: toNumberSafe(body.wholesalePrice, 0),
       wholesaleQty: body.wholesaleQty ? parseInt(body.wholesaleQty) : 0,
+
       isActive: body.isActive !== undefined ? !!body.isActive : true,
-      farmer: { connect: { id: body.farmerId } },
-      category: body.categoryId ? { connect: { id: body.categoryId } } : undefined,
+
+      // NOW SAFE
+      farmerId: body.farmerId,
+
+      categoryId: body.categoryId ?? null,
     };
 
     const product = await prisma.product.create({ data: payload });
@@ -50,7 +79,10 @@ export async function POST(req) {
     return NextResponse.json({ success: true, data: product });
   } catch (error) {
     console.error("CREATE PRODUCT ERROR:", error);
-    return NextResponse.json({ success: false, message: "Failed to create product", error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to create product", error: error.message },
+      { status: 500 }
+    );
   }
 }
 
@@ -78,7 +110,9 @@ export async function GET(req) {
     return NextResponse.json({ success: true, data: products });
   } catch (error) {
     console.error("GET PRODUCTS ERROR:", error);
-    return NextResponse.json({ success: false, message: "Failed to fetch products", error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch products", error: error.message },
+      { status: 500 }
+    );
   }
 }
-
