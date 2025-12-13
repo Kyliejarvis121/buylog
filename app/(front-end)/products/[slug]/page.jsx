@@ -1,19 +1,28 @@
-"use client"; // required for Swiper
+"use client"; // Needed because Swiper uses client-side rendering
 
 import { getData } from "@/lib/getData";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { Navigation, Pagination } from "swiper";
+
+// Correct imports for Swiper v10+
+import { Navigation } from "swiper/modules/navigation";
+import { Pagination } from "swiper/modules/pagination";
 
 export default async function ProductDetailPage({ params: { slug } }) {
+  // -------------------------------
+  // 1. Fetch Product
+  // -------------------------------
   const productRes = await getData(`products/product/${slug}`);
   const product =
     productRes && productRes.success && productRes.data
       ? productRes.data
       : null;
 
+  // -------------------------------
+  // 2. Fetch Category
+  // -------------------------------
   let category = null;
   if (product?.categoryId) {
     const categoryRes = await getData(`categories/${product.categoryId}`);
@@ -23,6 +32,9 @@ export default async function ProductDetailPage({ params: { slug } }) {
         : null;
   }
 
+  // -------------------------------
+  // 3. Handle Not Found
+  // -------------------------------
   if (!product) {
     return (
       <div className="p-4 text-center text-red-600 text-lg">
@@ -31,11 +43,16 @@ export default async function ProductDetailPage({ params: { slug } }) {
     );
   }
 
-  // Wrap single image in array if images are not provided
+  // -------------------------------
+  // 4. Prepare Images Array
+  // -------------------------------
   const images = product.images?.length
     ? product.images
     : [{ url: product.imageUrl || product.image || "/no-image.png" }];
 
+  // -------------------------------
+  // 5. Render Page
+  // -------------------------------
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* PRODUCT IMAGES SWIPER */}
