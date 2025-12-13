@@ -42,9 +42,13 @@ export default async function ProductDetailPage({ params: { slug } }) {
   // -------------------------------
   // 4. Prepare Images Array
   // -------------------------------
-  const images = product.images?.length
-    ? product.images
-    : [{ url: product.imageUrl || product.image || "/no-image.png" }];
+  // Use productImages array if exists, otherwise fallback to single imageUrl
+  const images =
+    product.productImages?.length > 0
+      ? product.productImages
+      : product.imageUrl
+      ? [product.imageUrl]
+      : ["/no-image.png"];
 
   // -------------------------------
   // 5. Render Page
@@ -54,15 +58,15 @@ export default async function ProductDetailPage({ params: { slug } }) {
       {/* PRODUCT IMAGES SWIPER */}
       <div className="w-full mb-6">
         <Swiper
-          navigation // ✅ enables arrows
-          pagination={{ clickable: true }} // ✅ enables dots
+          navigation
+          pagination={{ clickable: true }}
           spaceBetween={10}
           slidesPerView={1}
         >
           {images.map((img, index) => (
             <SwiperSlide key={index}>
               <img
-                src={img.url}
+                src={typeof img === "string" ? img : img.url}
                 alt={`${product.title} image ${index + 1}`}
                 className="w-full h-80 object-cover rounded-lg border bg-gray-100"
               />
@@ -94,3 +98,4 @@ export default async function ProductDetailPage({ params: { slug } }) {
     </div>
   );
 }
+
