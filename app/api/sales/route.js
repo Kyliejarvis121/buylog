@@ -12,12 +12,15 @@ function safeJson(obj) {
 
 export async function GET() {
   try {
-    const sales = await prisma.sale.findMany({
+    const sales = await prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        product: true, // if your Sale has a product relation
-        farmer: true,  // if your Sale has a farmer relation
-        user: true,    // if your Sale has a user relation
+        items: {
+          include: {
+            product: true, // include product details for each order item
+          },
+        },
+        user: true, // include user who placed the order
       },
     });
 
@@ -32,8 +35,7 @@ export async function GET() {
       {
         success: false,
         data: [],
-        message: "Failed to fetch sales",
-        error: error.message,
+        message: error.message || "Failed to fetch sales",
       },
       { status: 500 }
     );

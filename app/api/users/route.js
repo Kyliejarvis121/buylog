@@ -4,15 +4,15 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
-      orderBy: { id: "desc" }, // FIXED
+      orderBy: { id: "desc" },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
-        emailVerified: true,
         phone: true,
-        createdAt: true, // This will still work if it exists in DB
+        createdAt: true,
+        // ✅ Removed emailVerified because it doesn't exist in your schema
       },
     });
 
@@ -20,9 +20,8 @@ export async function GET() {
   } catch (error) {
     console.error("USERS API ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch users" },
+      { success: false, message: error.message || "Failed to fetch users" },
       { status: 500 }
     );
   }
 }
-
