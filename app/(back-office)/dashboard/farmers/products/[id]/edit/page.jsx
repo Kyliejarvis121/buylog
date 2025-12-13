@@ -1,10 +1,18 @@
+"use client";
+
+
+
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 
 export default function EditProductPage() {
-  const router = useRouter();
-  const params = useParams();
-  const productId = params.id;
+    
+    const router = useRouter();
+    const params = useParams();
+    const productId = params.id;
+  
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
