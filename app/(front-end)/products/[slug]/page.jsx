@@ -6,12 +6,6 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-// Correct Swiper import for Next.js/Vercel
-import SwiperCore, { Navigation, Pagination } from "swiper";
-
-// Install Swiper modules
-SwiperCore.use([Navigation, Pagination]);
-
 export default async function ProductDetailPage({ params: { slug } }) {
   // -------------------------------
   // 1. Fetch Product
@@ -60,8 +54,8 @@ export default async function ProductDetailPage({ params: { slug } }) {
       {/* PRODUCT IMAGES SWIPER */}
       <div className="w-full mb-6">
         <Swiper
-          navigation
-          pagination={{ clickable: true }}
+          navigation // ✅ enables arrows
+          pagination={{ clickable: true }} // ✅ enables dots
           spaceBetween={10}
           slidesPerView={1}
         >
