@@ -103,6 +103,15 @@ export default function EditProductPage() {
     }));
   };
 
+  // SELECT FILES ONLY (NO UPLOAD HERE)
+const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+  
+    setSelectedFiles(files);
+  };
+  
+
   const uploadSelectedImages = async () => {
     if (!selectedFiles.length) return;
   
