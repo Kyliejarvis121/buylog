@@ -34,7 +34,13 @@ export default async function NewProductPage() {
       <h1 className="text-2xl font-semibold mb-6 text-white">
         Upload New Product
       </h1>
-      <ProductUpload farmerId={farmer.id} categories={categories} />
+
+      {/* Pass empty existingProduct for new uploads */}
+      <ProductUpload
+        farmerId={farmer.id}
+        categories={categories}
+        existingProduct={null} // ensures multiple image merge logic works in future
+      />
     </div>
   );
 }
