@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
@@ -16,11 +16,11 @@ import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
 import { makePostRequest } from "@/lib/apiRequest";
 
-export default function ProductUpload({ farmerId, categories }) {
+export default function ProductUpload({ farmerId, categories, existingProduct }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [tags, setTags] = useState([]);
-  const [productImages, setProductImages] = useState([]);
+  const [tags, setTags] = useState(existingProduct?.tags || []);
+  const [productImages, setProductImages] = useState(existingProduct?.productImages || []);
 
   const {
     register,
@@ -29,7 +29,7 @@ export default function ProductUpload({ farmerId, categories }) {
     reset,
     formState: { errors },
   } = useForm({
-    defaultValues: { isActive: true, isWholesale: false },
+    defaultValues: { isActive: existingProduct?.isActive ?? true, isWholesale: existingProduct?.isWholesale ?? false },
   });
 
   const isWholesale = watch("isWholesale");
@@ -39,10 +39,18 @@ export default function ProductUpload({ farmerId, categories }) {
       return alert("Upload at least one product image");
     }
 
+    // Merge existing images if editing
+    let allImages = productImages;
+    if (existingProduct?.productImages?.length) {
+      // Append any new images not already in the array
+      allImages = [...existingProduct.productImages, ...productImages.filter(img => !existingProduct.productImages.includes(img))];
+    }
+
     const slug = generateSlug(data.title);
     const productCode = generateUserCode("LLP", data.title);
 
     const payload = {
+      id: existingProduct?.id, // for edit
       title: data.title,
       description: data.description ?? "",
       slug,
@@ -51,30 +59,33 @@ export default function ProductUpload({ farmerId, categories }) {
       productStock: parseInt(data.productStock ?? 0),
       categoryId: data.categoryId || null,
       farmerId,
-      imageUrl: productImages[0], // main image
-      productImages, // array
+      imageUrl: allImages[0], // main image
+      productImages: allImages, // full array
       tags,
       productCode,
       isWholesale: !!data.isWholesale,
-      wholesalePrice: data.wholesalePrice
-        ? parseFloat(data.wholesalePrice)
-        : 0,
+      wholesalePrice: data.wholesalePrice ? parseFloat(data.wholesalePrice) : 0,
       wholesaleQty: data.wholesaleQty ? parseInt(data.wholesaleQty) : 0,
       isActive: !!data.isActive,
       qty: 1,
     };
 
+    // Decide if POST or PUT
+    const method = existingProduct ? "PUT" : "POST";
+    const endpoint = "/api/products";
+
     makePostRequest(
       setLoading,
-      "/api/products",
+      endpoint,
       payload,
-      "Product",
+      existingProduct ? "Product updated" : "Product",
       () => {
         reset();
         setTags([]);
         setProductImages([]);
       },
-      () => router.push("/dashboard/farmers/products")
+      () => router.push("/dashboard/farmers/products"),
+      method
     );
   };
 
@@ -83,7 +94,7 @@ export default function ProductUpload({ farmerId, categories }) {
       onSubmit={handleSubmit(onSubmit)}
       className="w-full max-w-4xl p-4 bg-gray-900 border border-gray-700 rounded-lg shadow sm:p-6 md:p-8 mx-auto my-4 text-white"
     >
-      <h2 className="text-xl font-semibold mb-4">Upload New Product</h2>
+      <h2 className="text-xl font-semibold mb-4">{existingProduct ? "Edit Product" : "Upload New Product"}</h2>
 
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
         <TextInput
@@ -91,6 +102,7 @@ export default function ProductUpload({ farmerId, categories }) {
           name="title"
           register={register}
           errors={errors}
+          defaultValue={existingProduct?.title}
         />
 
         <TextInput
@@ -99,6 +111,7 @@ export default function ProductUpload({ farmerId, categories }) {
           type="number"
           register={register}
           errors={errors}
+          defaultValue={existingProduct?.price}
         />
 
         <TextInput
@@ -107,6 +120,7 @@ export default function ProductUpload({ farmerId, categories }) {
           type="number"
           register={register}
           errors={errors}
+          defaultValue={existingProduct?.salePrice}
         />
 
         <TextInput
@@ -115,6 +129,7 @@ export default function ProductUpload({ farmerId, categories }) {
           type="number"
           register={register}
           errors={errors}
+          defaultValue={existingProduct?.productStock}
         />
 
         <SelectInput
@@ -122,6 +137,7 @@ export default function ProductUpload({ farmerId, categories }) {
           name="categoryId"
           register={register}
           errors={errors}
+          defaultValue={existingProduct?.categoryId}
           options={categories.map((c) => ({
             value: c.id,
             label: c.title,
@@ -144,6 +160,7 @@ export default function ProductUpload({ farmerId, categories }) {
               type="number"
               register={register}
               errors={errors}
+              defaultValue={existingProduct?.wholesalePrice}
             />
 
             <TextInput
@@ -152,6 +169,7 @@ export default function ProductUpload({ farmerId, categories }) {
               type="number"
               register={register}
               errors={errors}
+              defaultValue={existingProduct?.wholesaleQty}
             />
           </>
         )}
@@ -161,6 +179,7 @@ export default function ProductUpload({ farmerId, categories }) {
           setImageUrls={setProductImages}
           endpoint="multipleProductsUploader"
           label="Upload Product Images"
+          existingImages={existingProduct?.productImages || []} // optional, for display
         />
 
         <ArrayItemsInput
@@ -174,6 +193,7 @@ export default function ProductUpload({ farmerId, categories }) {
           name="description"
           register={register}
           errors={errors}
+          defaultValue={existingProduct?.description}
         />
 
         <ToggleInput
@@ -187,8 +207,8 @@ export default function ProductUpload({ farmerId, categories }) {
 
       <SubmitButton
         isLoading={loading}
-        buttonTitle="Add Product"
-        loadingButtonTitle="Uploading Product..."
+        buttonTitle={existingProduct ? "Update Product" : "Add Product"}
+        loadingButtonTitle={existingProduct ? "Updating Product..." : "Uploading Product..."}
       />
     </form>
   );

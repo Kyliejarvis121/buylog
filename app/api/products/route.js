@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
+// ----------------------------
+// Helpers
+// ----------------------------
 function toNumberSafe(val, fallback = undefined) {
   if (val === undefined || val === null) return fallback;
   const n = Number(val);
@@ -13,9 +16,9 @@ function removeUndef(obj) {
   return out;
 }
 
-// =============================
+// ----------------------------
 // GET PRODUCTS
-// =============================
+// ----------------------------
 export async function GET(req) {
   try {
     const url = new URL(req.url);
@@ -44,33 +47,23 @@ export async function GET(req) {
   }
 }
 
-// =============================
+// ----------------------------
 // CREATE PRODUCT
-// =============================
+// ----------------------------
 export async function POST(req) {
   try {
     const body = await req.json();
 
-    if (!body.title) {
-      return NextResponse.json({ success: false, message: "Product title is required" }, { status: 400 });
-    }
+    if (!body.title) return NextResponse.json({ success: false, message: "Product title is required" }, { status: 400 });
+    if (!body.farmerId) return NextResponse.json({ success: false, message: "farmerId is required" }, { status: 400 });
 
-    if (!body.farmerId) {
-      return NextResponse.json({ success: false, message: "farmerId is required to link product" }, { status: 400 });
-    }
-
-    // verify farmer exists
     const farmer = await prisma.farmer.findUnique({ where: { id: body.farmerId } });
-    if (!farmer) {
-      return NextResponse.json({ success: false, message: "Farmer not found" }, { status: 404 });
-    }
+    if (!farmer) return NextResponse.json({ success: false, message: "Farmer not found" }, { status: 404 });
 
     let categoryConnect = undefined;
     if (body.categoryId) {
       const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
-      if (!category) {
-        return NextResponse.json({ success: false, message: "Category not found" }, { status: 404 });
-      }
+      if (!category) return NextResponse.json({ success: false, message: "Category not found" }, { status: 404 });
       categoryConnect = { connect: { id: body.categoryId } };
     }
 
@@ -91,7 +84,7 @@ export async function POST(req) {
       price,
       salePrice,
       productStock,
-      imageUrl: body.imageUrl ?? (productImages[0] ?? null),
+      imageUrl: productImages[0] ?? body.imageUrl ?? null, // first image becomes main
       productImages,
       tags,
       productCode: body.productCode ?? null,
@@ -119,3 +112,61 @@ export async function POST(req) {
   }
 }
 
+// ----------------------------
+// UPDATE PRODUCT
+// ----------------------------
+export async function PUT(req) {
+  try {
+    const body = await req.json();
+    if (!body.id) return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
+
+    const existingProduct = await prisma.product.findUnique({ where: { id: body.id } });
+    if (!existingProduct) return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 });
+
+    // Merge new images with existing images
+    const newImages = Array.isArray(body.productImages) ? body.productImages : body.productImages ? [body.productImages] : [];
+    const allImages = [...(existingProduct.productImages || []), ...newImages];
+
+    let categoryConnect = undefined;
+    if (body.categoryId) {
+      const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
+      if (!category) return NextResponse.json({ success: false, message: "Category not found" }, { status: 404 });
+      categoryConnect = { connect: { id: body.categoryId } };
+    }
+
+    const updateData = removeUndef({
+      title: body.title ?? existingProduct.title,
+      slug: body.slug ?? existingProduct.slug,
+      description: body.description ?? existingProduct.description,
+      price: body.price !== undefined ? toNumberSafe(body.price) : existingProduct.price,
+      salePrice: body.salePrice !== undefined ? toNumberSafe(body.salePrice) : existingProduct.salePrice,
+      productStock: body.productStock !== undefined ? parseInt(body.productStock) : existingProduct.productStock,
+      imageUrl: allImages[0] ?? existingProduct.imageUrl, // sync first image as main
+      productImages: allImages,
+      tags: Array.isArray(body.tags) ? body.tags : body.tags ? [body.tags] : existingProduct.tags,
+      productCode: body.productCode ?? existingProduct.productCode,
+      sku: body.sku ?? existingProduct.sku,
+      barcode: body.barcode ?? existingProduct.barcode,
+      unit: body.unit ?? existingProduct.unit,
+      qty: body.qty !== undefined ? parseInt(body.qty) : existingProduct.qty,
+      isWholesale: body.isWholesale !== undefined ? !!body.isWholesale : existingProduct.isWholesale,
+      wholesalePrice: body.wholesalePrice !== undefined ? toNumberSafe(body.wholesalePrice) : existingProduct.wholesalePrice,
+      wholesaleQty: body.wholesaleQty !== undefined ? parseInt(body.wholesaleQty) : existingProduct.wholesaleQty,
+      isActive: body.isActive !== undefined ? !!body.isActive : existingProduct.isActive,
+      category: categoryConnect,
+    });
+
+    if (updateData.category === undefined) delete updateData.category;
+
+    const updatedProduct = await prisma.product.update({
+      where: { id: body.id },
+      data: updateData,
+    });
+
+    return NextResponse.json({ success: true, message: "Product updated", data: updatedProduct });
+  } catch (error) {
+    console.error("UPDATE PRODUCT ERROR:", error);
+    const msg = error?.meta?.cause || error?.message || "Failed to update product";
+    return NextResponse.json({ success: false, message: "Failed to update product", error: msg }, { status: 500 });
+  }
+}
