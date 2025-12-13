@@ -1,23 +1,20 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+"use client"; // required for Swiper
 
 import { getData } from "@/lib/getData";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { Navigation, Pagination } from "swiper";
 
 export default async function ProductDetailPage({ params: { slug } }) {
-  // -------------------------------
-  // 1. Fetch Product
-  // -------------------------------
   const productRes = await getData(`products/product/${slug}`);
   const product =
     productRes && productRes.success && productRes.data
       ? productRes.data
       : null;
 
-  // -------------------------------
-  // 2. Fetch Category
-  // -------------------------------
   let category = null;
-
   if (product?.categoryId) {
     const categoryRes = await getData(`categories/${product.categoryId}`);
     category =
@@ -26,9 +23,6 @@ export default async function ProductDetailPage({ params: { slug } }) {
         : null;
   }
 
-  // -------------------------------
-  // 3. Render
-  // -------------------------------
   if (!product) {
     return (
       <div className="p-4 text-center text-red-600 text-lg">
@@ -37,15 +31,32 @@ export default async function ProductDetailPage({ params: { slug } }) {
     );
   }
 
+  // Wrap single image in array if images are not provided
+  const images = product.images?.length
+    ? product.images
+    : [{ url: product.imageUrl || product.image || "/no-image.png" }];
+
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* PRODUCT IMAGE */}
+      {/* PRODUCT IMAGES SWIPER */}
       <div className="w-full mb-6">
-        <img
-          src={product.imageUrl || product.image || "/no-image.png"}
-          alt={product.title}
-          className="w-full h-80 object-cover rounded-lg border bg-gray-100"
-        />
+        <Swiper
+          modules={[Navigation, Pagination]}
+          navigation
+          pagination={{ clickable: true }}
+          spaceBetween={10}
+          slidesPerView={1}
+        >
+          {images.map((img, index) => (
+            <SwiperSlide key={index}>
+              <img
+                src={img.url}
+                alt={`${product.title} image ${index + 1}`}
+                className="w-full h-80 object-cover rounded-lg border bg-gray-100"
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
       </div>
 
       {/* TITLE */}
