@@ -10,9 +10,8 @@ export async function GET() {
         name: true,
         email: true,
         role: true,
-        phone: true,
-        createdAt: true,
-        // ✅ Removed emailVerified because it doesn't exist in your schema
+        password: true, // optional: include if needed for admin
+        // ❌ Removed phone and emailVerified
       },
     });
 
