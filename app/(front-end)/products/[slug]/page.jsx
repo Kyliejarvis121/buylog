@@ -1,4 +1,4 @@
-"use client"; // Needed because Swiper uses client-side rendering
+"use client"; // Swiper is client-side only
 
 import { getData } from "@/lib/getData";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -6,9 +6,11 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-// Correct imports for Swiper v10+
-import { Navigation } from "swiper/modules/navigation";
-import { Pagination } from "swiper/modules/pagination";
+// Correct Swiper import for Next.js/Vercel
+import SwiperCore, { Navigation, Pagination } from "swiper";
+
+// Install Swiper modules
+SwiperCore.use([Navigation, Pagination]);
 
 export default async function ProductDetailPage({ params: { slug } }) {
   // -------------------------------
@@ -58,7 +60,6 @@ export default async function ProductDetailPage({ params: { slug } }) {
       {/* PRODUCT IMAGES SWIPER */}
       <div className="w-full mb-6">
         <Swiper
-          modules={[Navigation, Pagination]}
           navigation
           pagination={{ clickable: true }}
           spaceBetween={10}
