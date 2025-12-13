@@ -1,26 +1,21 @@
 "use client";
 
-
-
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 
 export default function EditProductPage() {
-    
-    const router = useRouter();
-    const params = useParams();
-    const productId = params.id;
-  
+  const router = useRouter();
+  const params = useParams();
+  const productId = params.id;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
   const [categories, setCategories] = useState([]);
-  const [selectedFiles, setSelectedFiles] = useState([]); // 👈 NEW
+
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [form, setForm] = useState({
     title: "",
@@ -42,9 +37,7 @@ export default function EditProductPage() {
     wholesaleQty: "",
   });
 
-  // ==================================================
   // FETCH PRODUCT + CATEGORIES
-  // ==================================================
   useEffect(() => {
     async function fetchData() {
       try {
@@ -75,9 +68,7 @@ export default function EditProductPage() {
           imageUrl:
             p.imageUrl ??
             (Array.isArray(p.productImages) ? p.productImages[0] ?? "" : ""),
-          productImages: Array.isArray(p.productImages)
-            ? p.productImages
-            : [],
+          productImages: Array.isArray(p.productImages) ? p.productImages : [],
           sku: p.sku ?? "",
           barcode: p.barcode ?? "",
           unit: p.unit ?? "",
@@ -99,85 +90,79 @@ export default function EditProductPage() {
     fetchData();
   }, [productId, router]);
 
-  // ==================================================
-  // FORM HANDLERS
-  // ==================================================
+  // INPUT HANDLER
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     if (type === "checkbox") {
       setForm((prev) => ({ ...prev, [name]: !!checked }));
       return;
     }
-
     setForm((prev) => ({
       ...prev,
       [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
     }));
   };
 
-  // ==================================================
-  // IMAGE SELECTION (NO UPLOAD YET)
-  // ==================================================
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFiles(files);
-  };
-
-  // ==================================================
-  // IMAGE UPLOAD BUTTON (ACTUAL UPLOAD)
-  // ==================================================
-  const uploadSelectedImages = async () => {
-    if (selectedFiles.length === 0) return alert("Select images first");
+  // UPLOAD WITH PROGRESS
+  const uploadImages = async () => {
+    if (!selectedFiles.length) return;
 
     setUploading(true);
+    setUploadProgress(0);
     const uploadedUrls = [];
 
-    try {
-      for (let file of selectedFiles) {
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
         const fd = new FormData();
         fd.append("file", file);
 
-        const uploadRes = await fetch("/api/uploadthing", {
-          method: "POST",
-          body: fd,
-        });
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round(((i + e.loaded / e.total) / selectedFiles.length) * 100);
+            setUploadProgress(percent);
+          }
+        };
 
-        const uploadJson = await uploadRes.json();
-        const url =
-          uploadJson?.fileUrl ||
-          uploadJson?.url ||
-          uploadJson?.data?.fileUrl ||
-          uploadJson?.data?.url;
+        xhr.onload = () => {
+          try {
+            const res = JSON.parse(xhr.responseText);
+            const url =
+              res?.fileUrl || res?.url || res?.data?.fileUrl || res?.data?.url;
+            if (url) uploadedUrls.push(url);
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        };
 
-        if (url) uploadedUrls.push(url);
-      }
-
-      if (uploadedUrls.length > 0) {
-        setForm((prev) => ({
-          ...prev,
-          productImages: [...prev.productImages, ...uploadedUrls],
-          imageUrl: prev.imageUrl || uploadedUrls[0],
-        }));
-
-        setSelectedFiles([]); // reset input
-      }
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("Image upload failed");
-    } finally {
-      setUploading(false);
+        xhr.onerror = reject;
+        xhr.open("POST", "/api/uploadthing");
+        xhr.send(fd);
+      });
     }
+
+    setForm((prev) => ({
+      ...prev,
+      productImages: [...prev.productImages, ...uploadedUrls],
+      imageUrl: prev.imageUrl || uploadedUrls[0] || "",
+    }));
+
+    setSelectedFiles([]);
+    setUploading(false);
+    setUploadProgress(0);
   };
 
-  // ==================================================
-  // IMAGE HELPERS
-  // ==================================================
   const removeImg = (url) => {
     setForm((prev) => {
-      const nextImages = prev.productImages.filter((i) => i !== url);
-      const nextMain = prev.imageUrl === url ? nextImages[0] ?? "" : prev.imageUrl;
-      return { ...prev, productImages: nextImages, imageUrl: nextMain };
+      const imgs = prev.productImages.filter((i) => i !== url);
+      return {
+        ...prev,
+        productImages: imgs,
+        imageUrl: prev.imageUrl === url ? imgs[0] ?? "" : prev.imageUrl,
+      };
     });
   };
 
@@ -185,56 +170,28 @@ export default function EditProductPage() {
     setForm((prev) => ({ ...prev, imageUrl: url }));
   };
 
-  // ==================================================
-  // TAGS
-  // ==================================================
   const addTag = (tag) => {
     if (!tag) return;
-    setForm((prev) => ({
-      ...prev,
-      tags: [...new Set([...prev.tags, tag])],
-    }));
+    setForm((prev) => ({ ...prev, tags: [...new Set([...prev.tags, tag])] }));
   };
 
   const removeTag = (tag) => {
-    setForm((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((t) => t !== tag),
-    }));
+    setForm((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
   };
 
-  // ==================================================
   // UPDATE PRODUCT
-  // ==================================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      const payload = {
-        title: form.title,
-        slug: form.slug || undefined,
-        price: Number(form.price),
-        salePrice: form.salePrice !== "" ? Number(form.salePrice) : null,
-        productStock: Number(form.productStock || 0),
-        description: form.description,
-        categoryId: form.categoryId || null,
-        isActive: !!form.isActive,
-        imageUrl: form.imageUrl || null,
-        productImages: form.productImages,
-        sku: form.sku || null,
-        barcode: form.barcode || null,
-        unit: form.unit || null,
-        tags: form.tags,
-        isWholesale: !!form.isWholesale,
-        wholesalePrice: Number(form.wholesalePrice || 0),
-        wholesaleQty: Number(form.wholesaleQty || 0),
-      };
-
       const res = await fetch(`/api/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...form,
+          productImages: form.productImages,
+        }),
       });
 
       const data = await res.json();
@@ -247,36 +204,21 @@ export default function EditProductPage() {
       }
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
+      alert("Update error");
     } finally {
       setSaving(false);
     }
   };
 
-  // ==================================================
-  // DELETE PRODUCT
-  // ==================================================
   const handleDelete = async () => {
-    if (!confirm("Delete this product?")) return;
+    if (!confirm("Delete product permanently?")) return;
     setDeleting(true);
-
-    try {
-      const res = await fetch(`/api/products/${productId}`, { method: "DELETE" });
-      const j = await res.json();
-
-      if (j.success) {
-        alert("Product deleted");
-        router.push("/dashboard/farmers/products");
-      } else {
-        alert(j.message || "Delete failed");
-      }
-    } finally {
-      setDeleting(false);
-    }
+    await fetch(`/api/products/${productId}`, { method: "DELETE" });
+    router.push("/dashboard/farmers/products");
   };
 
   if (loading) {
-    return <div className="p-6 bg-gray-900 min-h-screen text-white">Loading…</div>;
+    return <div className="p-6 bg-gray-900 min-h-screen text-white">Loading...</div>;
   }
 
   return (
@@ -285,52 +227,62 @@ export default function EditProductPage() {
         <h1 className="text-2xl font-semibold mb-4">Edit Product</h1>
 
         <form onSubmit={handleSubmit} className="grid gap-4">
-          {/* ALL YOUR EXISTING FIELDS REMAIN UNCHANGED */}
 
-          {/* ADD MORE IMAGES */}
+          {/* ALL YOUR EXISTING FIELDS ARE UNCHANGED ABOVE */}
+
+          {/* IMAGE UPLOAD */}
           <div>
-            <label className="block text-sm mb-1">Add More Images</label>
+            <label className="block text-sm mb-1">Add More Photos</label>
             <input
               type="file"
               multiple
               accept="image/*"
-              onChange={handleFileSelect}
-              className="text-sm"
+              onChange={(e) => setSelectedFiles(e.target.files)}
             />
 
-            <button
-              type="button"
-              onClick={uploadSelectedImages}
-              disabled={uploading}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              {uploading ? "Uploading…" : "Upload Selected Images"}
-            </button>
+            {selectedFiles.length > 0 && (
+              <button
+                type="button"
+                onClick={uploadImages}
+                disabled={uploading}
+                className="mt-2 px-4 py-2 bg-blue-600 rounded"
+              >
+                {uploading ? "Uploading..." : "Upload Photos"}
+              </button>
+            )}
+
+            {uploading && (
+              <div className="mt-2 text-sm">
+                Uploading: {uploadProgress}%
+                <div className="w-full bg-gray-700 h-2 rounded mt-1">
+                  <div
+                    className="bg-lime-500 h-2 rounded"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* IMAGE PREVIEW */}
           <div className="grid grid-cols-3 gap-3">
             {form.productImages.map((url, i) => (
               <div key={i} className="relative border border-gray-700 rounded">
-                <img src={url} className="w-full h-32 object-cover" />
+                <img src={url} className="h-32 w-full object-cover" />
                 <div className="absolute top-1 left-1 flex gap-1">
                   <button
                     type="button"
                     onClick={() => setMainImage(url)}
-                    className={`text-xs px-2 py-1 rounded ${
-                      form.imageUrl === url
-                        ? "bg-lime-600 text-black"
-                        : "bg-gray-800"
-                    }`}
+                    className="text-xs px-2 py-1 bg-gray-800 rounded"
                   >
-                    {form.imageUrl === url ? "Main" : "Set main"}
+                    {form.imageUrl === url ? "Main" : "Set"}
                   </button>
                   <button
                     type="button"
                     onClick={() => removeImg(url)}
                     className="text-xs px-2 py-1 bg-red-600 rounded"
                   >
-                    Remove
+                    X
                   </button>
                 </div>
               </div>
@@ -339,23 +291,18 @@ export default function EditProductPage() {
 
           {/* ACTIONS */}
           <div className="flex gap-3 mt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 bg-lime-600 text-black rounded"
-            >
-              {saving ? "Saving…" : "Update Product"}
+            <button className="px-4 py-2 bg-lime-600 text-black rounded">
+              {saving ? "Saving..." : "Update Product"}
             </button>
-
             <button
               type="button"
               onClick={handleDelete}
-              disabled={deleting}
               className="ml-auto px-4 py-2 bg-red-600 rounded"
             >
-              {deleting ? "Deleting…" : "Delete"}
+              {deleting ? "Deleting..." : "Delete"}
             </button>
           </div>
+
         </form>
       </div>
     </div>
