@@ -1,3 +1,6 @@
+"use client";
+
+
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { getServerSession } from "next-auth";
