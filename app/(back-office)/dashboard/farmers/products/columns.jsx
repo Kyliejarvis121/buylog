@@ -1,5 +1,7 @@
-// app/backoffice/dashboard/farmers/products/columns.js
-import { ColumnDef } from "@tanstack/react-table";
+"use client";
+
+import React from "react";
+import DataTable from "@/components/data-table-components/DataTable";
 
 export const columns = [
   {
@@ -13,7 +15,7 @@ export const columns = [
   {
     header: "Price",
     accessorKey: "price",
-    cell: (info) => `$${info.getValue().toFixed(2)}`,
+    cell: (info) => `$${info.getValue()?.toFixed(2) || "0.00"}`,
   },
   {
     header: "Stock",
@@ -25,3 +27,7 @@ export const columns = [
     cell: (info) => (info.getValue() ? "Active" : "Inactive"),
   },
 ];
+
+export default function FarmerProductsTable({ products }) {
+  return <DataTable data={products} columns={columns} />;
+}
