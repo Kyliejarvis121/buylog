@@ -8,23 +8,34 @@ import { columns } from "./columns";
 
 export default async function FarmersPage() {
   let farmers = [];
+
   try {
-    // ✅ Use singular 'farmer'
+    // Fetch all farmers with their linked user
     farmers = await prisma.farmer.findMany({
       orderBy: { createdAt: "desc" },
-      include: { user: true },
+      include: { user: true }, // include related user info
     });
   } catch (error) {
-    return <div className="p-4 text-red-600">Failed to fetch farmers: {error.message}</div>;
+    console.error("Failed to fetch farmers:", error);
+    return (
+      <div className="p-4 text-red-600">
+        Failed to fetch farmers: {error.message}
+      </div>
+    );
   }
 
   return (
-    <div>
-      <PageHeader heading="Farmers" href="/dashboard/farmers/new" linkTitle="Add Farmer" />
-      <div className="py-0">
+    <div className="container mx-auto py-8">
+      <PageHeader
+        heading="Farmers"
+        href="/dashboard/farmers/new"
+        linkTitle="Add Farmer"
+      />
+
+      <div className="py-4">
         <DataTable
           data={Array.isArray(farmers) ? farmers : []}
-          columns={columns} // include "Approve/Reject" actions in your columns
+          columns={columns} // ensure your columns handle 'user' and 'status'
           filterKeys={["name", "status"]}
         />
       </div>
