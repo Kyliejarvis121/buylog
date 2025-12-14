@@ -2,7 +2,7 @@
 
 
 import PageHeader from "@/components/backoffice/PageHeader";
-import FarmerProductsTable from "./FarmerProductsTable";
+import columns from "./columns";
 import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
