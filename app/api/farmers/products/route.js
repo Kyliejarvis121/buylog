@@ -28,38 +28,25 @@ export async function POST(req) {
       unit,
     } = body;
 
-    // Validate required fields
     if (!title || !price || !farmerId) {
       return NextResponse.json(
-        { success: false, message: "Missing required fields: title, price, or farmerId" },
+        { success: false, message: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Verify farmer exists
-    const farmer = await prisma.farmer.findUnique({ where: { id: farmerId } });
-    if (!farmer) {
-      return NextResponse.json(
-        { success: false, message: "Farmer not found" },
-        { status: 404 }
-      );
-    }
-
-    // Verify category exists if provided
-    let categoryConnect = undefined;
-    if (categoryId) {
-      const category = await prisma.category.findUnique({ where: { id: categoryId } });
-      if (category) categoryConnect = { connect: { id: categoryId } };
-    }
-
-    // Ensure productImages is always an array
+    // Ensure productImages is an array
     const imagesArray = Array.isArray(productImages)
       ? productImages
       : productImages
       ? [productImages]
       : [];
 
-    // Create product
+    // Connect category if exists
+    const categoryConnect = categoryId
+      ? { connect: { id: categoryId } }
+      : undefined;
+
     const newProduct = await prisma.product.create({
       data: {
         title,
@@ -73,7 +60,7 @@ export async function POST(req) {
         sku: sku || "",
         barcode: barcode || "",
         unit: unit || "",
-        imageUrl: imagesArray[0] || null, // first image is main
+        imageUrl: imagesArray[0] || null,
         productImages: imagesArray,
         tags: tags || [],
         isActive: isActive ?? true,
@@ -94,3 +81,33 @@ export async function POST(req) {
     );
   }
 }
+
+// GET ALL PRODUCTS
+export async function GET(req) {
+  try {
+    const url = new URL(req.url);
+    const q = url.searchParams.get("q") || "";
+    const limit = parseInt(url.searchParams.get("limit") || "50");
+
+    const products = await prisma.product.findMany({
+      where: {
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: { category: true, farmer: true },
+    });
+
+    return NextResponse.json({ success: true, data: products });
+  } catch (error) {
+    console.error("GET PRODUCTS ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch products", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+

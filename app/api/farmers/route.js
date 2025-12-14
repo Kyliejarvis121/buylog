@@ -1,41 +1,31 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+"use client";
 
-import { prisma } from "@/lib/prismadb";
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
-import { columns } from "./columns";
+import { columns } from "@/components/backoffice/farmers/products/columns";
+import { useEffect, useState } from "react";
 
-export default async function FarmersPage() {
-  let farmers = [];
+export default function FarmerProductsPage() {
+  const [products, setProducts] = useState([]);
 
-  try {
-    farmers = await prisma.farmer.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { user: true },
-    });
-  } catch (error) {
-    console.error("Failed to fetch farmers:", error);
-    return (
-      <div className="p-4 text-red-600">
-        Failed to fetch farmers: {error.message}
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setProducts(data.data);
+      })
+      .catch(console.error);
+  }, []);
 
   return (
-    <div>
+    <div className="py-6">
       <PageHeader
-        heading="Farmers"
-        href="/dashboard/farmers/new"
-        linkTitle="Add Farmer"
+        heading="Products"
+        href="/dashboard/farmers/products/new"
+        linkTitle="Add Product"
       />
-      <div className="py-0">
-        <DataTable
-          data={Array.isArray(farmers) ? farmers : []}
-          columns={columns}
-          filterKeys={["user.name", "isActive"]}
-        />
+      <div className="py-4">
+        <DataTable data={products} columns={columns} />
       </div>
     </div>
   );

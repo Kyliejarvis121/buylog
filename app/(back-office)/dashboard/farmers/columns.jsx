@@ -1,4 +1,3 @@
-// app/(back-office)/dashboard/farmers/products/columns.js
 "use client";
 
 import SortableColumn from "@/components/DataTableColumns/SortableColumn";
@@ -16,10 +15,6 @@ export const columns = [
   {
     accessorKey: "title",
     header: ({ column }) => <SortableColumn column={column} title="Title" />,
-  },
-  {
-    accessorKey: "slug",
-    header: "Slug",
   },
   {
     accessorKey: "price",
