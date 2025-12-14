@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
+// CREATE NEW PRODUCT
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -35,7 +36,7 @@ export async function POST(req) {
       );
     }
 
-    // Check if farmer exists
+    // Verify farmer exists
     const farmer = await prisma.farmer.findUnique({ where: { id: farmerId } });
     if (!farmer) {
       return NextResponse.json(
@@ -44,14 +45,14 @@ export async function POST(req) {
       );
     }
 
-    // Optional: Check if category exists
+    // Verify category exists if provided
     let categoryConnect = undefined;
     if (categoryId) {
       const category = await prisma.category.findUnique({ where: { id: categoryId } });
       if (category) categoryConnect = { connect: { id: categoryId } };
     }
 
-    // Ensure productImages is an array
+    // Ensure productImages is always an array
     const imagesArray = Array.isArray(productImages)
       ? productImages
       : productImages
@@ -72,7 +73,7 @@ export async function POST(req) {
         sku: sku || "",
         barcode: barcode || "",
         unit: unit || "",
-        imageUrl: imagesArray[0] || null, // main image
+        imageUrl: imagesArray[0] || null, // first image is main
         productImages: imagesArray,
         tags: tags || [],
         isActive: isActive ?? true,

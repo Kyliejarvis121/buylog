@@ -1,50 +1,40 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import { prisma } from "@/lib/prismadb";
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { prisma } from "@/lib/prismadb";
 import { columns } from "./columns";
 
-export default async function FarmerProductsPage() {
-  const session = await getServerSession(authOptions);
-  if (!session) return null;
+export default async function FarmersPage() {
+  let farmers = [];
 
-  const userId = session.user.id;
-
-  // 🔹 Get the farmer linked to this user
-  const farmer = await prisma.farmer.findFirst({
-    where: { userId },
-    select: { id: true },
-  });
-
-  if (!farmer) {
-    return <div className="p-4 text-red-600">Farmer record not found</div>;
-  }
-
-  let products = [];
   try {
-    // Fetch only products belonging to this farmer
-    products = await prisma.product.findMany({
-      where: { farmerId: farmer.id },
-      include: { category: true },
+    farmers = await prisma.farmer.findMany({
       orderBy: { createdAt: "desc" },
+      include: { user: true },
     });
-  } catch (err) {
-    return <div className="p-4 text-red-600">Failed to load products: {err.message}</div>;
+  } catch (error) {
+    console.error("Failed to fetch farmers:", error);
+    return (
+      <div className="p-4 text-red-600">
+        Failed to fetch farmers: {error.message}
+      </div>
+    );
   }
 
   return (
     <div>
       <PageHeader
-        heading="Products"
-        href="/dashboard/farmers/products/new"
-        linkTitle="Add Product"
+        heading="Farmers"
+        href="/dashboard/farmers/new"
+        linkTitle="Add Farmer"
       />
-      <div className="py-6">
+      <div className="py-0">
         <DataTable
-          data={products}
+          data={Array.isArray(farmers) ? farmers : []}
           columns={columns}
-          filterKeys={["title", "category.title"]}
+          filterKeys={["user.name", "isActive"]}
         />
       </div>
     </div>
