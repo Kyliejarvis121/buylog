@@ -1,172 +1,228 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// ----------------------------
-// Helpers
-// ----------------------------
-function toNumberSafe(val, fallback = undefined) {
-  if (val === undefined || val === null) return fallback;
+/* ===============================
+   HELPERS
+================================ */
+function toNumberSafe(val, fallback = 0) {
   const n = Number(val);
   return Number.isFinite(n) ? n : fallback;
 }
 
-function removeUndef(obj) {
-  const out = {};
-  for (const k in obj) if (obj[k] !== undefined) out[k] = obj[k];
-  return out;
+function removeUndefined(obj) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
+  );
 }
 
-// ----------------------------
-// GET PRODUCTS
-// ----------------------------
+/* ===============================
+   GET PRODUCTS
+   - Admin: all products
+   - Farmer: ?farmerId=xxx
+   - Search: ?q=tomato
+================================ */
 export async function GET(req) {
   try {
-    const url = new URL(req.url);
-    const q = url.searchParams.get("q") || "";
-    const limit = parseInt(url.searchParams.get("limit") || "50");
+    const { searchParams } = new URL(req.url);
 
-    const products = await prisma.product.findMany({
-      where: {
+    const q = searchParams.get("q") || "";
+    const farmerId = searchParams.get("farmerId");
+    const limit = parseInt(searchParams.get("limit") || "50");
+
+    const where = {
+      ...(q && {
         OR: [
           { title: { contains: q, mode: "insensitive" } },
           { description: { contains: q, mode: "insensitive" } },
         ],
-      },
+      }),
+      ...(farmerId && { farmerId }),
+    };
+
+    const products = await prisma.product.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       take: limit,
-      include: { category: true, farmer: true },
+      include: {
+        category: true,
+        farmer: true,
+      },
     });
 
-    return NextResponse.json({ success: true, data: products });
+    return NextResponse.json({
+      success: true,
+      data: products,
+    });
   } catch (error) {
-    console.error("GET PRODUCTS ERROR:", error);
+    console.error("❌ GET PRODUCTS ERROR:", error);
+
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products", error: error.message },
+      {
+        success: false,
+        message: "Failed to fetch products",
+      },
       { status: 500 }
     );
   }
 }
 
-// ----------------------------
-// CREATE PRODUCT
-// ----------------------------
+/* ===============================
+   CREATE PRODUCT
+================================ */
 export async function POST(req) {
   try {
     const body = await req.json();
 
-    if (!body.title) return NextResponse.json({ success: false, message: "Product title is required" }, { status: 400 });
-    if (!body.farmerId) return NextResponse.json({ success: false, message: "farmerId is required" }, { status: 400 });
-
-    const farmer = await prisma.farmer.findUnique({ where: { id: body.farmerId } });
-    if (!farmer) return NextResponse.json({ success: false, message: "Farmer not found" }, { status: 404 });
-
-    let categoryConnect = undefined;
-    if (body.categoryId) {
-      const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
-      if (!category) return NextResponse.json({ success: false, message: "Category not found" }, { status: 404 });
-      categoryConnect = { connect: { id: body.categoryId } };
+    if (!body.title || !body.farmerId) {
+      return NextResponse.json(
+        { success: false, message: "Title and farmerId are required" },
+        { status: 400 }
+      );
     }
 
-    const price = toNumberSafe(body.price ?? body.productPrice, 0);
-    const salePrice = body.salePrice !== undefined ? toNumberSafe(body.salePrice, null) : null;
-    const productStock = Number.isFinite(Number(body.productStock)) ? parseInt(body.productStock) : 0;
-    const wholesalePrice = body.wholesalePrice !== undefined ? toNumberSafe(body.wholesalePrice, 0) : 0;
-    const wholesaleQty = body.wholesaleQty !== undefined ? parseInt(body.wholesaleQty || 0) : 0;
-    const qty = body.qty !== undefined ? parseInt(body.qty || 1) : 1;
-
-    const productImages = Array.isArray(body.productImages) ? body.productImages : body.productImages ? [body.productImages] : [];
-    const tags = Array.isArray(body.tags) ? body.tags : body.tags ? [body.tags] : [];
-
-    const createData = removeUndef({
-      title: body.title,
-      slug: body.slug || (body.title ? String(body.title).toLowerCase().replace(/\s+/g, "-") : undefined),
-      description: body.description ?? "",
-      price,
-      salePrice,
-      productStock,
-      imageUrl: productImages[0] ?? body.imageUrl ?? null, // first image becomes main
-      productImages,
-      tags,
-      productCode: body.productCode ?? null,
-      sku: body.sku ?? null,
-      barcode: body.barcode ?? null,
-      unit: body.unit ?? null,
-      qty,
-      isWholesale: body.isWholesale !== undefined ? !!body.isWholesale : undefined,
-      wholesalePrice,
-      wholesaleQty,
-      isActive: body.isActive !== undefined ? !!body.isActive : true,
-      farmer: { connect: { id: body.farmerId } },
-      category: categoryConnect,
+    // Ensure farmer exists
+    const farmer = await prisma.farmer.findUnique({
+      where: { id: body.farmerId },
     });
 
-    if (createData.category === undefined) delete createData.category;
+    if (!farmer) {
+      return NextResponse.json(
+        { success: false, message: "Farmer not found" },
+        { status: 404 }
+      );
+    }
 
-    const product = await prisma.product.create({ data: createData });
+    const productImages = Array.isArray(body.productImages)
+      ? body.productImages
+      : body.productImages
+      ? [body.productImages]
+      : [];
 
-    return NextResponse.json({ success: true, message: "Product created", data: product }, { status: 201 });
+    const data = removeUndefined({
+      title: body.title,
+      slug:
+        body.slug ||
+        body.title.toLowerCase().replace(/\s+/g, "-"),
+      description: body.description || "",
+      price: toNumberSafe(body.price),
+      salePrice: toNumberSafe(body.salePrice),
+      productStock: toNumberSafe(body.productStock),
+      imageUrl: productImages[0] || body.imageUrl || null,
+      productImages,
+      tags: Array.isArray(body.tags) ? body.tags : [],
+      productCode: body.productCode || null,
+      sku: body.sku || null,
+      barcode: body.barcode || null,
+      unit: body.unit || null,
+      qty: toNumberSafe(body.qty, 1),
+      isWholesale: !!body.isWholesale,
+      wholesalePrice: toNumberSafe(body.wholesalePrice),
+      wholesaleQty: toNumberSafe(body.wholesaleQty),
+      isActive: body.isActive ?? true,
+      farmer: { connect: { id: body.farmerId } },
+      ...(body.categoryId && {
+        category: { connect: { id: body.categoryId } },
+      }),
+    });
+
+    const product = await prisma.product.create({ data });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Product created successfully",
+        data: product,
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error("CREATE PRODUCT ERROR:", error);
-    const msg = error?.meta?.cause || error?.message || "Failed to create product";
-    return NextResponse.json({ success: false, message: "Failed to create product", error: msg }, { status: 500 });
+    console.error("❌ CREATE PRODUCT ERROR:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to create product",
+      },
+      { status: 500 }
+    );
   }
 }
 
-// ----------------------------
-// UPDATE PRODUCT
-// ----------------------------
+/* ===============================
+   UPDATE PRODUCT (EDIT)
+   - Preserves old images
+   - Appends new images
+================================ */
 export async function PUT(req) {
   try {
     const body = await req.json();
-    if (!body.id) return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
 
-    const existingProduct = await prisma.product.findUnique({ where: { id: body.id } });
-    if (!existingProduct) return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 });
-
-    // Merge new images with existing images
-    const newImages = Array.isArray(body.productImages) ? body.productImages : body.productImages ? [body.productImages] : [];
-    const allImages = [...(existingProduct.productImages || []), ...newImages];
-
-    let categoryConnect = undefined;
-    if (body.categoryId) {
-      const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
-      if (!category) return NextResponse.json({ success: false, message: "Category not found" }, { status: 404 });
-      categoryConnect = { connect: { id: body.categoryId } };
+    if (!body.id) {
+      return NextResponse.json(
+        { success: false, message: "Product ID is required" },
+        { status: 400 }
+      );
     }
 
-    const updateData = removeUndef({
-      title: body.title ?? existingProduct.title,
-      slug: body.slug ?? existingProduct.slug,
-      description: body.description ?? existingProduct.description,
-      price: body.price !== undefined ? toNumberSafe(body.price) : existingProduct.price,
-      salePrice: body.salePrice !== undefined ? toNumberSafe(body.salePrice) : existingProduct.salePrice,
-      productStock: body.productStock !== undefined ? parseInt(body.productStock) : existingProduct.productStock,
-      imageUrl: allImages[0] ?? existingProduct.imageUrl, // sync first image as main
-      productImages: allImages,
-      tags: Array.isArray(body.tags) ? body.tags : body.tags ? [body.tags] : existingProduct.tags,
-      productCode: body.productCode ?? existingProduct.productCode,
-      sku: body.sku ?? existingProduct.sku,
-      barcode: body.barcode ?? existingProduct.barcode,
-      unit: body.unit ?? existingProduct.unit,
-      qty: body.qty !== undefined ? parseInt(body.qty) : existingProduct.qty,
-      isWholesale: body.isWholesale !== undefined ? !!body.isWholesale : existingProduct.isWholesale,
-      wholesalePrice: body.wholesalePrice !== undefined ? toNumberSafe(body.wholesalePrice) : existingProduct.wholesalePrice,
-      wholesaleQty: body.wholesaleQty !== undefined ? parseInt(body.wholesaleQty) : existingProduct.wholesaleQty,
-      isActive: body.isActive !== undefined ? !!body.isActive : existingProduct.isActive,
-      category: categoryConnect,
-    });
-
-    if (updateData.category === undefined) delete updateData.category;
-
-    const updatedProduct = await prisma.product.update({
+    const existing = await prisma.product.findUnique({
       where: { id: body.id },
-      data: updateData,
     });
 
-    return NextResponse.json({ success: true, message: "Product updated", data: updatedProduct });
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    const newImages = Array.isArray(body.productImages)
+      ? body.productImages
+      : [];
+
+    const mergedImages = [
+      ...(existing.productImages || []),
+      ...newImages.filter(
+        (img) => !existing.productImages.includes(img)
+      ),
+    ];
+
+    const data = removeUndefined({
+      title: body.title,
+      description: body.description,
+      price: toNumberSafe(body.price),
+      salePrice: toNumberSafe(body.salePrice),
+      productStock: toNumberSafe(body.productStock),
+      productImages: mergedImages,
+      imageUrl: mergedImages[0] || existing.imageUrl,
+      tags: body.tags,
+      isWholesale: body.isWholesale,
+      wholesalePrice: toNumberSafe(body.wholesalePrice),
+      wholesaleQty: toNumberSafe(body.wholesaleQty),
+      isActive: body.isActive,
+      ...(body.categoryId && {
+        category: { connect: { id: body.categoryId } },
+      }),
+    });
+
+    const updated = await prisma.product.update({
+      where: { id: body.id },
+      data,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Product updated successfully",
+      data: updated,
+    });
   } catch (error) {
-    console.error("UPDATE PRODUCT ERROR:", error);
-    const msg = error?.meta?.cause || error?.message || "Failed to update product";
-    return NextResponse.json({ success: false, message: "Failed to update product", error: msg }, { status: 500 });
+    console.error("❌ UPDATE PRODUCT ERROR:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update product",
+      },
+      { status: 500 }
+    );
   }
 }
