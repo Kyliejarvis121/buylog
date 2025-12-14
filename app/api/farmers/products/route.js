@@ -1,134 +1,81 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// =============================
-// CREATE NEW PRODUCT
-// =============================
-export async function POST(req) {
+// GET all products for a farmer
+export async function GET(req) {
   try {
-    const body = await req.json();
+    const url = new URL(req.url);
+    const farmerId = url.searchParams.get("farmerId");
 
-    const {
-      title,
-      slug,
-      description,
-      price,
-      salePrice,
-      categoryId,
-      farmerId,
-      productImages,
-      tags,
-      isActive,
-      isWholesale,
-      wholesalePrice,
-      wholesaleQty,
-      productStock,
-      qty,
-      productCode,
-      sku,
-      barcode,
-      unit,
-    } = body;
-
-    // Validate required fields
-    if (!title || !price || !farmerId) {
+    if (!farmerId) {
       return NextResponse.json(
-        { success: false, message: "Missing required fields: title, price, or farmerId" },
+        { success: false, message: "farmerId is required" },
         { status: 400 }
       );
     }
 
-    // Ensure farmer exists
-    const farmer = await prisma.farmer.findUnique({ where: { id: farmerId } });
-    if (!farmer) {
-      return NextResponse.json(
-        { success: false, message: "Farmer not found" },
-        { status: 404 }
-      );
-    }
-
-    // Connect category if exists
-    let categoryConnect = undefined;
-    if (categoryId) {
-      const category = await prisma.category.findUnique({ where: { id: categoryId } });
-      if (category) categoryConnect = { connect: { id: categoryId } };
-    }
-
-    // Ensure productImages is an array
-    const imagesArray = Array.isArray(productImages)
-      ? productImages
-      : productImages
-      ? [productImages]
-      : [];
-
-    // Create the product
-    const newProduct = await prisma.product.create({
-      data: {
-        title,
-        slug: slug || title.toLowerCase().replace(/\s+/g, "-"),
-        description: description || "",
-        price: parseFloat(price),
-        salePrice: salePrice ? parseFloat(salePrice) : null,
-        productStock: productStock ? parseInt(productStock) : 0,
-        qty: qty ? parseInt(qty) : 1,
-        productCode: productCode || "",
-        sku: sku || "",
-        barcode: barcode || "",
-        unit: unit || "",
-        imageUrl: imagesArray[0] || null, // first image as main
-        productImages: imagesArray,
-        tags: tags || [],
-        isActive: isActive ?? true,
-        isWholesale: isWholesale ?? false,
-        wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : 0,
-        wholesaleQty: wholesaleQty ? parseInt(wholesaleQty) : 0,
-        farmer: { connect: { id: farmerId } },
-        category: categoryConnect,
-      },
+    const products = await prisma.product.findMany({
+      where: { farmerId },
+      orderBy: { createdAt: "desc" },
+      include: { category: true },
     });
 
-    return NextResponse.json({ success: true, data: newProduct }, { status: 201 });
+    return NextResponse.json({ success: true, data: products });
   } catch (error) {
-    console.error("CREATE PRODUCT ERROR:", error);
+    console.error("❌ GET FARMER PRODUCTS ERROR:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to create product" },
+      { success: false, message: "Failed to fetch products", error: error.message },
       { status: 500 }
     );
   }
 }
 
-// =============================
-// GET PRODUCTS
-// =============================
-export async function GET(req) {
+// CREATE product for a farmer
+export async function POST(req) {
   try {
-    const url = new URL(req.url);
-    const q = url.searchParams.get("q") || "";
-    const limit = parseInt(url.searchParams.get("limit") || "50");
-    const farmerId = url.searchParams.get("farmerId"); // optional
+    const body = await req.json();
 
-    const products = await prisma.product.findMany({
-      where: {
-        AND: [
-          farmerId ? { farmerId } : {}, // filter by farmer if provided
-          {
-            OR: [
-              { title: { contains: q, mode: "insensitive" } },
-              { description: { contains: q, mode: "insensitive" } },
-            ],
-          },
-        ],
+    if (!body.title || !body.farmerId) {
+      return NextResponse.json(
+        { success: false, message: "Title and farmerId are required" },
+        { status: 400 }
+      );
+    }
+
+    const product = await prisma.product.create({
+      data: {
+        title: body.title,
+        slug: body.slug || body.title.toLowerCase().replace(/\s+/g, "-"),
+        description: body.description || "",
+        price: Number(body.price) || 0,
+        salePrice: Number(body.salePrice) || 0,
+        productStock: Number(body.productStock) || 0,
+        qty: Number(body.qty) || 1,
+        imageUrl: Array.isArray(body.productImages) ? body.productImages[0] : body.imageUrl,
+        productImages: body.productImages || [],
+        tags: body.tags || [],
+        productCode: body.productCode || "",
+        sku: body.sku || "",
+        barcode: body.barcode || "",
+        unit: body.unit || "",
+        isWholesale: !!body.isWholesale,
+        wholesalePrice: Number(body.wholesalePrice) || 0,
+        wholesaleQty: Number(body.wholesaleQty) || 0,
+        isActive: body.isActive ?? true,
+
+        farmer: { connect: { id: body.farmerId } },
+
+        category: body.categoryId
+          ? { connect: { id: body.categoryId } }
+          : undefined,
       },
-      orderBy: { createdAt: "desc" },
-      take: limit,
-      include: { category: true, farmer: true },
     });
 
-    return NextResponse.json({ success: true, data: products });
+    return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
-    console.error("GET PRODUCTS ERROR:", error);
+    console.error("❌ CREATE PRODUCT ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products", error: error.message },
+      { success: false, message: error.message || "Failed to create product" },
       { status: 500 }
     );
   }
