@@ -3,31 +3,30 @@ import DataTable from "@/components/data-table-components/DataTable";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { columns } from "./columns";
-import { getData } from "@/lib/getData";
+import { prisma } from "@/lib/prismadb";
 
 export default async function ProductsPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session?.user) {
     return <p className="text-red-600">Please login to view your products</p>;
   }
 
-  let allProducts = [];
   let farmerProducts = [];
 
   try {
-    const res = await getData("products");
-    allProducts = res?.data || [];
+    // 1️⃣ Get the Farmer record linked to the logged-in user
+    const farmer = await prisma.farmer.findFirst({
+      where: { userId: session.user.id },
+    });
 
-    // Get the farmer linked to the logged-in user
-    const farmerRes = await getData("farmers");
-    const farmer = farmerRes?.data?.find(f => f.userId === session.user.id);
-
-    // Filter products for this farmer
     if (farmer) {
-      farmerProducts = allProducts.filter(
-        (product) => product.farmerId === farmer.id
-      );
+      // 2️⃣ Fetch products for this farmer
+      farmerProducts = await prisma.product.findMany({
+        where: { farmerId: farmer.id },
+        include: { category: true },
+        orderBy: { createdAt: "desc" },
+      });
     }
   } catch (error) {
     console.error("❌ Failed to fetch products:", error);
