@@ -1,33 +1,56 @@
+// app/(back-office)/dashboard/farmers/products/columns.js
 "use client";
 
-import React from "react";
-import DataTable from "@/components/data-table-components/DataTable";
+import SortableColumn from "@/components/DataTableColumns/SortableColumn";
+import ImageColumn from "@/components/DataTableColumns/ImageColumn";
+import ActionColumn from "@/components/DataTableColumns/ActionColumn";
+import Status from "@/components/DataTableColumns/Status";
+import DateColumn from "@/components/DataTableColumns/DateColumn";
 
 export const columns = [
   {
-    header: "Title",
+    accessorKey: "imageUrl",
+    header: "Image",
+    cell: ({ row }) => <ImageColumn row={row} accessorKey="imageUrl" />,
+  },
+  {
     accessorKey: "title",
+    header: ({ column }) => <SortableColumn column={column} title="Title" />,
   },
   {
-    header: "Category",
-    accessorKey: "category.title",
+    accessorKey: "slug",
+    header: "Slug",
   },
   {
-    header: "Price",
     accessorKey: "price",
-    cell: (info) => `$${info.getValue()?.toFixed(2) || "0.00"}`,
+    header: "Price",
   },
   {
-    header: "Stock",
     accessorKey: "productStock",
+    header: "Stock",
   },
   {
-    header: "Status",
     accessorKey: "isActive",
-    cell: (info) => (info.getValue() ? "Active" : "Inactive"),
+    header: "Status",
+    cell: ({ row }) => <Status row={row} accessorKey="isActive" />,
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Date Created",
+    cell: ({ row }) => <DateColumn row={row} accessorKey="createdAt" />,
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const product = row.original;
+      return (
+        <ActionColumn
+          row={row}
+          title="Product"
+          editEndpoint={`farmers/products/update/${product.id}`}
+          endpoint={`farmers/products/${product.id}`}
+        />
+      );
+    },
   },
 ];
-
-export default function FarmerProductsTable({ products }) {
-  return <DataTable data={products} columns={columns} />;
-}
