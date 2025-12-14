@@ -1,75 +1,80 @@
-import FormHeader from "@/components/backoffice/FormHeader";
-import ProductUpload from "@/components/backoffice/Farmer/ProductUpload";
 import { prisma } from "@/lib/prismadb";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-export default async function UpdateProductPage({ params }) {
-  const { id } = params;
+export async function DELETE(req, { params }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ success: false }, { status: 401 });
+    }
 
-  // 1️⃣ Auth check
-  const session = await getServerSession(authOptions);
+    const farmer = await prisma.farmer.findFirst({
+      where: { userId: session.user.id },
+    });
 
-  if (!session?.user) {
-    return (
-      <p className="p-4 text-red-600">
-        Please login to edit this product
-      </p>
+    if (!farmer) {
+      return NextResponse.json({ success: false }, { status: 403 });
+    }
+
+    await prisma.product.delete({
+      where: {
+        id: params.id,
+        farmerId: farmer.id, // 🔒 ownership check
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE PRODUCT ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Delete failed" },
+      { status: 500 }
     );
   }
+}
 
-  // 2️⃣ Find farmer linked to user
-  const farmer = await prisma.farmer.findFirst({
-    where: { userId: session.user.id },
-  });
+export async function PUT(req, { params }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ success: false }, { status: 401 });
+    }
 
-  if (!farmer) {
-    return (
-      <p className="p-4 text-red-600">
-        Farmer account not found
-      </p>
+    const farmer = await prisma.farmer.findFirst({
+      where: { userId: session.user.id },
+    });
+
+    if (!farmer) {
+      return NextResponse.json({ success: false }, { status: 403 });
+    }
+
+    const body = await req.json();
+
+    const product = await prisma.product.update({
+      where: {
+        id: params.id,
+        farmerId: farmer.id,
+      },
+      data: {
+        title: body.title,
+        price: Number(body.price),
+        productStock: Number(body.productStock),
+        isActive: body.isActive,
+        categoryId: body.categoryId || null,
+        imageUrl: body.imageUrl,
+        productImages: body.productImages || [],
+        tags: body.tags || [],
+      },
+    });
+
+    return NextResponse.json({ success: true, data: product });
+  } catch (error) {
+    console.error("UPDATE PRODUCT ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Update failed" },
+      { status: 500 }
     );
   }
-
-  // 3️⃣ Fetch product (ownership enforced)
-  const product = await prisma.product.findFirst({
-    where: {
-      id,
-      farmerId: farmer.id,
-    },
-    include: {
-      category: true,
-    },
-  });
-
-  if (!product) {
-    return (
-      <p className="p-4 text-red-600">
-        Product not found or access denied
-      </p>
-    );
-  }
-
-  // 4️⃣ Fetch categories
-  const categoriesData = await prisma.category.findMany({
-    orderBy: { title: "asc" },
-  });
-
-  const categories = categoriesData.map((category) => ({
-    id: category.id,
-    title: category.title,
-  }));
-
-  return (
-    <div className="container mx-auto py-8">
-      <FormHeader title="Update Product" />
-
-      <ProductUpload
-        initialData={product}     // 🔥 IMPORTANT for edit mode
-        categories={categories}
-        farmerId={farmer.id}
-        isUpdate={true}            // 🔥 tells form this is EDIT
-      />
-    </div>
-  );
 }
