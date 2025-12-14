@@ -1,29 +1,36 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+// GET all products for a farmer
+export async function GET(req) {
   try {
+    const url = new URL(req.url);
+    const farmerId = url.searchParams.get("farmerId");
+
+    if (!farmerId) {
+      return NextResponse.json(
+        { success: false, message: "farmerId is required" },
+        { status: 400 }
+      );
+    }
+
     const products = await prisma.product.findMany({
+      where: { farmerId },
       orderBy: { createdAt: "desc" },
-      include: {
-        category: true,
-        farmer: true,
-      },
+      include: { category: true },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: products,
-    });
+    return NextResponse.json({ success: true, data: products });
   } catch (error) {
-    console.error("❌ PRODUCTS GET ERROR:", error);
+    console.error("❌ GET FARMER PRODUCTS ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products" },
+      { success: false, message: "Failed to fetch products", error: error.message },
       { status: 500 }
     );
   }
 }
 
+// CREATE product for a farmer
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -38,24 +45,25 @@ export async function POST(req) {
     const product = await prisma.product.create({
       data: {
         title: body.title,
-        slug: body.slug,
+        slug: body.slug || body.title.toLowerCase().replace(/\s+/g, "-"),
         description: body.description || "",
         price: Number(body.price) || 0,
         salePrice: Number(body.salePrice) || 0,
         productStock: Number(body.productStock) || 0,
-        imageUrl: body.imageUrl,
+        qty: Number(body.qty) || 1,
+        imageUrl: Array.isArray(body.productImages) ? body.productImages[0] : body.imageUrl,
         productImages: body.productImages || [],
         tags: body.tags || [],
-        productCode: body.productCode || null,
+        productCode: body.productCode || "",
+        sku: body.sku || "",
+        barcode: body.barcode || "",
+        unit: body.unit || "",
         isWholesale: !!body.isWholesale,
         wholesalePrice: Number(body.wholesalePrice) || 0,
         wholesaleQty: Number(body.wholesaleQty) || 0,
         isActive: body.isActive ?? true,
-        qty: body.qty || 1,
 
-        farmer: {
-          connect: { id: body.farmerId },
-        },
+        farmer: { connect: { id: body.farmerId } },
 
         category: body.categoryId
           ? { connect: { id: body.categoryId } }
@@ -63,15 +71,13 @@ export async function POST(req) {
       },
     });
 
-    return NextResponse.json(
-      { success: true, message: "Product created", data: product },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
-    console.error("❌ PRODUCT CREATE ERROR:", error);
+    console.error("❌ CREATE PRODUCT ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to create product" },
+      { success: false, message: error.message || "Failed to create product" },
       { status: 500 }
     );
   }
 }
+
