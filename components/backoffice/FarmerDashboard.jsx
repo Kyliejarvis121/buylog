@@ -1,3 +1,4 @@
+// FarmerDashboard.jsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -8,64 +9,32 @@ import DashboardCharts from "./DashboardCharts";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
-export default function FarmerDashboard({
-  sales = [],
-  products = [],
-  supports = [],
-}) {
+export default function FarmerDashboard({ sales = [], products = [], supports = [] }) {
   const { data: session, status } = useSession();
 
-  // =========================
-  // LOADING / AUTH STATES
-  // =========================
-  if (status === "loading") {
-    return <div>Loading...</div>;
-  }
+  if (status === "loading") return <div>Loading...</div>;
+  if (!session?.user) return <div>Please login to view your dashboard</div>;
 
-  if (!session?.user) {
-    return <div>Please login to view your dashboard</div>;
-  }
-
-  // =========================
-  // LOCAL PRODUCT STATE
-  // =========================
   const [productList, setProductList] = useState(products);
 
-  // Keep state in sync when products change
   useEffect(() => {
     setProductList(products);
   }, [products]);
 
-  // =========================
-  // DELETE PRODUCT
-  // =========================
   const handleDelete = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      const res = await fetch(`/api/products/${productId}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/farmers/products/${productId}`, { method: "DELETE" });
       const data = await res.json();
-
-      if (data.success) {
-        setProductList((prev) =>
-          prev.filter((p) => p.id !== productId)
-        );
-        alert("Product deleted successfully");
-      } else {
-        alert("Failed to delete product: " + data.message);
-      }
+      if (data.success) setProductList((prev) => prev.filter((p) => p.id !== productId));
+      else alert("Failed to delete product: " + data.message);
     } catch (err) {
       console.error(err);
       alert("Something went wrong");
     }
   };
 
-  // =========================
-  // RENDER
-  // =========================
   return (
     <div className="p-6">
       <Heading title="Farmer Dashboard" />
@@ -74,7 +43,6 @@ export default function FarmerDashboard({
       <SmallCards orders={[]} supports={supports} />
       <DashboardCharts sales={sales} />
 
-      {/* Products Section */}
       <div className="mt-8 flex justify-between items-center">
         <Heading title="Products" />
         <Link
@@ -103,19 +71,11 @@ export default function FarmerDashboard({
             <tbody>
               {productList.map((product) => (
                 <tr key={product.id} className="text-center">
-                  <td className="p-2 border">
-                    {product.title || "Untitled"}
-                  </td>
-                  <td className="p-2 border">
-                    {product.category?.title || "No Category"}
-                  </td>
+                  <td className="p-2 border">{product.title || "Untitled"}</td>
+                  <td className="p-2 border">{product.category?.title || "No Category"}</td>
                   <td className="p-2 border">{product.price ?? 0}</td>
-                  <td className="p-2 border">
-                    {product.productStock ?? 0}
-                  </td>
-                  <td className="p-2 border">
-                    {product.isActive ? "Active" : "Draft"}
-                  </td>
+                  <td className="p-2 border">{product.productStock ?? 0}</td>
+                  <td className="p-2 border">{product.isActive ? "Active" : "Draft"}</td>
                   <td className="p-2 border flex gap-2 justify-center">
                     <Link
                       href={`/dashboard/farmers/products/${product.id}/edit`}
@@ -123,7 +83,6 @@ export default function FarmerDashboard({
                     >
                       Edit
                     </Link>
-
                     <button
                       onClick={() => handleDelete(product.id)}
                       className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"

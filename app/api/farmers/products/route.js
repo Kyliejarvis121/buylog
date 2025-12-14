@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
+// =============================
 // CREATE NEW PRODUCT
+// =============================
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -28,11 +30,28 @@ export async function POST(req) {
       unit,
     } = body;
 
+    // Validate required fields
     if (!title || !price || !farmerId) {
       return NextResponse.json(
-        { success: false, message: "Missing required fields" },
+        { success: false, message: "Missing required fields: title, price, or farmerId" },
         { status: 400 }
       );
+    }
+
+    // Ensure farmer exists
+    const farmer = await prisma.farmer.findUnique({ where: { id: farmerId } });
+    if (!farmer) {
+      return NextResponse.json(
+        { success: false, message: "Farmer not found" },
+        { status: 404 }
+      );
+    }
+
+    // Connect category if exists
+    let categoryConnect = undefined;
+    if (categoryId) {
+      const category = await prisma.category.findUnique({ where: { id: categoryId } });
+      if (category) categoryConnect = { connect: { id: categoryId } };
     }
 
     // Ensure productImages is an array
@@ -42,11 +61,7 @@ export async function POST(req) {
       ? [productImages]
       : [];
 
-    // Connect category if exists
-    const categoryConnect = categoryId
-      ? { connect: { id: categoryId } }
-      : undefined;
-
+    // Create the product
     const newProduct = await prisma.product.create({
       data: {
         title,
@@ -60,7 +75,7 @@ export async function POST(req) {
         sku: sku || "",
         barcode: barcode || "",
         unit: unit || "",
-        imageUrl: imagesArray[0] || null,
+        imageUrl: imagesArray[0] || null, // first image as main
         productImages: imagesArray,
         tags: tags || [],
         isActive: isActive ?? true,
@@ -82,18 +97,26 @@ export async function POST(req) {
   }
 }
 
-// GET ALL PRODUCTS
+// =============================
+// GET PRODUCTS
+// =============================
 export async function GET(req) {
   try {
     const url = new URL(req.url);
     const q = url.searchParams.get("q") || "";
     const limit = parseInt(url.searchParams.get("limit") || "50");
+    const farmerId = url.searchParams.get("farmerId"); // optional
 
     const products = await prisma.product.findMany({
       where: {
-        OR: [
-          { title: { contains: q, mode: "insensitive" } },
-          { description: { contains: q, mode: "insensitive" } },
+        AND: [
+          farmerId ? { farmerId } : {}, // filter by farmer if provided
+          {
+            OR: [
+              { title: { contains: q, mode: "insensitive" } },
+              { description: { contains: q, mode: "insensitive" } },
+            ],
+          },
         ],
       },
       orderBy: { createdAt: "desc" },
@@ -110,4 +133,3 @@ export async function GET(req) {
     );
   }
 }
-
