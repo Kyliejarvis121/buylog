@@ -47,10 +47,10 @@ export const columns = [
         <ActionColumn
           row={row}
           title="Product"
-          editEndpoint={`/dashboard/farmers/products/update/${product.id}`} // ✅ FIX
-          endpoint={`/api/farmers/products/${product.id}`} // 
+          editEndpoint={`/dashboard/farmers/products/update/${product.id}`}
+          endpoint={`/api/farmers/products/${product.id}`}
         />
       );
     },
-  },
+  },  
 ];

@@ -1,18 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Pencil } from "lucide-react";
 
 export default function EditBtn({ editEndpoint }) {
   const router = useRouter();
 
   return (
     <button
-      type="button"
-      className="flex w-full items-center gap-2 text-sm"
-      onClick={() => router.push(editEndpoint)}
+      onClick={() => router.push(`/${editEndpoint}`)}
+      className="text-blue-600 hover:underline"
     >
-      <Pencil className="h-4 w-4" />
       Edit
     </button>
   );
