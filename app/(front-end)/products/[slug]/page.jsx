@@ -5,6 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import { Navigation, Pagination } from "swiper";
 
 export default async function ProductDetailPage({ params: { slug } }) {
   // -------------------------------
@@ -45,7 +46,9 @@ export default async function ProductDetailPage({ params: { slug } }) {
   // Use productImages array if exists, otherwise fallback to single imageUrl
   const images =
     product.productImages?.length > 0
-      ? product.productImages
+      ? product.productImages.map((img) =>
+          typeof img === "string" ? img : img.url
+        )
       : product.imageUrl
       ? [product.imageUrl]
       : ["/no-image.png"];
@@ -58,6 +61,7 @@ export default async function ProductDetailPage({ params: { slug } }) {
       {/* PRODUCT IMAGES SWIPER */}
       <div className="w-full mb-6">
         <Swiper
+          modules={[Navigation, Pagination]}
           navigation
           pagination={{ clickable: true }}
           spaceBetween={10}
@@ -66,7 +70,7 @@ export default async function ProductDetailPage({ params: { slug } }) {
           {images.map((img, index) => (
             <SwiperSlide key={index}>
               <img
-                src={typeof img === "string" ? img : img.url}
+                src={img}
                 alt={`${product.title} image ${index + 1}`}
                 className="w-full h-80 object-cover rounded-lg border bg-gray-100"
               />
@@ -82,7 +86,7 @@ export default async function ProductDetailPage({ params: { slug } }) {
       <p className="text-gray-600 mb-3">
         Category:{" "}
         <span className="font-semibold">
-          {category ? category.name : "Uncategorized"}
+          {category ? category.title || category.name : "Uncategorized"}
         </span>
       </p>
 
@@ -98,4 +102,3 @@ export default async function ProductDetailPage({ params: { slug } }) {
     </div>
   );
 }
-
