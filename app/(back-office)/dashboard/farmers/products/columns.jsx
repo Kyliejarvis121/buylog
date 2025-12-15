@@ -45,11 +45,12 @@ export const columns = [
       const product = row.original;
       return (
         <ActionColumn
-          row={row}
-          title="Product"
-          editEndpoint={`/dashboard/farmers/products/update/${product.id}`}
-          endpoint={`/api/farmers/products/${product.id}`}
-        />
+           row={row}
+           title="Product"
+           editEndpoint={`/dashboard/farmers/products/update/${product.id}`}
+           endpoint={`/api/farmers/products/${product.id}`}
+/>
+
       );
     },
   },  
