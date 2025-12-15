@@ -1,4 +1,7 @@
+"use client";
+
 import RegisterForm from "@/components/frontend/RegisterForm";
+import { signIn } from "next-auth/react";
 
 export default function Register() {
   return (
@@ -9,7 +12,22 @@ export default function Register() {
             <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center">
               Create a new account
             </h1>
+
+            {/* Existing form */}
             <RegisterForm role="USER" />
+
+            {/* OR separator */}
+            <div className="flex items-center justify-center mt-4">
+              <span className="text-gray-500 dark:text-gray-400">or</span>
+            </div>
+
+            {/* Google button */}
+            <button
+              onClick={() => signIn("google", { callbackUrl: "/" })}
+              className="w-full flex justify-center items-center px-4 py-2 mt-2 text-white bg-red-500 rounded hover:bg-red-600 transition"
+            >
+              Continue with Google
+            </button>
           </div>
         </div>
       </div>
