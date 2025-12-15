@@ -43,16 +43,16 @@ export const columns = [
     id: "actions",
     cell: ({ row }) => {
       const product = row.original;
+  
       return (
         <ActionColumn
-  row={row}
-  title="Product"
-  editEndpoint={`/dashboard/farmers/products/edit/${product.id}`}
-  endpoint={`/api/farmers/products/${product.id}`}
-/>
-
-
+          row={row}
+          title="Product"
+          editEndpoint={`/dashboard/farmers/products/${product.id}/edit`} // ✅ CORRECT
+          endpoint={`/api/farmers/products/${product.id}`}               // ✅ CORRECT
+        />
       );
     },
-  },  
+  }
+  
 ];
