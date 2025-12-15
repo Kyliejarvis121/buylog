@@ -1,10 +1,10 @@
-"use client"; // required for Swiper (client-side only)
+"use client"; // Client component only
 
 import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination } from "swiper";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { Navigation, Pagination } from "swiper";
 
 export default function ProductImagesSwiper({ images, title }) {
   if (!images || images.length === 0) return null;
@@ -12,11 +12,11 @@ export default function ProductImagesSwiper({ images, title }) {
   return (
     <div className="w-full mb-6">
       <Swiper
+        modules={[Navigation, Pagination]}
         navigation
         pagination={{ clickable: true }}
         spaceBetween={10}
         slidesPerView={1}
-        modules={[Navigation, Pagination]}
       >
         {images.map((img, index) => (
           <SwiperSlide key={index}>
