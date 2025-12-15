@@ -1,3 +1,6 @@
+"use client"
+
+
 import { getData } from "@/lib/getData";
 import dynamic from "next/dynamic";
 
