@@ -5,34 +5,22 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prismadb";
 import { compare } from "bcryptjs";
 
-// ❗ DO NOT EXPORT THIS
 const authOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
-
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
 
   providers: [
     CredentialsProvider({
       name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-
+      credentials: { email: { label: "Email", type: "email" }, password: { label: "Password", type: "password" } },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
-
+        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
         if (!user || !user.password) return null;
-
         const isValid = await compare(credentials.password, user.password);
         if (!isValid) return null;
-
         return user;
       },
     }),
@@ -40,14 +28,6 @@ const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-        };
-      },
     }),
   ],
 
@@ -74,16 +54,20 @@ const authOptions = {
                 role: "USER",
               },
             });
-
             token.id = newUser.id;
             token.role = newUser.role;
           } else {
             token.id = existing.id;
             token.role = existing.role || "USER";
+            if (!existing.name || !existing.image) {
+              await prisma.user.update({
+                where: { id: existing.id },
+                data: { name: token.name, image: token.picture },
+              });
+            }
           }
         }
       }
-
       return token;
     },
 
@@ -97,7 +81,5 @@ const authOptions = {
   },
 };
 
-// ❗ ONLY EXPORT HANDLER (GET / POST)
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };
