@@ -1,13 +1,18 @@
 import { getData } from "@/lib/getData";
-import ProductImagesSwiper from "@/components/frontend/ProductImagesSwiper";
+import dynamic from "next/dynamic";
+
+// 1️⃣ Import Swiper component dynamically (client-side only)
+const ProductImagesSwiper = dynamic(
+  () => import("@/components/frontend/ProductImagesSwiper"),
+  { ssr: false } // important!
+);
 
 export default async function ProductDetailPage({ params: { slug } }) {
   // -------------------------------
-  // 1️⃣ Fetch Product
+  // Fetch product
   // -------------------------------
   const productRes = await getData(`products/product/${slug}`);
-  const product =
-    productRes?.success && productRes.data ? productRes.data : null;
+  const product = productRes?.success && productRes.data ? productRes.data : null;
 
   if (!product) {
     return (
@@ -18,17 +23,16 @@ export default async function ProductDetailPage({ params: { slug } }) {
   }
 
   // -------------------------------
-  // 2️⃣ Fetch Category
+  // Fetch category
   // -------------------------------
   let category = null;
   if (product?.categoryId) {
     const categoryRes = await getData(`categories/${product.categoryId}`);
-    category =
-      categoryRes?.success && categoryRes.data ? categoryRes.data : null;
+    category = categoryRes?.success && categoryRes.data ? categoryRes.data : null;
   }
 
   // -------------------------------
-  // 3️⃣ Prepare Images Array
+  // Prepare images array
   // -------------------------------
   const images =
     product.productImages?.length > 0
@@ -38,7 +42,7 @@ export default async function ProductDetailPage({ params: { slug } }) {
       : ["/no-image.png"];
 
   // -------------------------------
-  // 4️⃣ Render Page
+  // Render page
   // -------------------------------
   return (
     <div className="max-w-4xl mx-auto p-6">

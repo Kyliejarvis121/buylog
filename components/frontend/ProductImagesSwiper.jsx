@@ -1,4 +1,4 @@
-"use client"; // Swiper is client-side only
+"use client"; // required for Swiper (client-side only)
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
