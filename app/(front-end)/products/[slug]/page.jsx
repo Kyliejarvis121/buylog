@@ -1,5 +1,6 @@
-"use client"; // Swiper is client-side only
+"use client";
 
+import { useEffect, useState } from "react";
 import { getData } from "@/lib/getData";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -7,58 +8,60 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { Navigation, Pagination } from "swiper";
 
-export default async function ProductDetailPage({ params: { slug } }) {
-  // -------------------------------
-  // 1. Fetch Product
-  // -------------------------------
-  const productRes = await getData(`products/product/${slug}`);
-  const product =
-    productRes && productRes.success && productRes.data
-      ? productRes.data
-      : null;
+export default function ProductDetailPage({ params: { slug } }) {
+  const [product, setProduct] = useState(null);
+  const [category, setCategory] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // -------------------------------
-  // 2. Fetch Category
-  // -------------------------------
-  let category = null;
-  if (product?.categoryId) {
-    const categoryRes = await getData(`categories/${product.categoryId}`);
-    category =
-      categoryRes && categoryRes.success && categoryRes.data
-        ? categoryRes.data
-        : null;
-  }
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const productRes = await getData(`products/product/${slug}`);
+        if (!productRes?.success || !productRes?.data) {
+          setProduct(null);
+          setLoading(false);
+          return;
+        }
 
-  // -------------------------------
-  // 3. Handle Not Found
-  // -------------------------------
-  if (!product) {
+        setProduct(productRes.data);
+
+        // Fetch category if exists
+        if (productRes.data.categoryId) {
+          const categoryRes = await getData(
+            `categories/${productRes.data.categoryId}`
+          );
+          setCategory(categoryRes?.success ? categoryRes.data : null);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      }
+    }
+
+    fetchProduct();
+  }, [slug]);
+
+  if (loading) return <div className="p-4">Loading...</div>;
+  if (!product)
     return (
       <div className="p-4 text-center text-red-600 text-lg">
         ❌ Product not found
       </div>
     );
-  }
 
-  // -------------------------------
-  // 4. Prepare Images Array
-  // -------------------------------
-  // Use productImages array if exists, otherwise fallback to single imageUrl
+  // Prepare images
   const images =
     product.productImages?.length > 0
-      ? product.productImages.map((img) =>
-          typeof img === "string" ? img : img.url
-        )
+      ? product.productImages.map((img) => (typeof img === "string" ? img : img.url))
       : product.imageUrl
       ? [product.imageUrl]
       : ["/no-image.png"];
 
-  // -------------------------------
-  // 5. Render Page
-  // -------------------------------
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* PRODUCT IMAGES SWIPER */}
+      {/* Swiper */}
       <div className="w-full mb-6">
         <Swiper
           modules={[Navigation, Pagination]}
@@ -79,23 +82,17 @@ export default async function ProductDetailPage({ params: { slug } }) {
         </Swiper>
       </div>
 
-      {/* TITLE */}
+      {/* Product Info */}
       <h1 className="text-3xl font-bold mb-4">{product.title}</h1>
-
-      {/* CATEGORY */}
       <p className="text-gray-600 mb-3">
         Category:{" "}
         <span className="font-semibold">
           {category ? category.title || category.name : "Uncategorized"}
         </span>
       </p>
-
-      {/* PRICE */}
       <p className="text-2xl font-semibold text-green-600 mb-5">
         ₦{Number(product.price)?.toLocaleString() ?? "0"}
       </p>
-
-      {/* DESCRIPTION */}
       <div className="text-gray-700 leading-7 whitespace-pre-line">
         {product.description || "No description available."}
       </div>
