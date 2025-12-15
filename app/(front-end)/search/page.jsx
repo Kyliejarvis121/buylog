@@ -5,21 +5,32 @@ import React from "react";
 export default async function Search({ searchParams }) {
   const { sort = "asc", min = 0, max = "", page = 1, search = "" } = searchParams;
 
-  // Fetch filtered products
-  const products = await getData(
-    `products/search?search=${search}&page=${page}&sort=${sort}&min=${min}&max=${max}`
-  );
+  const query = new URLSearchParams({
+    search: search || "",
+    page: page.toString(),
+    sort,
+    min: min.toString(),
+    max: max.toString(),
+  }).toString();
+
+  let products = { data: [] };
+
+  try {
+    products = await getData(`products/search?${query}`);
+  } catch (err) {
+    console.error("Search fetch error:", err);
+  }
 
   const category = {
     title: search,
     slug: "",
     isSearch: true,
-    products,
+    products: products?.data || [],
   };
 
   return (
     <div>
-      <FilterComponent category={category} products={products} />
+      <FilterComponent category={category} products={products?.data || []} />
     </div>
   );
 }
