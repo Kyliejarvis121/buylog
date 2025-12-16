@@ -16,38 +16,45 @@ export default function Product({ product }) {
     toast.success("Item added successfully");
   }
 
-  // Choose the first image in productImages array or fallback to imageUrl or default
   const mainImage =
     product.productImages?.length > 0
       ? product.productImages[0]
       : product.imageUrl || "/no-image.png";
 
   return (
-    <div className="rounded-lg mr-3 bg-white dark:bg-slate-900 overflow-hidden border shadow">
+    <div className="rounded-lg bg-white dark:bg-slate-900 overflow-hidden border shadow-sm">
+      {/* IMAGE */}
       <Link href={`/products/${product.slug}`}>
-        <Image
-          src={mainImage}
-          alt={product.title}
-          width={556}
-          height={556}
-          className="w-full h-48 object-cover"
-        />
+        <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
+          <Image
+            src={mainImage}
+            alt={product.title}
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw"
+            className="object-cover"
+            priority={false}
+          />
+        </div>
       </Link>
 
-      <div className="px-4">
+      {/* CONTENT */}
+      <div className="p-3">
         <Link href={`/products/${product.slug}`}>
-          <h2 className="text-center dark:text-slate-200 text-slate-800 my-2 font-semibold">
+          <h2 className="text-sm font-medium text-center line-clamp-2 text-slate-800 dark:text-slate-200">
             {product.title}
           </h2>
         </Link>
 
-        <div className="flex items-center justify-between gap-2 pb-3 dark:text-slate-200 text-slate-800">
-          <p>UGX {product.salePrice ?? product.price}</p>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-sm font-semibold text-green-700 dark:text-green-400">
+            UGX {product.salePrice ?? product.price}
+          </p>
+
           <button
             onClick={handleAddToCart}
-            className="flex items-center space-x-2 bg-lime-600 px-4 py-2 rounded-md text-white"
+            className="flex items-center gap-1 bg-lime-600 hover:bg-lime-700 px-3 py-1.5 rounded-md text-white text-sm"
           >
-            <BaggageClaim />
+            <BaggageClaim size={16} />
             <span>Add</span>
           </button>
         </div>
