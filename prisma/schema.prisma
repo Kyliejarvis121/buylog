@@ -12,11 +12,12 @@ datasource db {
 // USERS
 // ===============================
 model User {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  name     String
-  email    String? @unique
-  password String
-  role     String  @default("user")
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String? @unique
+  password      String
+  role          String  @default("user")
+  emailVerified Boolean @default(false)   // ✅ added
 
   farmers Farmer[]
   orders  Order[]
@@ -71,10 +72,10 @@ model Product {
   productImages  String[] @default([])
   tags           String[] @default([])
   productCode    String?
-  sku            String?  // ✅ added
-  barcode        String?  // ✅ added
-  unit           String?  // ✅ added
-  qty            Int?     @default(1) // ✅ added
+  sku            String?  
+  barcode        String?  
+  unit           String?  
+  qty            Int?     @default(1) 
   isWholesale    Boolean? @default(false)
   wholesalePrice Float?   @default(0)
   wholesaleQty   Int?     @default(0)

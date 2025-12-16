@@ -1,5 +1,6 @@
-import FilterComponent from "@/components/frontend/Filter/FilterComponent";
 import { getData } from "@/lib/getData";
+import Product from "@/components/frontend/product"; // ✅ use your Product component
+import FilterComponent from "@/components/frontend/Filter/FilterComponent";
 import React from "react";
 
 export default async function page({ params: { slug }, searchParams }) {
@@ -22,29 +23,29 @@ export default async function page({ params: { slug }, searchParams }) {
   return (
     <div className="w-full overflow-x-hidden max-w-6xl mx-auto px-4 md:px-8">
       <div className="flex flex-col md:flex-row gap-6">
+
         {/* Sidebar / Filters */}
         <div className="hidden md:block md:w-1/4">
           <FilterComponent category={category} products={products} />
         </div>
 
-        {/* Product Grid */}
+        {/* Products Grid */}
         <div className="w-full md:w-3/4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {products.length > 0 ? (
-              products.map((product) => (
-                <div key={product.id}>
-                  {/* Assuming ProductCard is inside FilterComponent or you can import and use it here */}
-                  <FilterComponent.ProductCard product={product} />
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center text-gray-500 py-10">
-                No products found
-              </div>
-            )}
-          </div>
+          {products.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {products.map((product) => (
+                <Product key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="col-span-full text-center text-gray-500 py-10">
+              No products found
+            </div>
+          )}
         </div>
+
       </div>
     </div>
   );
 }
+
