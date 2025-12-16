@@ -1,5 +1,4 @@
 import { getData } from "@/lib/getData";
-import Product from "@/components/frontend/product";
 import FilterComponent from "@/components/frontend/Filter/FilterComponent";
 import React from "react";
 
