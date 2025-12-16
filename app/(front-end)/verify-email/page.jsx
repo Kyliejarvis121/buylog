@@ -1,32 +1,56 @@
-import { getData } from "@/lib/getData";
-import { Info } from "lucide-react";
-import React from "react";
+"use client";
 
-export default async function VerifyMail({ searchParams }) {
-  const { userId } = searchParams;
-  const user = await getData(`users/${userId}`);
-  const { email } = user;
-  console.log(userId);
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+
+export default function VerifyEmailPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [status, setStatus] = useState("Verifying...");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = searchParams.get("token");
+    const id = searchParams.get("id");
+
+    if (!token || !id) {
+      setStatus("Invalid verification link.");
+      setLoading(false);
+      return;
+    }
+
+    const verifyEmail = async () => {
+      try {
+        const res = await fetch("/api/users", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, id }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.data?.emailVerified) {
+          setStatus("✅ Email verified successfully! Redirecting to login...");
+          setTimeout(() => router.push("/login"), 3000);
+        } else {
+          setStatus("❌ Verification failed: " + data.message);
+        }
+      } catch (error) {
+        console.error(error);
+        setStatus("❌ Verification failed. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyEmail();
+  }, [searchParams, router]);
+
   return (
-    <div className="max-w-2xl mx-auto min-h-screen mt-8">
-      <div
-        id="alert-additional-content-1"
-        className="p-4 mb-4 text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800"
-        role="alert"
-      >
-        <div className="flex items-center">
-          <Info className="flex-shrink-0 w-4 h-4 me-2" />
-          <span className="sr-only">Info</span>
-          <h3 className="text-lg font-medium">
-            Email Sent-Verify your account
-          </h3>
-        </div>
-        <div className="mt-2 mb-4 text-sm">
-          Thank you for creating an account with Us, we have sent you an email
-          to <span className="font-bold">{email}</span>, check in your inbox and
-          click on the link to complete your onborading process
-          <button className="mx-4 text-white">Change email</button>
-        </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="max-w-xl p-6 bg-white shadow rounded text-center">
+        <h1 className="text-2xl font-semibold mb-4">Email Verification</h1>
+        <p className="text-gray-700">{status}</p>
+        {loading && <p className="mt-4 text-sm text-gray-400">Processing...</p>}
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ export async function PUT(request) {
   try {
     const { token, id } = await request.json();
 
-    // Validate input
     if (!id || !token) {
       return NextResponse.json(
         { data: null, message: "User ID and token are required" },
@@ -13,12 +12,20 @@ export async function PUT(request) {
       );
     }
 
-    // Fetch user
+    // Fetch user by id
     const user = await prisma.users.findUnique({ where: { id } });
     if (!user) {
       return NextResponse.json(
         { data: null, message: "No user found with this ID" },
         { status: 404 }
+      );
+    }
+
+    // Check if token matches
+    if (user.emailVerificationToken !== token) {
+      return NextResponse.json(
+        { data: null, message: "Invalid verification token" },
+        { status: 401 }
       );
     }
 
@@ -28,17 +35,18 @@ export async function PUT(request) {
       data: {
         emailVerified: true,
         verificationRequestCount: (user.verificationRequestCount || 0) + 1,
+        emailVerificationToken: null, // clear token after use
       },
     });
 
     return NextResponse.json({
       data: { id: updatedUser.id, emailVerified: updatedUser.emailVerified },
-      message: "User verification updated successfully",
+      message: "User verified successfully",
     });
   } catch (error) {
     console.error("PUT /api/users verification failed:", error);
     return NextResponse.json(
-      { data: null, message: "Failed to update user verification", error: error.message },
+      { data: null, message: "Failed to verify user", error: error.message },
       { status: 500 }
     );
   }
