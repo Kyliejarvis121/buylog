@@ -43,6 +43,16 @@ export default function FarmerDashboard({ sales = [], products = [], supports = 
       <SmallCards orders={[]} supports={supports} />
       <DashboardCharts sales={sales} />
 
+      <div className="mt-6">
+  <Link
+    href="/dashboard/farmers/products"
+    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+  >
+    View Products
+  </Link>
+</div>
+
+
       <div className="mt-8 flex justify-between items-center">
         <Heading title="Products" />
         <Link
