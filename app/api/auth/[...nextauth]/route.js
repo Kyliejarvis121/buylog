@@ -14,13 +14,19 @@ const authOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
-      credentials: { email: { label: "Email", type: "email" }, password: { label: "Password", type: "password" } },
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+
         const user = await prisma.user.findUnique({ where: { email: credentials.email } });
         if (!user || !user.password) return null;
+
         const isValid = await compare(credentials.password, user.password);
         if (!isValid) return null;
+
         return user;
       },
     }),
@@ -33,25 +39,28 @@ const authOptions = {
 
   callbacks: {
     async jwt({ token, user, account }) {
+      // Attach user id & role
       if (user) {
         token.id = user.id;
         token.role = user.role || "USER";
       }
 
+      // Google OAuth
       if (account?.provider === "google") {
         const email = token.email || user?.email;
         if (email) {
           let existing = await prisma.user.findUnique({ where: { email } });
 
           if (!existing) {
+            // Create new OAuth user
             const newUser = await prisma.user.create({
               data: {
                 email,
                 name: token.name || "User",
-                image: token.picture || null,
-                password: null,
-                emailVerified: new Date(),
+                password: null, // OAuth users don't have password
                 role: "USER",
+                phone: null,
+                emailVerified: true, // mark verified since Google verified it
               },
             });
             token.id = newUser.id;
@@ -59,15 +68,18 @@ const authOptions = {
           } else {
             token.id = existing.id;
             token.role = existing.role || "USER";
-            if (!existing.name || !existing.image) {
+
+            // Update name if missing
+            if (!existing.name) {
               await prisma.user.update({
                 where: { id: existing.id },
-                data: { name: token.name, image: token.picture },
+                data: { name: token.name || existing.name },
               });
             }
           }
         }
       }
+
       return token;
     },
 
