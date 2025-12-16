@@ -5,28 +5,27 @@ const Footer = () => {
     <section className="py-10 bg-gray-50 sm:pt-16 lg:pt-24">
       <div className="px-4 mx-auto sm:px-6 lg:px-8 max-w-7xl">
         <div className="grid grid-cols-2 md:col-span-3 lg:grid-cols-6 gap-y-16 gap-x-12">
-          
+
           {/* Logo & Description */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2 lg:pr-8">
-            <img className="w-auto h-9" src="/limiLogo.webp.png" alt="Buylog Logo" />
+            <img
+              className="w-auto h-9"
+              src="/limiLogo.webp.png"
+              alt="Buylog Logo"
+            />
 
             <p className="text-base leading-relaxed text-gray-600 mt-7">
-              Buylog is a trusted online marketplace designed to connect buyers and sellers seamlessly.
-              We provide a secure and user-friendly platform where sellers can showcase their products and
-              buyers can easily find, compare, and purchase what they need.
+              Buylog is a trusted online marketplace designed to connect buyers
+              and sellers seamlessly. We provide a secure and user-friendly
+              platform where sellers can showcase their products and buyers can
+              easily find, compare, and purchase what they need.
             </p>
 
             <ul className="flex items-center space-x-3 mt-9">
-              {["twitter", "facebook", "instagram", "github"].map((_, i) => (
-                <li key={i}>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center text-white transition-all duration-200 bg-gray-800 rounded-full w-7 h-7 hover:bg-blue-600"
-                  >
-                    <span className="sr-only">Social</span>
-                  </a>
-                </li>
-              ))}
+              <li><a href="#" className="social-icon" /></li>
+              <li><a href="#" className="social-icon" /></li>
+              <li><a href="#" className="social-icon" /></li>
+              <li><a href="#" className="social-icon" /></li>
             </ul>
           </div>
 
@@ -39,8 +38,8 @@ const Footer = () => {
             <ul className="mt-6 space-y-4">
               <li><a href="#" className="footer-link">About</a></li>
               <li><a href="#" className="footer-link">Features</a></li>
-              <li><a href="#" className="footer-link">How it Works</a></li>
-              <li><a href="#" className="footer-link">Careers</a></li>
+              <li><a href="#" className="footer-link">Works</a></li>
+              <li><a href="#" className="footer-link">Career</a></li>
             </ul>
           </div>
 
@@ -54,7 +53,7 @@ const Footer = () => {
               <li><a href="#" className="footer-link">Customer Support</a></li>
               <li><a href="#" className="footer-link">Delivery Details</a></li>
 
-              {/* ✅ Terms Page */}
+              {/* ✅ Correct Terms link */}
               <li>
                 <Link
                   href="/front-end/terms"
@@ -64,10 +63,7 @@ const Footer = () => {
                 </Link>
               </li>
 
-              {/* (Optional future page) */}
-              <li>
-                <a href="#" className="footer-link">Privacy Policy</a>
-              </li>
+              <li><a href="#" className="footer-link">Privacy Policy</a></li>
             </ul>
           </div>
 
@@ -97,21 +93,9 @@ const Footer = () => {
         <hr className="mt-16 mb-10 border-gray-200" />
 
         <p className="text-sm text-center text-gray-600">
-          © {new Date().getFullYear()} Buylog. All rights reserved.
+          © {new Date().getFullYear()} Buylog. All Rights Reserved.
         </p>
       </div>
-
-      {/* Tailwind helper */}
-      <style jsx>{`
-        .footer-link {
-          display: flex;
-          color: #000;
-          transition: color 0.2s;
-        }
-        .footer-link:hover {
-          color: #2563eb;
-        }
-      `}</style>
     </section>
   );
 };
