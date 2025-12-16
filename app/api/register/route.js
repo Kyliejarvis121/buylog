@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 
 export async function POST(req) {
   try {
-    const { name, email, password, phone } = await req.json();
+    const { name, email, password } = await req.json(); // remove phone
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -23,7 +23,6 @@ export async function POST(req) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const verificationToken = Math.random().toString(36).substring(2, 15);
 
     const newUser = await prisma.user.create({
@@ -31,7 +30,6 @@ export async function POST(req) {
         name,
         email,
         password: hashedPassword,
-        phone: phone || null,
         role: "USER",
         emailVerified: false,
         emailVerificationToken: verificationToken,
@@ -40,39 +38,32 @@ export async function POST(req) {
         id: true,
         name: true,
         email: true,
-        phone: true,
         role: true,
         emailVerified: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
 
-    // --------------------
-    // SEND VERIFICATION EMAIL
-    // --------------------
+    // send verification email
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",          // or your SMTP host
-      port: 465,                       // 465 for SSL, 587 for TLS
-      secure: true,
+      service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER,  // your email
-        pass: process.env.EMAIL_PASS   // your email password or app password
-      }
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
     });
 
-    const verificationLink = `https://yourdomain.com/verify?token=${verificationToken}&id=${newUser.id}`;
+    const verificationUrl = `https://buy-log-omega.vercel.app/front-end/verify-email?token=${verificationToken}&id=${newUser.id}`;
 
     await transporter.sendMail({
       from: `"Buylog" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Verify Your Email for Buylog",
+      to: newUser.email,
+      subject: "Verify your Buylog account",
       html: `
-        <h3>Hello ${name},</h3>
-        <p>Thank you for registering at Buylog.</p>
-        <p>Please verify your email by clicking the link below:</p>
-        <a href="${verificationLink}">Verify Email</a>
-        <p>If you did not create this account, please ignore this email.</p>
-      `
+        <p>Hi ${newUser.name},</p>
+        <p>Please verify your email by clicking below:</p>
+        <a href="${verificationUrl}" style="background:#22c55e;color:white;padding:10px 20px;border-radius:5px;text-decoration:none;">Verify Email</a>
+      `,
     });
 
     return NextResponse.json(
