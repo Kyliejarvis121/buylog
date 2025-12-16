@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -9,10 +9,8 @@ import { signIn } from "next-auth/react";
 import SubmitButton from "../FormInputs/SubmitButton";
 import TextInput from "../FormInputs/TextInput";
 
-export default function RegisterForm({ role = "USER" }) {
+export default function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const plan = searchParams.get("plan");
 
   const {
     register,
@@ -29,7 +27,7 @@ export default function RegisterForm({ role = "USER" }) {
       setLoading(true);
       setEmailErr("");
 
-      const response = await fetch(`/api/register`, {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -47,21 +45,10 @@ export default function RegisterForm({ role = "USER" }) {
         return;
       }
 
-      toast.success("Registration successful!");
+      toast.success("Registration successful! Verify your email.");
 
-      // Automatically login user
-      const loginRes = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
-
-      if (loginRes?.error) {
-        toast.success("Registered! Please login manually.");
-        router.push("/login");
-      } else {
-        router.push("/");
-      }
+      reset();
+      router.push(`/front-end/verify-email?userId=${res.user.id}`);
 
     } catch (error) {
       console.error(error);
@@ -72,16 +59,16 @@ export default function RegisterForm({ role = "USER" }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="">
+    <form onSubmit={handleSubmit(onSubmit)}>
 
-      {/* Name */}
+      {/* Full Name */}
       <TextInput
         label="Full Name"
         name="name"
         register={register}
         errors={errors}
         type="text"
-        className="sm:col-span-2 mb-3"
+        className="mb-3"
       />
 
       {/* Email */}
@@ -91,9 +78,13 @@ export default function RegisterForm({ role = "USER" }) {
         register={register}
         errors={errors}
         type="email"
-        className="sm:col-span-2 mb-3"
+        className="mb-3"
       />
-      {emailErr && <small className="text-red-600 -mt-2 mb-2">{emailErr}</small>}
+      {emailErr && (
+        <small className="text-red-600 -mt-2 mb-2 block">
+          {emailErr}
+        </small>
+      )}
 
       {/* Password */}
       <TextInput
@@ -102,34 +93,42 @@ export default function RegisterForm({ role = "USER" }) {
         register={register}
         errors={errors}
         type="password"
-        className="sm:col-span-2 mb-3"
+        className="mb-3"
       />
 
-      {/* Optional Farmer Fields */}
-      {role === "FARMER" && (
-        <>
-          <TextInput
-            label="Phone Number"
-            name="phone"
-            register={register}
-            errors={errors}
-            type="text"
-            className="sm:col-span-2 mb-3"
-          />
-          <TextInput
-            label="Physical Address"
-            name="physicalAddress"
-            register={register}
-            errors={errors}
-            type="text"
-            className="sm:col-span-2 mb-3"
-          />
-        </>
-      )}
+      {/* Farm Name (REQUIRED) */}
+      <TextInput
+        label="Farm Name"
+        name="farmName"
+        register={register}
+        errors={errors}
+        type="text"
+        className="mb-3"
+      />
+
+      {/* Optional Phone */}
+      <TextInput
+        label="Phone Number (Optional)"
+        name="phone"
+        register={register}
+        errors={errors}
+        type="text"
+        className="mb-3"
+      />
+
+      {/* Optional Address */}
+      <TextInput
+        label="Physical Address (Optional)"
+        name="physicalAddress"
+        register={register}
+        errors={errors}
+        type="text"
+        className="mb-4"
+      />
 
       <SubmitButton
         isLoading={loading}
-        buttonTitle="Register"
+        buttonTitle="Create Farmer Account"
         loadingButtonTitle="Creating account..."
       />
 
@@ -137,37 +136,18 @@ export default function RegisterForm({ role = "USER" }) {
       <button
         type="button"
         onClick={() => signIn("google")}
-        className="w-full mt-4 py-2 bg-red-500 text-white rounded-md"
+        className="w-full mt-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
       >
         Continue with Google
       </button>
 
-      {/* Links */}
-      <div className="flex gap-2 justify-between">
-        <p className="text-[0.75rem] text-gray-500 py-4">
-          Already have an account?{" "}
-          <Link href="/login" className="text-purple-600 hover:underline">
-            Login
-          </Link>
-        </p>
-
-        {role === "USER" ? (
-          <p className="text-[0.75rem] text-gray-500 py-4">
-            Are you a Farmer?{" "}
-            <Link href="/register?role=FARMER" className="text-purple-600 hover:underline">
-              Register here
-            </Link>
-          </p>
-        ) : (
-          <p className="text-[0.75rem] text-gray-500 py-4">
-            Are you a User?{" "}
-            <Link href="/register" className="text-purple-600 hover:underline">
-              Register here
-            </Link>
-          </p>
-        )}
-      </div>
+      {/* Login Link */}
+      <p className="text-[0.75rem] text-gray-500 py-4 text-center">
+        Already have an account?{" "}
+        <Link href="/login" className="text-purple-600 hover:underline">
+          Login
+        </Link>
+      </p>
     </form>
   );
 }
-
