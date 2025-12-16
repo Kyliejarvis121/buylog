@@ -1,67 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import LoginForm from "@/components/frontend/LoginForm";
 import { signIn } from "next-auth/react";
-import toast from "react-hot-toast";
 
-export default function LoginForm() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [loading, setLoading] = useState(false);
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await signIn("credentials", {
-        redirect: false,
-        email: form.email,
-        password: form.password,
-      });
-
-      if (res.error) {
-        toast.error(res.error || "Invalid credentials");
-      } else {
-        toast.success("Login successful!");
-        window.location.href = "/"; // redirect after login
-      }
-    } catch (err) {
-      toast.error("Server error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function Login() {
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={form.email}
-        onChange={handleChange}
-        required
-        className="w-full p-2 border rounded"
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={form.password}
-        onChange={handleChange}
-        required
-        className="w-full p-2 border rounded"
-      />
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-lime-600 text-white py-2 rounded hover:bg-lime-700"
-      >
-        {loading ? "Logging in..." : "Login"}
-      </button>
-    </form>
+    <section className="bg-gray-50 dark:bg-gray-900">
+      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen">
+        <div className="w-full bg-white rounded-lg shadow-2xl sm:max-w-md xl:p-0 dark:bg-gray-800">
+          <div className="p-6 space-y-4 sm:p-8">
+            <h1 className="text-xl font-bold text-center text-gray-900 dark:text-white">
+              Login to Account
+            </h1>
+
+            {/* Credentials login */}
+            <LoginForm />
+
+            {/* Divider */}
+            <div className="flex items-center gap-2">
+              <hr className="flex-1 border-gray-300" />
+              <span className="text-gray-500 text-sm">OR</span>
+              <hr className="flex-1 border-gray-300" />
+            </div>
+
+            {/* Google login */}
+            <button
+              onClick={() => signIn("google", { callbackUrl: "/" })}
+              className="w-full flex items-center justify-center gap-2 py-2 text-white bg-red-500 rounded hover:bg-red-600 transition"
+            >
+              Continue with Google
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
