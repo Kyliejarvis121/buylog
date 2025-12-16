@@ -11,19 +11,21 @@ datasource db {
 // ===============================
 // USERS
 // ===============================
+
 model User {
   id                     String   @id @default(auto()) @map("_id") @db.ObjectId
   name                   String
   email                  String?  @unique
   password               String
-  role                   String   @default("user")
+  role                   String   @default("FARMER")           // ✅ only farmers can register
   emailVerified          Boolean  @default(false)
-  emailVerificationToken String?
-  createdAt              DateTime @default(now()) // ✅ add this
+  emailVerificationToken String?                                // ✅ optional token for email verification
+  createdAt              DateTime @default(now())               // ✅ timestamp
 
   farmers Farmer[]
   orders  Order[]
 }
+
 
 //
 // ===============================
