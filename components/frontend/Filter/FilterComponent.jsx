@@ -9,17 +9,24 @@ import FilteredProducts from "./FilteredProducts";
 export default function FilterComponent({ category, products }) {
   const { title, slug } = category;
   const productCount = category.products.length;
+
   return (
-    <div>
-      <div className="bg-white space-y-6 text-slate-900 py-8 px-4 ">
+    <div className="w-full overflow-x-hidden">
+      {/* Breadcrumb & Sorting */}
+      <div className="bg-white space-y-6 text-slate-900 py-8 px-4">
         <Breadcrumb title={title} resultCount={productCount} />
         <Sorting isSearch={category?.isSearch} title={title} slug={slug} />
       </div>
-      <div className="grid grid-cols-12 py-8 gap-4">
-        <div className="col-span-3">
+
+      {/* Main Grid */}
+      <div className="flex flex-col md:flex-row gap-6 py-8 px-4">
+        {/* Sidebar: hidden on mobile */}
+        <div className="hidden md:block md:w-1/4">
           <Filters slug={slug} isSearch={category?.isSearch} />
         </div>
-        <div className="col-span-9">
+
+        {/* Products Grid: full width on mobile */}
+        <div className="w-full md:w-3/4">
           <FilteredProducts
             isSearch={category?.isSearch}
             productCount={productCount}
