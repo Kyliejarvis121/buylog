@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prismadb";
-import nodemailer from "nodemailer";
 
 export async function POST(req) {
   try {
-    const { name, email, password } = await req.json(); // remove phone
+    const { name, email, password, farmName } = await req.json();
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !farmName) {
       return NextResponse.json(
-        { message: "Name, email, and password are required" },
+        { message: "All fields are required" },
         { status: 400 }
       );
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
     if (existingUser) {
       return NextResponse.json(
         { message: "Email already registered" },
@@ -23,58 +25,35 @@ export async function POST(req) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationToken = Math.random().toString(36).substring(2, 15);
 
-    const newUser = await prisma.user.create({
+    // 1️⃣ Create user
+    const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "USER",
-        emailVerified: false,
-        emailVerificationToken: verificationToken,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        emailVerified: true,
-        createdAt: true,
+        role: "farmer",
+        emailVerified: true, // temporarily trusted
       },
     });
 
-    // send verification email
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+    // 2️⃣ Create farmer profile
+    await prisma.farmer.create({
+      data: {
+        name: farmName,
+        userId: user.id,
+        isActive: true,
       },
-    });
-
-    const verificationUrl = `https://buy-log-omega.vercel.app/front-end/verify-email?token=${verificationToken}&id=${newUser.id}`;
-
-    await transporter.sendMail({
-      from: `"Buylog" <${process.env.EMAIL_USER}>`,
-      to: newUser.email,
-      subject: "Verify your Buylog account",
-      html: `
-        <p>Hi ${newUser.name},</p>
-        <p>Please verify your email by clicking below:</p>
-        <a href="${verificationUrl}" style="background:#22c55e;color:white;padding:10px 20px;border-radius:5px;text-decoration:none;">Verify Email</a>
-      `,
     });
 
     return NextResponse.json(
-      { message: "Registration successful. Verification email sent.", user: newUser },
+      { message: "Farmer account created successfully" },
       { status: 201 }
     );
-
   } catch (error) {
     console.error("Register Error:", error);
     return NextResponse.json(
-      { message: "Server error", error: error.message },
+      { message: "Server error" },
       { status: 500 }
     );
   }
