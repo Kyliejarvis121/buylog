@@ -9,50 +9,71 @@ import "swiper/css/navigation";
 import "swiper/css/thumbs";
 import { FreeMode, Navigation, Thumbs } from "swiper/modules";
 
-export default function ProductImageCarousel({ productImages = [], thumbnail }) {
+export default function ProductImageCarousel({
+  productImages = [],
+  thumbnail,
+}) {
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
 
-  const images = productImages.length > 0
-    ? productImages
-    : thumbnail
-    ? [thumbnail]
-    : ["/no-image.png"];
+  const images =
+    productImages.length > 0
+      ? productImages
+      : thumbnail
+      ? [thumbnail]
+      : ["/no-image.png"];
 
   return (
-    <div className="col-span-3">
+    <div className="w-full">
+      {/* MAIN IMAGE */}
       <Swiper
-        style={{
-          "--swiper-navigation-color": "#fff",
-          "--swiper-pagination-color": "#fff",
-        }}
         spaceBetween={10}
-        navigation={true}
+        navigation
         thumbs={{ swiper: thumbsSwiper }}
         modules={[FreeMode, Navigation, Thumbs]}
-        className="mySwiper2"
+        className="w-full h-[280px] sm:h-[350px] md:h-[420px] rounded-lg overflow-hidden"
       >
         {images.map((image, i) => (
           <SwiperSlide key={i}>
-            <img src={image} alt={`Product image ${i + 1}`} className="w-full object-cover" />
+            <div className="relative w-full h-full">
+              <Image
+                src={image}
+                alt={`Product image ${i + 1}`}
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority={i === 0}
+              />
+            </div>
           </SwiperSlide>
         ))}
       </Swiper>
 
-      <Swiper
-        onSwiper={setThumbsSwiper}
-        spaceBetween={10}
-        slidesPerView={4}
-        freeMode={true}
-        watchSlidesProgress={true}
-        modules={[FreeMode, Navigation, Thumbs]}
-        className="mySwiper"
-      >
-        {images.map((image, i) => (
-          <SwiperSlide key={i}>
-            <img src={image} alt={`Thumbnail ${i + 1}`} className="w-full object-cover" />
-          </SwiperSlide>
-        ))}
-      </Swiper>
+      {/* THUMBNAILS */}
+      {images.length > 1 && (
+        <Swiper
+          onSwiper={setThumbsSwiper}
+          spaceBetween={8}
+          slidesPerView={4}
+          freeMode
+          watchSlidesProgress
+          modules={[FreeMode, Thumbs]}
+          className="mt-3 h-[70px]"
+        >
+          {images.map((image, i) => (
+            <SwiperSlide key={i}>
+              <div className="relative w-full h-[70px] border rounded cursor-pointer overflow-hidden">
+                <Image
+                  src={image}
+                  alt={`Thumbnail ${i + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="80px"
+                />
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      )}
     </div>
   );
 }
