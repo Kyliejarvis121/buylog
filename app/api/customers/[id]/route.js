@@ -1,36 +1,63 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-export async function PUT(request, { params: { id } }) {
+/* ===============================
+   DELETE CUSTOMER
+=============================== */
+export async function DELETE(req, { params }) {
   try {
-    const { title, couponCode, expiryDate, isActive } = await request.json();
+    const { id } = params;
 
-    const existingCoupon = await prisma.coupon.findUnique({
+    // 1️⃣ Check if user exists
+    const user = await prisma.user.findUnique({
       where: { id },
+      include: {
+        orders: true,
+        farmers: true,
+      },
     });
 
-    if (!existingCoupon) {
+    if (!user) {
       return NextResponse.json(
-        { data: null, message: "Coupon Not Found" },
+        { message: "Customer not found" },
         { status: 404 }
       );
     }
 
-    const updatedCoupon = await prisma.coupon.update({
+    // 2️⃣ PROTECT ADMIN ACCOUNTS
+    if (user.role === "ADMIN") {
+      return NextResponse.json(
+        { message: "Admin accounts cannot be deleted" },
+        { status: 403 }
+      );
+    }
+
+    // 3️⃣ Delete related records FIRST (IMPORTANT)
+    if (user.orders.length > 0) {
+      await prisma.order.deleteMany({
+        where: { userId: id },
+      });
+    }
+
+    if (user.farmers.length > 0) {
+      await prisma.farmer.deleteMany({
+        where: { userId: id },
+      });
+    }
+
+    // 4️⃣ Delete user
+    await prisma.user.delete({
       where: { id },
-      data: {
-        title,
-        couponCode,
-        expiryDate,
-        isActive,
-      },
     });
 
-    return NextResponse.json(updatedCoupon);
-  } catch (error) {
-    console.log(error);
     return NextResponse.json(
-      { message: "Failed to Update Coupon", error },
+      { message: "Customer deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("DELETE USER ERROR:", error);
+    return NextResponse.json(
+      { message: "Failed to delete customer", error: error.message },
       { status: 500 }
     );
   }

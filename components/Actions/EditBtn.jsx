@@ -7,11 +7,8 @@ export default function EditBtn({ editEndpoint }) {
   const router = useRouter();
 
   const handleEdit = () => {
-    if (!editEndpoint.startsWith("/")) {
-      router.push(`/${editEndpoint}`);
-    } else {
-      router.push(editEndpoint);
-    }
+    if (!editEndpoint) return;
+    router.push(editEndpoint); // always use full path from parent
   };
 
   return (
