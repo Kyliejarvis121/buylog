@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prismadb"; // ✅ Use Prisma singleton
+import { prisma } from "@/lib/prismadb";
 
 export async function GET(request, { params: { id } }) {
   try {
-    const user = await prisma.users.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id },
       select: {
         email: true,
@@ -11,11 +11,18 @@ export async function GET(request, { params: { id } }) {
         id: true,
         role: true,
         createdAt: true,
-        profile: true, // make sure profile relation exists in schema
+        // profile: true, // only if your User model has a relation named 'profile'
       },
     });
 
-    return NextResponse.json(user);
+    if (!user) {
+      return NextResponse.json(
+        { data: null, message: "User Not Found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ data: user });
   } catch (error) {
     console.error("Failed to Fetch User:", error);
     return NextResponse.json(
@@ -27,7 +34,7 @@ export async function GET(request, { params: { id } }) {
 
 export async function DELETE(request, { params: { id } }) {
   try {
-    const existingUser = await prisma.users.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { id },
     });
 
@@ -38,11 +45,11 @@ export async function DELETE(request, { params: { id } }) {
       );
     }
 
-    const deletedUser = await prisma.users.delete({
+    const deletedUser = await prisma.user.delete({
       where: { id },
     });
 
-    return NextResponse.json(deletedUser);
+    return NextResponse.json({ data: deletedUser });
   } catch (error) {
     console.error("Failed to Delete User:", error);
     return NextResponse.json(
