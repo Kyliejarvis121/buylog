@@ -2,55 +2,60 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const token = searchParams.get("token");
+  const id = searchParams.get("id");
+
   const [status, setStatus] = useState("Verifying...");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const id = searchParams.get("id");
-
     if (!token || !id) {
-      setStatus("Invalid verification link.");
-      setLoading(false);
+      setStatus("Invalid verification link");
       return;
     }
 
-    const verifyEmail = async () => {
+    async function verifyUser() {
       try {
-        const res = await fetch("/api/users", {
+        const res = await fetch("/api/users/verify", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token, id }),
         });
 
         const data = await res.json();
-        if (res.ok && data.data?.emailVerified) {
-          setStatus("✅ Email verified successfully! Redirecting to login...");
-          setTimeout(() => router.push("/login"), 3000);
-        } else {
-          setStatus("❌ Verification failed: " + data.message);
-        }
-      } catch (error) {
-        console.error(error);
-        setStatus("❌ Verification failed. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    verifyEmail();
-  }, [searchParams, router]);
+        if (!res.ok) {
+          setStatus(data.message || "Verification failed");
+          toast.error(data.message || "Verification failed");
+          return;
+        }
+
+        setStatus("Your account has been successfully verified!");
+        toast.success("Account verified successfully!");
+
+        // Optionally redirect to login or dashboard after 3 seconds
+        setTimeout(() => {
+          router.push("/login"); // or "/farmer/dashboard"
+        }, 3000);
+      } catch (error) {
+        console.error("Verification Error:", error);
+        setStatus("Network error, please try again.");
+        toast.error("Network error, please try again.");
+      }
+    }
+
+    verifyUser();
+  }, [token, id, router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="max-w-xl p-6 bg-white shadow rounded text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="bg-white shadow-lg p-6 rounded-lg text-center">
         <h1 className="text-2xl font-semibold mb-4">Email Verification</h1>
         <p className="text-gray-700">{status}</p>
-        {loading && <p className="mt-4 text-sm text-gray-400">Processing...</p>}
       </div>
     </div>
   );
