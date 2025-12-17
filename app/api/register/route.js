@@ -8,9 +8,9 @@ export async function POST(req) {
     const { name, email, password, farmName } = await req.json();
 
     // 1️⃣ Validation
-    if (!name || !email || !password || !farmName) {
+    if (!name || !email || !password) {
       return NextResponse.json(
-        { message: "All fields are required" },
+        { message: "Name, email and password are required" },
         { status: 400 }
       );
     }
@@ -30,31 +30,37 @@ export async function POST(req) {
     // 3️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4️⃣ Generate token
-    const verificationToken = Math.random().toString(36).substring(2, 15);
+    // 4️⃣ Generate verification token
+    const verificationToken = crypto.randomUUID();
 
-    // 5️⃣ Create FARMER user
+    // 5️⃣ Create user + related model
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "FARMER",
+        role: farmName ? "FARMER" : "USER",
         emailVerified: false,
         emailVerificationToken: verificationToken,
+
+        ...(farmName
+          ? {
+              farmer: {
+                create: {
+                  name: farmName,
+                  isActive: true,
+                },
+              },
+            }
+          : {
+              profile: {
+                create: {}, // ✅ Proper profile creation
+              },
+            }),
       },
     });
 
-    // 6️⃣ Create farmer profile
-    await prisma.farmer.create({
-      data: {
-        name: farmName,
-        userId: user.id,
-        isActive: true,
-      },
-    });
-
-    // 7️⃣ Send verification email (Titan / Hostinger)
+    // 6️⃣ Send verification email
     const transporter = nodemailer.createTransport({
       host: "smtp.titan.email",
       port: 465,
@@ -65,31 +71,27 @@ export async function POST(req) {
       },
     });
 
-    // ✅ CORRECT URL (route groups removed)
-    const verificationUrl = `https://buy-log-omega.vercel.app/verify-email?token=${verificationToken}&id=${user.id}`;
+    const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email?token=${verificationToken}&id=${user.id}`;
 
     await transporter.sendMail({
       from: `"Buylog" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Verify your Buylog Farmer account",
+      subject: "Verify your Buylog account",
       html: `
         <p>Hi ${user.name},</p>
         <p>Welcome to Buylog 👋</p>
-        <p>Please verify your email to activate your farmer account:</p>
+        <p>Please verify your email to activate your account:</p>
         <a href="${verificationUrl}"
           style="display:inline-block;margin-top:10px;background:#22c55e;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;">
           Verify Email
         </a>
-        <p style="margin-top:15px;font-size:12px;color:#555;">
-          If you didn’t create this account, please ignore this email.
-        </p>
       `,
     });
 
     return NextResponse.json(
       {
         message:
-          "Farmer account created successfully. Please check your email to verify your account.",
+          "Account created successfully. Please check your email to verify your account.",
       },
       { status: 201 }
     );
