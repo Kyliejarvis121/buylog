@@ -7,9 +7,7 @@ export async function POST(req) {
   try {
     const { name, email, password, farmName } = await req.json();
 
-    /* ===============================
-       1️⃣ VALIDATION
-    =============================== */
+    // 1️⃣ Validate input
     if (!name || !email || !password || !farmName) {
       return NextResponse.json(
         { message: "All fields are required" },
@@ -17,9 +15,7 @@ export async function POST(req) {
       );
     }
 
-    /* ===============================
-       2️⃣ CHECK EXISTING USER
-    =============================== */
+    // 2️⃣ Check existing user
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json(
@@ -28,33 +24,25 @@ export async function POST(req) {
       );
     }
 
-    /* ===============================
-       3️⃣ HASH PASSWORD
-    =============================== */
+    // 3️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    /* ===============================
-       4️⃣ GENERATE EMAIL VERIFICATION TOKEN
-    =============================== */
+    // 4️⃣ Generate verification token
     const verificationToken = Math.random().toString(36).substring(2, 15);
 
-    /* ===============================
-       5️⃣ CREATE USER (FARMER ONLY)
-    =============================== */
+    // 5️⃣ Create user (FARMER only)
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "FARMER",       // force role
-        emailVerified: false, // not verified yet
+        role: "FARMER",
+        emailVerified: false,
         emailVerificationToken: verificationToken,
       },
     });
 
-    /* ===============================
-       6️⃣ CREATE FARMER PROFILE
-    =============================== */
+    // 6️⃣ Create farmer profile
     await prisma.farmer.create({
       data: {
         name: farmName,
@@ -63,9 +51,7 @@ export async function POST(req) {
       },
     });
 
-    /* ===============================
-       7️⃣ SEND VERIFICATION EMAIL (TITAN SMTP)
-    =============================== */
+    // 7️⃣ Send verification email via Titan SMTP
     const transporter = nodemailer.createTransport({
       host: "smtp.titan.email",
       port: 465,
@@ -76,6 +62,7 @@ export async function POST(req) {
       },
     });
 
+    // ✅ Correct URL: remove parentheses from path
     const verificationUrl = `https://buy-log-omega.vercel.app/front-end/verify-email?token=${verificationToken}&id=${user.id}`;
 
     await transporter.sendMail({
@@ -96,13 +83,10 @@ export async function POST(req) {
       `,
     });
 
-    /* ===============================
-       8️⃣ SUCCESS RESPONSE
-    =============================== */
+    // 8️⃣ Return success
     return NextResponse.json(
       {
-        message:
-          "Farmer account created successfully. Please check your email to verify your account.",
+        message: "Farmer account created successfully. Please check your email to verify your account.",
       },
       { status: 201 }
     );
