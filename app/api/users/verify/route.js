@@ -12,8 +12,8 @@ export async function PUT(request) {
       );
     }
 
-    // Fetch user by id
-    const user = await prisma.users.findUnique({ where: { id } });
+    // ✅ Fetch user by id
+    const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
       return NextResponse.json(
         { data: null, message: "No user found with this ID" },
@@ -21,7 +21,7 @@ export async function PUT(request) {
       );
     }
 
-    // Check if token matches
+    // ✅ Check if token matches
     if (user.emailVerificationToken !== token) {
       return NextResponse.json(
         { data: null, message: "Invalid verification token" },
@@ -29,12 +29,11 @@ export async function PUT(request) {
       );
     }
 
-    // Update verification status
-    const updatedUser = await prisma.users.update({
+    // ✅ Update verification status
+    const updatedUser = await prisma.user.update({
       where: { id },
       data: {
         emailVerified: true,
-        verificationRequestCount: (user.verificationRequestCount || 0) + 1,
         emailVerificationToken: null, // clear token after use
       },
     });
