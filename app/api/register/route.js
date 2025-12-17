@@ -7,7 +7,9 @@ export async function POST(req) {
   try {
     const { name, email, password, farmName } = await req.json();
 
-    // ✅ Validate required fields
+    /* ===============================
+       1️⃣ VALIDATION
+    =============================== */
     if (!name || !email || !password || !farmName) {
       return NextResponse.json(
         { message: "All fields are required" },
@@ -15,8 +17,13 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Check if email already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    /* ===============================
+       2️⃣ CHECK EXISTING USER
+    =============================== */
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
     if (existingUser) {
       return NextResponse.json(
         { message: "Email already registered" },
@@ -24,25 +31,33 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Hash password
+    /* ===============================
+       3️⃣ HASH PASSWORD
+    =============================== */
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Generate email verification token
+    /* ===============================
+       4️⃣ GENERATE TOKEN
+    =============================== */
     const verificationToken = Math.random().toString(36).substring(2, 15);
 
-    // 1️⃣ Create user with role FARMER
+    /* ===============================
+       5️⃣ CREATE USER (FARMER ONLY)
+    =============================== */
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "FARMER",       // force role as FARMER
-        emailVerified: false, // email not verified yet
+        role: "FARMER", // 🔒 force farmer
+        emailVerified: false,
         emailVerificationToken: verificationToken,
       },
     });
 
-    // 2️⃣ Create farmer profile
+    /* ===============================
+       6️⃣ CREATE FARMER PROFILE
+    =============================== */
     await prisma.farmer.create({
       data: {
         name: farmName,
@@ -51,12 +66,17 @@ export async function POST(req) {
       },
     });
 
-    // 3️⃣ Send verification email
+    /* ===============================
+       7️⃣ SEND VERIFICATION EMAIL
+       (TITAN / HOSTINGER SMTP)
+    =============================== */
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.titan.email",
+      port: 465,
+      secure: true,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER, // your@domain.com
+        pass: process.env.EMAIL_PASS, // email password
       },
     });
 
@@ -65,23 +85,38 @@ export async function POST(req) {
     await transporter.sendMail({
       from: `"Buylog" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Verify your Farmer account",
+      subject: "Verify your Buylog Farmer account",
       html: `
         <p>Hi ${user.name},</p>
-        <p>Please verify your email by clicking below:</p>
-        <a href="${verificationUrl}" style="background:#22c55e;color:white;padding:10px 20px;border-radius:5px;text-decoration:none;">Verify Email</a>
+        <p>Welcome to Buylog 👋</p>
+        <p>Please verify your email to activate your farmer account:</p>
+        <a href="${verificationUrl}"
+          style="display:inline-block;margin-top:10px;background:#22c55e;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;">
+          Verify Email
+        </a>
+        <p style="margin-top:15px;font-size:12px;color:#555;">
+          If you didn’t create this account, please ignore this email.
+        </p>
       `,
     });
 
+    /* ===============================
+       8️⃣ SUCCESS RESPONSE
+    =============================== */
     return NextResponse.json(
-      { message: "Farmer account created successfully. Verification email sent." },
+      {
+        message:
+          "Farmer account created successfully. Please check your email to verify your account.",
+      },
       { status: 201 }
     );
-
   } catch (error) {
-    console.error("Register Error:", error);
+    console.error("REGISTER ERROR:", error);
     return NextResponse.json(
-      { message: "Server error", error: error.message },
+      {
+        message: "Registration failed",
+        error: error.message,
+      },
       { status: 500 }
     );
   }
