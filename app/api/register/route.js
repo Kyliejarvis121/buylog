@@ -7,7 +7,7 @@ export async function POST(req) {
   try {
     const { name, email, password, farmName } = await req.json();
 
-    // 1️⃣ Validate required fields
+    // 1️⃣ Validation
     if (!name || !email || !password || !farmName) {
       return NextResponse.json(
         { message: "All fields are required" },
@@ -15,8 +15,11 @@ export async function POST(req) {
       );
     }
 
-    // 2️⃣ Check if email already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    // 2️⃣ Check existing user
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
     if (existingUser) {
       return NextResponse.json(
         { message: "Email already registered" },
@@ -27,16 +30,16 @@ export async function POST(req) {
     // 3️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4️⃣ Generate email verification token
+    // 4️⃣ Generate token
     const verificationToken = Math.random().toString(36).substring(2, 15);
 
-    // 5️⃣ Create user with role FARMER
+    // 5️⃣ Create FARMER user
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "FARMER",       // force role as FARMER
+        role: "FARMER",
         emailVerified: false,
         emailVerificationToken: verificationToken,
       },
@@ -51,19 +54,19 @@ export async function POST(req) {
       },
     });
 
-    // 7️⃣ Send verification email (Titan/Hostinger SMTP)
+    // 7️⃣ Send verification email (Titan / Hostinger)
     const transporter = nodemailer.createTransport({
       host: "smtp.titan.email",
       port: 465,
       secure: true,
       auth: {
-        user: process.env.EMAIL_USER, // your email
-        pass: process.env.EMAIL_PASS, // email password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    const verificationUrl = `${baseUrl}/front-end/verify-email?token=${verificationToken}&id=${user.id}`;
+    // ✅ CORRECT URL (route groups removed)
+    const verificationUrl = `https://buy-log-omega.vercel.app/verify-email?token=${verificationToken}&id=${user.id}`;
 
     await transporter.sendMail({
       from: `"Buylog" <${process.env.EMAIL_USER}>`,
@@ -83,7 +86,6 @@ export async function POST(req) {
       `,
     });
 
-    // 8️⃣ Return success response
     return NextResponse.json(
       {
         message:
@@ -94,10 +96,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("REGISTER ERROR:", error);
     return NextResponse.json(
-      {
-        message: "Registration failed",
-        error: error.message,
-      },
+      { message: "Registration failed", error: error.message },
       { status: 500 }
     );
   }
