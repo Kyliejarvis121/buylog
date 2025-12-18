@@ -1,11 +1,11 @@
 import { authOptions } from "@/lib/authOptions";
 import { getServerSession } from "next-auth";
-import Image from "next/image";
 import { prisma } from "@/lib/prismadb";
+import AvatarUploader from "@/components/backoffice/profile/AvatarUploader";
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
-  if (!session) return null;
+  if (!session?.user?.id) return null;
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -15,30 +15,27 @@ export default async function ProfilePage() {
     },
   });
 
+  if (!user) return null;
+
   const farmer = user.farmers?.[0];
 
   return (
-    <div className="max-w-4xl mx-auto mt-6 bg-zinc-900 text-zinc-100 rounded-2xl shadow-xl p-8">
+    <div className="max-w-4xl mx-auto mt-8 bg-zinc-900 text-zinc-100 rounded-2xl shadow-xl p-8">
       {/* HEADER */}
       <h2 className="text-2xl font-bold mb-8 border-b border-zinc-700 pb-4">
         My Profile
       </h2>
 
       {/* PROFILE HEADER */}
-      <div className="flex flex-col md:flex-row items-center gap-6 mb-10">
-        <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-zinc-700">
-          <Image
-            src={user.profile?.avatar || "/avatar.png"}
-            fill
-            className="object-cover"
-            alt="Profile picture"
-          />
-        </div>
+      <div className="flex flex-col md:flex-row items-center gap-8 mb-10">
+        {/* ✅ Avatar Upload */}
+        <AvatarUploader avatar={user.profile?.avatar} />
 
         <div className="text-center md:text-left">
           <p className="text-xl font-semibold">{user.name}</p>
           <p className="text-sm text-zinc-400">{user.email}</p>
-          <span className="inline-block mt-2 px-3 py-1 text-xs rounded-full bg-emerald-600 text-white">
+
+          <span className="inline-block mt-3 px-3 py-1 text-xs rounded-full bg-emerald-600 text-white">
             {user.role}
           </span>
         </div>
@@ -77,6 +74,8 @@ export default async function ProfilePage() {
     </div>
   );
 }
+
+/* ---------------- SMALL COMPONENT ---------------- */
 
 function Info({ label, value }) {
   return (
