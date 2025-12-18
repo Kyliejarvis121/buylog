@@ -21,6 +21,7 @@ model User {
   emailVerificationToken String?
   createdAt              DateTime @default(now())
 
+  // RELATIONS
   profile Profile?
   farmers Farmer[]
   orders  Order[]
@@ -28,22 +29,24 @@ model User {
 
 //
 // ===============================
-// USER PROFILE (NEW)
+// USER PROFILE
 // ===============================
 model Profile {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @unique @db.ObjectId
+
   avatar    String?
   phone     String?
   address   String?
   country   String?
   bio       String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // RELATION
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
 
 //
 // ===============================
@@ -54,6 +57,7 @@ model Farmer {
   name     String
   userId   String    @db.ObjectId
   isActive Boolean?  @default(false)
+
   products Product[]
 
   user User @relation(fields: [userId], references: [id])
