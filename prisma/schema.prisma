@@ -11,21 +11,43 @@ datasource db {
 // ===============================
 // USERS
 // ===============================
-
 model User {
   id                     String   @id @default(auto()) @map("_id") @db.ObjectId
   name                   String
   email                  String?  @unique
   password               String
-  role                   String   @default("FARMER")           // ✅ only farmers can register
+  role                   String   @default("FARMER")
   emailVerified          Boolean  @default(false)
-  emailVerificationToken String?                                // ✅ optional token for email verification
-  createdAt              DateTime @default(now())               // ✅ timestamp
+  emailVerificationToken String?
+  createdAt              DateTime @default(now())
 
   farmers Farmer[]
   orders  Order[]
+
+  // ✅ THIS FIELD MUST EXIST
+  profile Profile?
 }
 
+
+
+//
+// ===============================
+// USER PROFILE (NEW)
+// ===============================
+model Profile {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+
+  image     String?
+  phone     String?
+  address   String?
+  bio       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
 //
 // ===============================
@@ -76,10 +98,10 @@ model Product {
   productImages  String[] @default([])
   tags           String[] @default([])
   productCode    String?
-  sku            String?  
-  barcode        String?  
-  unit           String?  
-  qty            Int?     @default(1) 
+  sku            String?
+  barcode        String?
+  unit           String?
+  qty            Int?     @default(1)
   isWholesale    Boolean? @default(false)
   wholesalePrice Float?   @default(0)
   wholesaleQty   Int?     @default(0)
@@ -162,7 +184,7 @@ model Order {
   updatedAt   DateTime @updatedAt
 
   items OrderItem[]
-  user  User        @relation(fields: [userId], references: [id])
+  user  User @relation(fields: [userId], references: [id])
 }
 
 //

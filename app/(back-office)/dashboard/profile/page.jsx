@@ -8,9 +8,13 @@ export default async function ProfilePage() {
 
   if (!session) return null;
 
+  // Fetch user from Prisma
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: { profile: true },
+    include: {
+      farmers: true, // include farmer info if any
+      orders: true,  // optional
+    },
   });
 
   return (
@@ -20,7 +24,7 @@ export default async function ProfilePage() {
       {/* Avatar */}
       <div className="flex items-center gap-5 mb-6">
         <Image
-          src={user.profile?.avatar || "/avatar.png"}
+          src="/avatar.png" // default avatar (no profile relation yet)
           width={96}
           height={96}
           className="rounded-full border"
@@ -34,12 +38,25 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      {/* Profile Details */}
+      {/* Farmer Details (if user is a farmer) */}
+      {user.farmers.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">Farmer Info</h3>
+          {user.farmers.map((farmer) => (
+            <div key={farmer.id} className="space-y-1">
+              <p className="font-medium">Farm Name: {farmer.name}</p>
+              <p>Status: {farmer.isActive ? "Active" : "Inactive"}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Optional profile fields (add these manually if needed) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ProfileField label="Phone" value={user.profile?.phone} />
-        <ProfileField label="Address" value={user.profile?.address} />
-        <ProfileField label="Country" value={user.profile?.country} />
-        <ProfileField label="Bio" value={user.profile?.bio} />
+        <ProfileField label="Phone" value={user.phone || "Not set"} />
+        <ProfileField label="Address" value={user.address || "Not set"} />
+        <ProfileField label="Country" value={user.country || "Not set"} />
+        <ProfileField label="Bio" value={user.bio || "Not set"} />
       </div>
     </div>
   );
@@ -49,7 +66,7 @@ function ProfileField({ label, value }) {
   return (
     <div>
       <p className="text-sm text-gray-500">{label}</p>
-      <p className="font-medium">{value || "Not set"}</p>
+      <p className="font-medium">{value}</p>
     </div>
   );
 }

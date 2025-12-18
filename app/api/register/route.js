@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prismadb";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 export async function POST(req) {
   try {
@@ -33,7 +34,7 @@ export async function POST(req) {
     // 4️⃣ Generate verification token
     const verificationToken = crypto.randomUUID();
 
-    // 5️⃣ Create user + related model
+    // 5️⃣ Create user (+ farmer if provided)
     const user = await prisma.user.create({
       data: {
         name,
@@ -43,20 +44,14 @@ export async function POST(req) {
         emailVerified: false,
         emailVerificationToken: verificationToken,
 
-        ...(farmName
-          ? {
-              farmer: {
-                create: {
-                  name: farmName,
-                  isActive: true,
-                },
-              },
-            }
-          : {
-              profile: {
-                create: {}, // ✅ Proper profile creation
-              },
-            }),
+        ...(farmName && {
+          farmers: {
+            create: {
+              name: farmName,
+              isActive: true,
+            },
+          },
+        }),
       },
     });
 
