@@ -16,19 +16,15 @@ model User {
   name                   String
   email                  String?  @unique
   password               String
-  role                   String   @default("FARMER")
+  role                   String
   emailVerified          Boolean  @default(false)
   emailVerificationToken String?
   createdAt              DateTime @default(now())
 
+  profile Profile?
   farmers Farmer[]
   orders  Order[]
-
-  // ✅ THIS FIELD MUST EXIST
-  profile Profile?
 }
-
-
 
 //
 // ===============================
@@ -37,17 +33,17 @@ model User {
 model Profile {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @unique @db.ObjectId
-
-  image     String?
+  avatar    String?
   phone     String?
   address   String?
+  country   String?
   bio       String?
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 
 //
 // ===============================
