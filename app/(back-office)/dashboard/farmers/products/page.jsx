@@ -11,7 +11,7 @@ export default async function ProductsPage() {
 
   if (!session?.user) {
     return (
-      <p className="text-red-600">
+      <p className="p-6 text-red-400">
         Please login to view your products
       </p>
     );
@@ -31,23 +31,28 @@ export default async function ProductsPage() {
     : [];
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <PageHeader
         heading="My Products"
         href="/dashboard/farmers/products/new"
         linkTitle="Add Product"
       />
 
-      <div className="py-8">
+      <div className="mt-6">
         {farmerProducts.length === 0 ? (
-          <p className="text-gray-600">
+          <p className="text-zinc-400">
             You haven’t uploaded any products yet.
           </p>
         ) : (
-          <DataTable
-            data={farmerProducts}
-            columns={columns}
-          />
+          /* 👇 MOBILE OVERFLOW FIX */
+          <div className="relative overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900">
+            <div className="min-w-[900px]">
+              <DataTable
+                data={farmerProducts}
+                columns={columns}
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>
