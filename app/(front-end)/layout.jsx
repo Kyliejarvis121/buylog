@@ -4,9 +4,14 @@ import React from "react";
 
 export default function Layout({ children }) {
   return (
-    <div>
+    <div className="w-full overflow-x-hidden">
       <Navbar />
-      <div className="max-w-6xl mx-auto py-6 px-8 lg:px-0 ">{children}</div>
+
+      {/* MAIN CONTENT */}
+      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-0 py-6">
+        {children}
+      </main>
+
       <Footer />
     </div>
   );

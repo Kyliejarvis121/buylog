@@ -1,23 +1,35 @@
 "use client";
+
 import Navbar from "@/components/backoffice/Navbar";
 import Sidebar from "@/components/backoffice/Sidebar";
 import React, { useState } from "react";
 
 export default function Layout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
+
   return (
-    <div className="flex">
-      {/* sidebar */}
-      <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
-      <div className="lg:ml-64 ml-0 flex-grow bg-slate-100 min-h-screen">
-        {/* Header */}
-        <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
-        <main className="p-8 bg-slate-100 dark:bg-slate-900 text-slate-50 min-h-screen mt-16">
-          {children}
-        </main>
-        {/* Main */}
+    <div className="w-full overflow-x-hidden">
+      <div className="flex relative">
+        {/* Sidebar */}
+        <Sidebar
+          showSidebar={showSidebar}
+          setShowSidebar={setShowSidebar}
+        />
+
+        {/* Main Content */}
+        <div className="flex-1 lg:ml-64 bg-slate-100 dark:bg-slate-900 min-h-screen w-full">
+          {/* Navbar */}
+          <Navbar
+            showSidebar={showSidebar}
+            setShowSidebar={setShowSidebar}
+          />
+
+          {/* Page Content */}
+          <main className="mt-16 px-4 sm:px-6 py-6 w-full overflow-x-hidden">
+            {children}
+          </main>
+        </div>
       </div>
-      {/* Main Body */}
     </div>
   );
 }
