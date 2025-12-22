@@ -202,3 +202,16 @@ model OrderItem {
   order   Order   @relation(fields: [orderId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 }
+
+//
+// ===============================
+// VERIFICATION TOKENS
+// ===============================
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
