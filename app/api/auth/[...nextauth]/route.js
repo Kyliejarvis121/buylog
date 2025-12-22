@@ -15,13 +15,12 @@ export const authOptions = {
     signIn: "/login",
   },
   providers: [
-    // Google OAuth
+    // ✅ Google login
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
-
-    // Credentials (manual registration)
+    // ✅ Credentials login
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -37,7 +36,7 @@ export const authOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user) throw new Error("User not found");
+        if (!user) throw new Error("No user found with this email");
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) throw new Error("Invalid password");
@@ -46,42 +45,40 @@ export const authOptions = {
       },
     }),
   ],
-
   callbacks: {
-    // Set role for Google users when they first sign up
-    async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        // Check if role is already set
-        if (!user.role) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { role: "FARMER" },
+    async signIn({ user, account, profile }) {
+      // ✅ If Google user signs in for the first time, ensure role is set
+      if (account.provider === "google") {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+        });
+
+        if (!existingUser) {
+          await prisma.user.create({
+            data: {
+              name: user.name,
+              email: user.email,
+              image: user.image,
+              role: "USER", // default role for Google users
+              emailVerified: true,
+            },
           });
         }
       }
       return true;
     },
-
-    // Add role to session
-    async session({ session, user }) {
-      if (user?.role) {
-        session.user.role = user.role;
+    async session({ session, token, user }) {
+      if (session.user) {
+        session.user.id = token.sub;
+        session.user.role = token.role;
       }
       return session;
     },
-
-    // Add role to JWT
     async jwt({ token, user }) {
-      if (user?.role) {
+      if (user) {
         token.role = user.role;
       }
       return token;
-    },
-  },
-
-  events: {
-    async error(message) {
-      console.error("NextAuth Error:", message);
     },
   },
 };
