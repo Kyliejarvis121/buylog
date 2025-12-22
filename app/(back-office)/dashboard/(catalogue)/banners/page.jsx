@@ -11,7 +11,13 @@ export default function BannersPage() {
   useEffect(() => {
     fetch("/api/banners")
       .then((res) => res.json())
-      .then((data) => setBanners(data))
+      .then((res) => {
+        if (res.success) {
+          setBanners(res.data); // ✅ extract the banners array
+        } else {
+          console.error("Failed to fetch banners:", res.message);
+        }
+      })
       .catch(console.error);
   }, []);
 
