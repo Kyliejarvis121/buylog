@@ -73,6 +73,11 @@ export default function RegisterForm() {
     }
   }
 
+  // Google signup/login
+  const handleGoogleSignup = () => {
+    signIn("google", { callbackUrl: "/dashboard" });
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
 
@@ -96,9 +101,7 @@ export default function RegisterForm() {
         className="mb-3"
       />
       {emailErr && (
-        <small className="text-red-600 -mt-2 mb-2 block">
-          {emailErr}
-        </small>
+        <small className="text-red-600 -mt-2 mb-2 block">{emailErr}</small>
       )}
 
       {/* Password */}
@@ -141,6 +144,7 @@ export default function RegisterForm() {
         className="mb-4"
       />
 
+      {/* Submit button */}
       <SubmitButton
         isLoading={loading}
         buttonTitle="Create Account"
@@ -150,7 +154,7 @@ export default function RegisterForm() {
       {/* Google Sign Up */}
       <button
         type="button"
-        onClick={() => signIn("google")}
+        onClick={handleGoogleSignup}
         className="w-full mt-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
       >
         Continue with Google

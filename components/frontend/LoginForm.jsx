@@ -1,11 +1,12 @@
 "use client";
+
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { FaGoogle, FaGithub } from "react-icons/fa";
+import { FaGoogle } from "react-icons/fa";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -23,16 +24,17 @@ export default function LoginForm() {
   async function onSubmit(data) {
     try {
       setLoading(true);
-      const loginData = await signIn("credentials", {
+      const result = await signIn("credentials", {
         ...data,
         redirect: false,
       });
-      if (loginData?.error) {
+
+      if (result?.error) {
         toast.error("Sign-in error: Check your credentials");
       } else {
-        toast.success("Login Successful");
+        toast.success("Login Successful!");
         reset();
-        router.push("/");
+        router.push("/dashboard"); // ✅ redirect to dashboard
       }
     } catch (error) {
       console.error("Network Error:", error);
@@ -46,74 +48,85 @@ export default function LoginForm() {
   const handleGoogleLogin = async () => {
     setLoadingGoogle(true);
     try {
-      await signIn("google", { callbackUrl: "/" });
+      await signIn("google", { callbackUrl: "/dashboard" }); // ✅ redirect to dashboard
     } catch (error) {
       console.error("Google SignIn Error:", error);
       toast.error("Google login failed");
+    } finally {
       setLoadingGoogle(false);
     }
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 max-w-md mx-auto">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {/* Email */}
         <div>
           <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-            Your email
+            Email
           </label>
           <input
-            {...register("email", { required: true })}
+            {...register("email", { required: "Email is required" })}
             type="email"
-            name="email"
             id="email"
             placeholder="name@company.com"
-            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
           />
-          {errors.email && <small className="text-red-600 text-sm">This field is required</small>}
+          {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>}
         </div>
 
+        {/* Password */}
         <div>
           <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
             Password
           </label>
           <input
-            {...register("password", { required: true })}
+            {...register("password", { required: "Password is required" })}
             type="password"
-            name="password"
             id="password"
             placeholder="••••••••"
-            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
           />
-          {errors.password && <small className="text-red-600 text-sm">This field is required</small>}
+          {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>}
         </div>
 
-        <div className="flex gap-4 items-center">
-          <Link href="/forgot-password" className="shrink-0 font-medium text-blue-600 hover:underline dark:text-blue-500">
-            Forgot Password
+        {/* Forgot Password & Submit */}
+        <div className="flex items-center justify-between">
+          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline dark:text-blue-500">
+            Forgot Password?
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className={`w-full text-white ${loading ? "bg-blue-700" : "bg-blue-600 hover:bg-blue-700"} focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800`}
+            className={`px-5 py-2.5 text-white rounded-lg text-sm font-medium focus:ring-4 focus:outline-none ${
+              loading ? "bg-blue-700" : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-300"
+            }`}
           >
-            {loading ? "Signing you in..." : "Login"}
+            {loading ? "Signing in..." : "Login"}
           </button>
         </div>
       </form>
 
-      <div className="flex flex-col gap-3">
-        <button
-          onClick={handleGoogleLogin}
-          disabled={loadingGoogle}
-          className="flex items-center justify-center gap-2 w-full text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
-        >
-          {loadingGoogle ? "Signing in with Google..." : <><FaGoogle /> Login with Google</>}
-        </button>
+      {/* Divider */}
+      <div className="flex items-center gap-2 my-4">
+        <hr className="flex-grow border-gray-300 dark:border-gray-600" />
+        <span className="text-gray-500 dark:text-gray-400 text-sm">or</span>
+        <hr className="flex-grow border-gray-300 dark:border-gray-600" />
       </div>
 
-      <p className="text-sm font-light text-gray-500 dark:text-gray-400">
+      {/* Google Login */}
+      <button
+        onClick={handleGoogleLogin}
+        disabled={loadingGoogle}
+        className="flex items-center justify-center gap-2 w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+      >
+        {loadingGoogle ? "Signing in with Google..." : <><FaGoogle /> Login with Google</>}
+      </button>
+
+      {/* Sign up link */}
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
         Don't have an account?{" "}
-        <Link href="/register" className="font-medium text-blue-600 hover:underline dark:text-blue-500">
+        <Link href="/register" className="text-blue-600 hover:underline dark:text-blue-500 font-medium">
           Sign Up
         </Link>
       </p>
