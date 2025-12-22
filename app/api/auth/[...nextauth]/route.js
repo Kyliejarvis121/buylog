@@ -8,60 +8,53 @@ import { compare } from "bcryptjs";
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    // Google OAuth for farmers only
+    // Google OAuth for farmers
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
-
     // Credentials login
     CredentialsProvider({
       name: "Credentials",
-      credentials: {
-        email: { type: "email" },
-        password: { type: "password" },
-      },
+      credentials: { email: { type: "email" }, password: { type: "password" } },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
-
-        if (!user || !user.password || user.role !== "FARMER") return null;
+        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
+        if (!user || !user.password) return null;
 
         const isValid = await compare(credentials.password, user.password);
         if (!isValid) return null;
+
+        // Only allow farmers
+        if (user.role !== "FARMER") return null;
 
         return user;
       },
     }),
   ],
-
   session: { strategy: "jwt" },
-
   callbacks: {
-    // JWT callback
     async jwt({ token, user, account }) {
-      // Credentials login
       if (user) {
         token.id = user.id;
-        token.role = user.role || "FARMER";
+        token.role = user.role;
         token.email = user.email;
       }
 
-      // Google OAuth login
+      // Google login
       if (account?.provider === "google") {
         const email = token.email || user?.email;
         if (email) {
           let existingUser = await prisma.user.findUnique({ where: { email } });
+
           if (!existingUser) {
-            // Only create a FARMER role
+            // Create farmer only
             const newUser = await prisma.user.create({
               data: {
                 name: token.name || "Google Farmer",
                 email,
-                role: "FARMER",
+                role: "FARMER", // <-- Important: only farmer can register
                 password: null,
                 emailVerified: true,
               },
@@ -69,30 +62,29 @@ export const authOptions = {
             token.id = newUser.id;
             token.role = newUser.role;
           } else {
+            if (existingUser.role !== "FARMER") {
+              throw new Error("Only farmers can login");
+            }
             token.id = existingUser.id;
-            token.role = existingUser.role || "FARMER";
+            token.role = existingUser.role;
           }
         }
       }
 
       return token;
     },
-
-    // Session callback
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
-        session.user.role = token.role || "FARMER";
+        session.user.role = token.role;
         session.user.email = token.email;
       }
       return session;
     },
   },
-
   pages: {
     signIn: "/login",
   },
-
   secret: process.env.NEXTAUTH_SECRET,
 };
 
