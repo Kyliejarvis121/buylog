@@ -4,64 +4,10 @@ export const revalidate = 0;
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-/* ===============================
-   GET PRODUCTS
-   - Admin: /api/products?all=true
-   - Frontend: /api/products
-================================ */
-export async function GET(request) {
+// CREATE PRODUCT
+export async function POST(request) {
   try {
-    const { searchParams } = new URL(request.url);
-
-    const page = Number(searchParams.get("page") || 1);
-    const limit = Number(searchParams.get("limit") || 20);
-    const skip = (page - 1) * limit;
-    const search = searchParams.get("q")?.trim() || "";
-    const showAll = searchParams.get("all") === "true";
-
-    const where = {
-      ...(search && {
-        title: { contains: search, mode: "insensitive" },
-      }),
-      ...(showAll ? {} : { isActive: true }), // ✅ KEY FIX
-    };
-
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-        include: {
-          category: true,
-          farmer: true,
-        },
-      }),
-      prisma.product.count({ where }),
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      data: products,
-      total,
-      page,
-      limit,
-    });
-  } catch (error) {
-    console.error("❌ PRODUCTS GET ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Failed to fetch products" },
-      { status: 500 }
-    );
-  }
-}
-
-/* ===============================
-   CREATE PRODUCT
-================================ */
-export async function POST(req) {
-  try {
-    const body = await req.json();
+    const body = await request.json();
 
     if (!body.title || !body.farmerId) {
       return NextResponse.json(
@@ -72,7 +18,7 @@ export async function POST(req) {
 
     const product = await prisma.product.create({
       data: {
-        title: body.title.trim(),
+        title: body.title,
         slug: body.slug,
         description: body.description || "",
         price: Number(body.price) || 0,
@@ -82,63 +28,75 @@ export async function POST(req) {
         productImages: body.productImages || [],
         tags: body.tags || [],
         productCode: body.productCode || null,
-
-        isWholesale: Boolean(body.isWholesale),
+        isWholesale: !!body.isWholesale,
         wholesalePrice: Number(body.wholesalePrice) || 0,
         wholesaleQty: Number(body.wholesaleQty) || 0,
-
-        isActive: body.isActive ?? true, // ✅ DEFAULT TRUE
-        qty: Number(body.qty) || 1,
-
-        farmer: {
-          connect: { id: body.farmerId },
-        },
-
-        ...(body.categoryId && {
-          category: { connect: { id: body.categoryId } },
-        }),
+        isActive: body.isActive ?? true,
+        qty: body.qty || 1,
+        farmer: { connect: { id: body.farmerId } },
+        category: body.categoryId
+          ? { connect: { id: body.categoryId } }
+          : undefined,
       },
     });
 
-    return NextResponse.json(
-      { success: true, message: "Product created", data: product },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: "Product created successfully",
+      data: product,
+    }, { status: 201 });
   } catch (error) {
-    console.error("❌ PRODUCT CREATE ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Failed to create product" },
-      { status: 500 }
-    );
+    console.error("POST /api/products failed:", error);
+    return NextResponse.json({
+      success: false,
+      message: "Failed to create product",
+      error: error.message,
+    }, { status: 500 });
   }
 }
 
-/* ===============================
-   DELETE PRODUCT (ADMIN)
-================================ */
-export async function DELETE(request) {
+// GET ALL PRODUCTS
+export async function GET(request) {
   try {
-    const { id } = await request.json();
+    const { searchParams } = new URL(request.url);
 
-    if (!id) {
-      return NextResponse.json(
-        { message: "Product ID is required" },
-        { status: 400 }
-      );
-    }
+    const page = Number(searchParams.get("page") || 1);
+    const limit = Number(searchParams.get("limit") || 1000); // fetch all
+    const skip = (page - 1) * limit;
+    const searchQuery = searchParams.get("q")?.trim() || "";
 
-    await prisma.product.delete({
-      where: { id },
-    });
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where: searchQuery
+          ? { title: { contains: searchQuery, mode: "insensitive" } }
+          : undefined,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: { category: true, farmer: true },
+      }),
+      prisma.product.count({
+        where: searchQuery
+          ? { title: { contains: searchQuery, mode: "insensitive" } }
+          : undefined,
+      }),
+    ]);
 
     return NextResponse.json({
-      message: "Product deleted successfully",
+      success: true,
+      data: products,
+      total,
+      page,
+      limit,
+      message: `Fetched ${products.length} products out of ${total}`,
     });
   } catch (error) {
-    console.error("❌ PRODUCT DELETE ERROR:", error);
-    return NextResponse.json(
-      { message: "Failed to delete product" },
-      { status: 500 }
-    );
+    console.error("GET /api/products failed:", error);
+    return NextResponse.json({
+      success: false,
+      data: [],
+      message: "Failed to fetch products",
+      error: error.message,
+    }, { status: 500 });
   }
 }
