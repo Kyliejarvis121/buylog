@@ -1,20 +1,51 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// GET all products
-export async function GET() {
+/* ===============================
+   GET PRODUCTS
+   - Admin: /api/products?all=true
+   - Frontend: /api/products
+================================ */
+export async function GET(request) {
   try {
-    const products = await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        category: true,
-        farmer: true,
-      },
-    });
+    const { searchParams } = new URL(request.url);
+
+    const page = Number(searchParams.get("page") || 1);
+    const limit = Number(searchParams.get("limit") || 20);
+    const skip = (page - 1) * limit;
+    const search = searchParams.get("q")?.trim() || "";
+    const showAll = searchParams.get("all") === "true";
+
+    const where = {
+      ...(search && {
+        title: { contains: search, mode: "insensitive" },
+      }),
+      ...(showAll ? {} : { isActive: true }), // ✅ KEY FIX
+    };
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          category: true,
+          farmer: true,
+        },
+      }),
+      prisma.product.count({ where }),
+    ]);
 
     return NextResponse.json({
       success: true,
       data: products,
+      total,
+      page,
+      limit,
     });
   } catch (error) {
     console.error("❌ PRODUCTS GET ERROR:", error);
@@ -25,7 +56,9 @@ export async function GET() {
   }
 }
 
-// CREATE a new product
+/* ===============================
+   CREATE PRODUCT
+================================ */
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -39,7 +72,7 @@ export async function POST(req) {
 
     const product = await prisma.product.create({
       data: {
-        title: body.title,
+        title: body.title.trim(),
         slug: body.slug,
         description: body.description || "",
         price: Number(body.price) || 0,
@@ -49,17 +82,21 @@ export async function POST(req) {
         productImages: body.productImages || [],
         tags: body.tags || [],
         productCode: body.productCode || null,
-        isWholesale: !!body.isWholesale,
+
+        isWholesale: Boolean(body.isWholesale),
         wholesalePrice: Number(body.wholesalePrice) || 0,
         wholesaleQty: Number(body.wholesaleQty) || 0,
-        isActive: body.isActive ?? true,
-        qty: body.qty || 1,
+
+        isActive: body.isActive ?? true, // ✅ DEFAULT TRUE
+        qty: Number(body.qty) || 1,
+
         farmer: {
           connect: { id: body.farmerId },
         },
-        category: body.categoryId
-          ? { connect: { id: body.categoryId } }
-          : undefined,
+
+        ...(body.categoryId && {
+          category: { connect: { id: body.categoryId } },
+        }),
       },
     });
 
@@ -71,6 +108,36 @@ export async function POST(req) {
     console.error("❌ PRODUCT CREATE ERROR:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create product" },
+      { status: 500 }
+    );
+  }
+}
+
+/* ===============================
+   DELETE PRODUCT (ADMIN)
+================================ */
+export async function DELETE(request) {
+  try {
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Product ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.product.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      message: "Product deleted successfully",
+    });
+  } catch (error) {
+    console.error("❌ PRODUCT DELETE ERROR:", error);
+    return NextResponse.json(
+      { message: "Failed to delete product" },
       { status: 500 }
     );
   }

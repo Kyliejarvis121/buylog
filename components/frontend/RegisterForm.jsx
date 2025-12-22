@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { signIn } from "next-auth/react";
+
 import SubmitButton from "../FormInputs/SubmitButton";
 import TextInput from "../FormInputs/TextInput";
 
@@ -27,6 +28,7 @@ export default function RegisterForm() {
       setLoading(true);
       setEmailErr("");
 
+      // 1️⃣ Register user
       const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,10 +47,23 @@ export default function RegisterForm() {
         return;
       }
 
-      toast.success("Registration successful! Verify your email.");
+      toast.success("Account created successfully");
 
+      // 2️⃣ Auto login after registration
+      const login = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (login?.error) {
+        toast.error("Login failed. Please login manually.");
+        return;
+      }
+
+      // 3️⃣ Reset form & redirect to dashboard
       reset();
-      router.push(`/front-end/verify-email?userId=${res.user.id}`);
+      router.push("/dashboard");
 
     } catch (error) {
       console.error(error);
@@ -96,7 +111,7 @@ export default function RegisterForm() {
         className="mb-3"
       />
 
-      {/* Farm Name (REQUIRED) */}
+      {/* Farm Name */}
       <TextInput
         label="Farm Name"
         name="farmName"
@@ -128,7 +143,7 @@ export default function RegisterForm() {
 
       <SubmitButton
         isLoading={loading}
-        buttonTitle="Create Farmer Account"
+        buttonTitle="Create Account"
         loadingButtonTitle="Creating account..."
       />
 

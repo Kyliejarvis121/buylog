@@ -1,57 +1,51 @@
-// app/api/banners/route.js
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// CREATE BANNER
+/* ===============================
+   CREATE BANNER
+================================ */
 export async function POST(request) {
   try {
     const body = await request.json();
     const { title, link, imageUrl, isActive } = body;
 
-    // Validate required fields
     if (!title || !imageUrl) {
       return NextResponse.json(
-        {
-          data: null,
-          message: "Title and imageUrl are required",
-        },
+        { message: "Title and imageUrl are required" },
         { status: 400 }
       );
     }
 
-    const newBanner = await prisma.banner.create({
+    const banner = await prisma.banner.create({
       data: {
-        title,
-        link: link?.trim() || null, // optional
+        title: title.trim(),
+        link: link?.trim() || null,
         imageUrl,
-        isActive: Boolean(isActive),
+        isActive: isActive ?? true, // ✅ DEFAULT TRUE
       },
     });
 
     return NextResponse.json(
-      {
-        data: newBanner,
-        message: "Banner created successfully",
-      },
+      { data: banner, message: "Banner created successfully" },
       { status: 201 }
     );
   } catch (error) {
-    console.error("POST /api/banners failed:", error);
+    console.error("POST /api/banners error:", error);
     return NextResponse.json(
-      {
-        data: null,
-        message: "Failed to create banner",
-        error: error.message,
-      },
+      { message: "Failed to create banner" },
       { status: 500 }
     );
   }
 }
 
-// GET ALL BANNERS (with pagination and optional search)
+/* ===============================
+   GET BANNERS
+   - Admin: /api/banners?all=true
+   - Frontend: /api/banners
+================================ */
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -59,22 +53,24 @@ export async function GET(request) {
     const page = Number(searchParams.get("page") || 1);
     const limit = Number(searchParams.get("limit") || 20);
     const skip = (page - 1) * limit;
-    const searchQuery = searchParams.get("q")?.trim() || "";
+    const search = searchParams.get("q")?.trim() || "";
+    const showAll = searchParams.get("all") === "true";
+
+    const where = {
+      ...(search && {
+        title: { contains: search, mode: "insensitive" },
+      }),
+      ...(showAll ? {} : { isActive: true }), // ✅ KEY FIX
+    };
 
     const [banners, total] = await Promise.all([
       prisma.banner.findMany({
-        where: searchQuery
-          ? { title: { contains: searchQuery, mode: "insensitive" } }
-          : undefined,
+        where,
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.banner.count({
-        where: searchQuery
-          ? { title: { contains: searchQuery, mode: "insensitive" } }
-          : undefined,
-      }),
+      prisma.banner.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -82,16 +78,41 @@ export async function GET(request) {
       total,
       page,
       limit,
-      message: `Fetched ${banners.length} banners out of ${total}`,
     });
   } catch (error) {
-    console.error("GET /api/banners failed:", error);
+    console.error("GET /api/banners error:", error);
     return NextResponse.json(
-      {
-        data: [],
-        message: "Failed to fetch banners",
-        error: error.message,
-      },
+      { data: [], message: "Failed to fetch banners" },
+      { status: 500 }
+    );
+  }
+}
+
+/* ===============================
+   DELETE BANNER
+================================ */
+export async function DELETE(request) {
+  try {
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Banner ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.banner.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      message: "Banner deleted successfully",
+    });
+  } catch (error) {
+    console.error("DELETE /api/banners error:", error);
+    return NextResponse.json(
+      { message: "Failed to delete banner" },
       { status: 500 }
     );
   }
