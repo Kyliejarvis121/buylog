@@ -1,23 +1,22 @@
 import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prismadb";
 import { compare } from "bcryptjs";
 
-const authOptions = {
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
-  secret: process.env.NEXTAUTH_SECRET,
-  session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
-
   providers: [
+    // Google OAuth
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    // Credentials login
     CredentialsProvider({
       name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
+      credentials: { email: { type: "email" }, password: { type: "password" } },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
@@ -30,67 +29,57 @@ const authOptions = {
         return user;
       },
     }),
-
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
   ],
-
+  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user, account }) {
-      // Attach user id & role
+      // If logging in for the first time with credentials
       if (user) {
         token.id = user.id;
         token.role = user.role || "USER";
+        token.email = user.email;
       }
 
-      // Google OAuth
+      // If logging in via Google
       if (account?.provider === "google") {
         const email = token.email || user?.email;
         if (email) {
-          let existing = await prisma.user.findUnique({ where: { email } });
-
-          if (!existing) {
-            // Create new OAuth user
+          let existingUser = await prisma.user.findUnique({ where: { email } });
+          if (!existingUser) {
+            // Create user if doesn't exist
             const newUser = await prisma.user.create({
               data: {
+                name: token.name || "Google User",
                 email,
-                name: token.name || "User",
-                password: null, // OAuth users don't have password
                 role: "USER",
-                phone: null,
-                emailVerified: true, // mark verified since Google verified it
+                password: null,
+                emailVerified: true,
               },
             });
             token.id = newUser.id;
             token.role = newUser.role;
           } else {
-            token.id = existing.id;
-            token.role = existing.role || "USER";
-
-            // Update name if missing
-            if (!existing.name) {
-              await prisma.user.update({
-                where: { id: existing.id },
-                data: { name: token.name || existing.name },
-              });
-            }
+            token.id = existingUser.id;
+            token.role = existingUser.role || "USER";
           }
         }
       }
 
       return token;
     },
-
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role || "USER";
+        session.user.email = token.email;
       }
       return session;
     },
   },
+  pages: {
+    signIn: "/login",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);
