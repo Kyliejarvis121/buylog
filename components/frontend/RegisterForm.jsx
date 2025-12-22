@@ -23,15 +23,16 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [emailErr, setEmailErr] = useState("");
 
+  // Manual registration
   async function onSubmit(data) {
     try {
       setLoading(true);
       setEmailErr("");
 
-      // Add role field for FARMER
+      // Force role to FARMER
       data.role = "FARMER";
 
-      // 1️⃣ Register user
+      // 1️⃣ Register user via API
       const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,7 +53,7 @@ export default function RegisterForm() {
 
       toast.success("Account created successfully");
 
-      // 2️⃣ Auto login after registration
+      // 2️⃣ Auto login
       const login = await signIn("credentials", {
         email: data.email,
         password: data.password,
@@ -64,7 +65,6 @@ export default function RegisterForm() {
         return;
       }
 
-      // 3️⃣ Reset form & redirect to dashboard
       reset();
       router.push("/dashboard");
     } catch (error) {
@@ -78,6 +78,7 @@ export default function RegisterForm() {
   // Google signup/login
   const handleGoogleSignup = async () => {
     try {
+      // Redirects to NextAuth Google provider
       await signIn("google", { callbackUrl: "/dashboard" });
     } catch (err) {
       console.error(err);

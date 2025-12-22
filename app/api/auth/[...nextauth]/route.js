@@ -8,13 +8,10 @@ import { compare } from "bcryptjs";
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    // Google OAuth for FARMERs
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
-
-    // Credentials login
     CredentialsProvider({
       name: "Credentials",
       credentials: { email: { type: "email" }, password: { type: "password" } },
@@ -27,9 +24,6 @@ export const authOptions = {
         const isValid = await compare(credentials.password, user.password);
         if (!isValid) return null;
 
-        // Only FARMERs can login
-        if (user.role !== "FARMER") return null;
-
         return user;
       },
     }),
@@ -37,36 +31,30 @@ export const authOptions = {
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user, account }) {
-      // Credentials login
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = user.role || "FARMER";
         token.email = user.email;
       }
 
-      // Google login
       if (account?.provider === "google") {
         const email = token.email || user?.email;
         if (email) {
           let existingUser = await prisma.user.findUnique({ where: { email } });
           if (!existingUser) {
-            // Only create FARMER users via Google
+            // Only create FARMER accounts
             const newUser = await prisma.user.create({
               data: {
-                name: token.name || "Google Farmer",
+                name: token.name || "Google User",
                 email,
-                role: "FARMER",      // Important: must be FARMER
+                role: "FARMER",          // ✅ important
                 password: null,
-                emailVerified: true,
+                emailVerified: new Date(),
               },
             });
             token.id = newUser.id;
             token.role = newUser.role;
           } else {
-            // If already exists, ensure they are FARMER
-            if (existingUser.role !== "FARMER") {
-              throw new Error("Only FARMERs can login here");
-            }
             token.id = existingUser.id;
             token.role = existingUser.role;
           }
