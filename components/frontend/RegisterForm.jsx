@@ -28,6 +28,9 @@ export default function RegisterForm() {
       setLoading(true);
       setEmailErr("");
 
+      // Add role field for FARMER
+      data.role = "FARMER";
+
       // 1️⃣ Register user
       const response = await fetch("/api/register", {
         method: "POST",
@@ -64,7 +67,6 @@ export default function RegisterForm() {
       // 3️⃣ Reset form & redirect to dashboard
       reset();
       router.push("/dashboard");
-
     } catch (error) {
       console.error(error);
       toast.error("Network error, try again.");
@@ -74,13 +76,17 @@ export default function RegisterForm() {
   }
 
   // Google signup/login
-  const handleGoogleSignup = () => {
-    signIn("google", { callbackUrl: "/dashboard" });
+  const handleGoogleSignup = async () => {
+    try {
+      await signIn("google", { callbackUrl: "/dashboard" });
+    } catch (err) {
+      console.error(err);
+      toast.error("Google signup failed");
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-
       {/* Full Name */}
       <TextInput
         label="Full Name"
