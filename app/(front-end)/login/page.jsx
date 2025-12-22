@@ -2,8 +2,25 @@
 
 import LoginForm from "@/components/frontend/LoginForm";
 import { signIn } from "next-auth/react";
+import toast from "react-hot-toast";
 
 export default function Login() {
+  const handleGoogleLogin = async () => {
+    try {
+      const res = await signIn("google", { redirect: false, callbackUrl: "/" });
+
+      if (res?.error) {
+        toast.error(res.error || "Google login failed");
+      } else if (res?.url) {
+        // Redirect manually
+        window.location.href = res.url;
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      toast.error("Something went wrong. Try again.");
+    }
+  };
+
   return (
     <section className="bg-gray-50 dark:bg-gray-900">
       <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen">
@@ -25,7 +42,7 @@ export default function Login() {
 
             {/* Google login */}
             <button
-              onClick={() => signIn("google", { callbackUrl: "/" })}
+              onClick={handleGoogleLogin}
               className="w-full flex items-center justify-center gap-2 py-2 text-white bg-red-500 rounded hover:bg-red-600 transition"
             >
               Continue with Google
