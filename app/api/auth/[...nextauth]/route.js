@@ -1,81 +1,89 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prismadb";
-import { compare } from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/login",
+  },
   providers: [
+    // Google OAuth
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
+
+    // Credentials (manual registration)
     CredentialsProvider({
       name: "Credentials",
-      credentials: { email: { type: "email" }, password: { type: "password" } },
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Missing email or password");
+        }
 
-        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
-        if (!user || !user.password) return null;
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        });
 
-        const isValid = await compare(credentials.password, user.password);
-        if (!isValid) return null;
+        if (!user) throw new Error("User not found");
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) throw new Error("Invalid password");
 
         return user;
       },
     }),
   ],
-  session: { strategy: "jwt" },
-  callbacks: {
-    async jwt({ token, user, account }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role || "FARMER";
-        token.email = user.email;
-      }
 
+  callbacks: {
+    // Set role for Google users when they first sign up
+    async signIn({ user, account }) {
       if (account?.provider === "google") {
-        const email = token.email || user?.email;
-        if (email) {
-          let existingUser = await prisma.user.findUnique({ where: { email } });
-          if (!existingUser) {
-            // Only create FARMER accounts
-            const newUser = await prisma.user.create({
-              data: {
-                name: token.name || "Google User",
-                email,
-                role: "FARMER",          // ✅ important
-                password: null,
-                emailVerified: new Date(),
-              },
-            });
-            token.id = newUser.id;
-            token.role = newUser.role;
-          } else {
-            token.id = existingUser.id;
-            token.role = existingUser.role;
-          }
+        // Check if role is already set
+        if (!user.role) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { role: "FARMER" },
+          });
         }
       }
-
-      return token;
+      return true;
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.email = token.email;
+
+    // Add role to session
+    async session({ session, user }) {
+      if (user?.role) {
+        session.user.role = user.role;
       }
       return session;
     },
+
+    // Add role to JWT
+    async jwt({ token, user }) {
+      if (user?.role) {
+        token.role = user.role;
+      }
+      return token;
+    },
   },
-  pages: {
-    signIn: "/login",
+
+  events: {
+    async error(message) {
+      console.error("NextAuth Error:", message);
+    },
   },
-  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);

@@ -5,12 +5,16 @@ import { signIn } from "next-auth/react";
 import toast from "react-hot-toast";
 
 export default function Register() {
+  // Google signup/login handler
   const handleGoogle = async () => {
     try {
+      // Sign in without redirect first
       const res = await signIn("google", { redirect: false, callbackUrl: "/dashboard" });
+
       if (res?.error) {
         toast.error(res.error || "Google signup failed");
       } else if (res?.url) {
+        // Redirect manually
         window.location.href = res.url;
       }
     } catch (err) {
@@ -28,17 +32,17 @@ export default function Register() {
               Create a new account
             </h1>
 
-            {/* Manual registration */}
+            {/* Manual registration form */}
             <RegisterForm role="FARMER" includePhone />
 
             {/* Divider */}
-            <div className="flex items-center gap-2">
-              <hr className="flex-1 border-gray-300" />
-              <span className="text-gray-500 text-sm">OR</span>
-              <hr className="flex-1 border-gray-300" />
+            <div className="flex items-center gap-2 my-4">
+              <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+              <span className="text-gray-500 dark:text-gray-400 text-sm">OR</span>
+              <hr className="flex-1 border-gray-300 dark:border-gray-600" />
             </div>
 
-            {/* Google sign-up/login */}
+            {/* Google signup/login button */}
             <button
               onClick={handleGoogle}
               className="w-full flex items-center justify-center gap-2 py-2 text-white bg-red-500 rounded hover:bg-red-600 transition"
