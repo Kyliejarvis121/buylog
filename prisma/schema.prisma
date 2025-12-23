@@ -22,6 +22,10 @@ model User {
   image                  String?
   createdAt              DateTime @default(now())
 
+  // 🔐 FORGOT PASSWORD
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
   // ✅ REQUIRED BY NEXTAUTH
   accounts Account[]
   sessions Session[]
@@ -32,21 +36,19 @@ model User {
   orders  Order[]
 }
 
-
-
 //
 // ===============================
 // USER PROFILE
 // ===============================
 model Profile {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @unique @db.ObjectId
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
 
-  avatar    String?
-  phone     String?
-  address   String?
-  country   String?
-  bio       String?
+  avatar  String?
+  phone   String?
+  address String?
+  country String?
+  bio     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -59,13 +61,13 @@ model Profile {
 // FARMERS
 // ===============================
 model Farmer {
-  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
   name     String
-  userId   String    @db.ObjectId
-  isActive Boolean?  @default(false)
+  userId   String   @db.ObjectId
+  isActive Boolean? @default(false)
 
   products Product[]
-  user User @relation(fields: [userId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
 }
 
 //
@@ -189,7 +191,7 @@ model Order {
   updatedAt   DateTime @updatedAt
 
   items OrderItem[]
-  user  User @relation(fields: [userId], references: [id])
+  user  User        @relation(fields: [userId], references: [id])
 }
 
 //
@@ -256,4 +258,3 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
-

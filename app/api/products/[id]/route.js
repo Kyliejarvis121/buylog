@@ -1,23 +1,25 @@
-// app/api/products/[id]/route.js
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-function toNumberSafe(val, fallback = undefined) {
-  if (val === undefined || val === null) return fallback;
-  const n = Number(val);
-  return Number.isFinite(n) ? n : fallback;
+/**
+ * Safe number parser
+ */
+function toNumber(val, fallback = 0) {
+  if (val === undefined || val === null || val === "") return fallback;
+  const num = Number(val);
+  return Number.isFinite(num) ? num : fallback;
 }
 
-// ======================================================
-// GET PRODUCT BY ID
-// ======================================================
+/* =====================================================
+   GET PRODUCT BY ID
+===================================================== */
 export async function GET(req, { params }) {
   try {
     const { id } = params;
 
     if (!id) {
       return NextResponse.json(
-        { success: false, message: "Product id required" },
+        { success: false, message: "Product ID is required" },
         { status: 400 }
       );
     }
@@ -37,153 +39,117 @@ export async function GET(req, { params }) {
       );
     }
 
-    const imageUrl =
-      product.imageUrl ?? (product.productImages?.[0] ?? null);
-
     return NextResponse.json({
       success: true,
-      data: {
-        ...product,
-        productPrice: product.price,
-        imageUrl,
-      },
+      data: product,
     });
   } catch (error) {
-    console.error("PRODUCT [id] GET ERROR:", error);
+    console.error("❌ PRODUCT GET ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch product",
-        error: error.message,
-      },
+      { success: false, message: "Failed to fetch product" },
       { status: 500 }
     );
   }
 }
 
-// ======================================================
-// UPDATE PRODUCT
-// ======================================================
+/* =====================================================
+   UPDATE PRODUCT
+===================================================== */
 export async function PUT(req, { params }) {
   try {
     const { id } = params;
+    const body = await req.json();
 
     if (!id) {
       return NextResponse.json(
-        { success: false, message: "Product id required" },
+        { success: false, message: "Product ID is required" },
         { status: 400 }
       );
     }
 
-    const body = await req.json();
+    /** Build update object safely */
+    const data = {};
 
-    const updates = {};
+    if ("title" in body) data.title = body.title;
+    if ("slug" in body) data.slug = body.slug;
+    if ("description" in body) data.description = body.description;
 
-    // ========== BASIC FIELDS ==========
-    if (body.title !== undefined) updates.title = body.title;
-    if (body.slug !== undefined) updates.slug = body.slug;
-    if (body.description !== undefined) updates.description = body.description;
+    if ("price" in body) data.price = toNumber(body.price);
+    if ("salePrice" in body) data.salePrice = toNumber(body.salePrice);
+    if ("productStock" in body)
+      data.productStock = parseInt(body.productStock || 0);
 
-    // ========== PRICE ==========
-    if (body.productPrice !== undefined)
-      updates.price = toNumberSafe(body.productPrice);
-    if (body.price !== undefined)
-      updates.price = toNumberSafe(body.price);
-    if (body.salePrice !== undefined)
-      updates.salePrice = toNumberSafe(body.salePrice);
+    if ("imageUrl" in body) data.imageUrl = body.imageUrl || null;
 
-    // ========== STOCK ==========
-    if (body.productStock !== undefined)
-      updates.productStock = parseInt(body.productStock ?? 0);
+    if ("productImages" in body)
+      data.productImages = Array.isArray(body.productImages)
+        ? body.productImages
+        : [];
 
-    // ========== CATEGORY CONNECT ==========
-    if (body.categoryId !== undefined) {
-      updates.category = body.categoryId
+    if ("tags" in body)
+      data.tags = Array.isArray(body.tags) ? body.tags : [];
+
+    if ("sku" in body) data.sku = body.sku;
+    if ("barcode" in body) data.barcode = body.barcode;
+    if ("unit" in body) data.unit = body.unit;
+    if ("qty" in body) data.qty = parseInt(body.qty || 1);
+
+    if ("isWholesale" in body) data.isWholesale = Boolean(body.isWholesale);
+    if ("wholesalePrice" in body)
+      data.wholesalePrice = toNumber(body.wholesalePrice);
+    if ("wholesaleQty" in body)
+      data.wholesaleQty = parseInt(body.wholesaleQty || 0);
+
+    if ("productCode" in body) data.productCode = body.productCode;
+    if ("isActive" in body) data.isActive = Boolean(body.isActive);
+
+    /** Category relation */
+    if ("categoryId" in body) {
+      data.category = body.categoryId
         ? { connect: { id: body.categoryId } }
         : { disconnect: true };
     }
 
-    // ========== FARMER CONNECT ==========
-    if (body.farmerId !== undefined) {
-      updates.farmer = body.farmerId
+    /** Farmer relation */
+    if ("farmerId" in body) {
+      data.farmer = body.farmerId
         ? { connect: { id: body.farmerId } }
         : { disconnect: true };
     }
 
-    // ========== IMAGES ==========
-    if (body.imageUrl !== undefined)
-      updates.imageUrl = body.imageUrl || null;
-
-    if (body.productImages !== undefined) {
-      updates.productImages = Array.isArray(body.productImages)
-        ? body.productImages
-        : [body.productImages];
-    }
-
-    // ========== TAGS ==========
-    if (body.tags !== undefined)
-      updates.tags = Array.isArray(body.tags) ? body.tags : [body.tags];
-
-    // ========== SKU, BARCODE, UNIT ==========
-    if (body.sku !== undefined) updates.sku = body.sku;
-    if (body.barcode !== undefined) updates.barcode = body.barcode;
-    if (body.unit !== undefined) updates.unit = body.unit;
-
-    // ========== QUANTITY FIELD ==========
-    if (body.qty !== undefined)
-      updates.qty = parseInt(body.qty ?? 0);
-
-    // ========== WHOLESALE ==========
-    if (body.isWholesale !== undefined)
-      updates.isWholesale = !!body.isWholesale;
-
-    if (body.wholesalePrice !== undefined)
-      updates.wholesalePrice = toNumberSafe(body.wholesalePrice);
-
-    if (body.wholesaleQty !== undefined)
-      updates.wholesaleQty = parseInt(body.wholesaleQty ?? 0);
-
-    // ========== PRODUCT CODE ==========
-    if (body.productCode !== undefined)
-      updates.productCode = body.productCode;
-
-    // ========== ACTIVE STATUS ==========
-    if (body.isActive !== undefined)
-      updates.isActive = !!body.isActive;
-
     const updatedProduct = await prisma.product.update({
       where: { id },
-      data: updates,
-      include: { category: true, farmer: true },
+      data,
+      include: {
+        category: true,
+        farmer: true,
+      },
     });
 
     return NextResponse.json({
       success: true,
+      message: "Product updated successfully",
       data: updatedProduct,
     });
   } catch (error) {
-    console.error("PRODUCT [id] PUT ERROR:", error);
+    console.error("❌ PRODUCT UPDATE ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to update product",
-        error: error.message,
-      },
+      { success: false, message: "Failed to update product" },
       { status: 500 }
     );
   }
 }
 
-// ======================================================
-// DELETE PRODUCT
-// ======================================================
+/* =====================================================
+   DELETE PRODUCT
+===================================================== */
 export async function DELETE(req, { params }) {
   try {
     const { id } = params;
 
     if (!id) {
       return NextResponse.json(
-        { success: false, message: "Product id required" },
+        { success: false, message: "Product ID is required" },
         { status: 400 }
       );
     }
@@ -197,14 +163,9 @@ export async function DELETE(req, { params }) {
       message: "Product deleted successfully",
     });
   } catch (error) {
-    console.error("PRODUCT [id] DELETE ERROR:", error);
-
+    console.error("❌ PRODUCT DELETE ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to delete product",
-        error: error.message,
-      },
+      { success: false, message: "Failed to delete product" },
       { status: 500 }
     );
   }
