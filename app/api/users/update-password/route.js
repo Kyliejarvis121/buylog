@@ -1,45 +1,52 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prismadb"; // ✅ Use Prisma singleton
+import { prisma } from "@/lib/prismadb";
 
 export async function PUT(request) {
   try {
-    const { password, id } = await request.json();
+    const { id, password } = await request.json();
 
-    // Validate input
+    // 1️⃣ Validate input
     if (!id || !password || password.length < 6) {
       return NextResponse.json(
-        { data: null, message: "Invalid user ID or password (min 6 chars required)" },
+        { message: "Invalid request or weak password (min 6 characters)" },
         { status: 400 }
       );
     }
 
-    // Check if user exists
-    const user = await prisma.users.findUnique({ where: { id } });
+    // 2️⃣ Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
     if (!user) {
       return NextResponse.json(
-        { data: null, message: "No user found with this ID" },
+        { message: "User not found" },
         { status: 404 }
       );
     }
 
-    // Encrypt the password
+    // 3️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Update password
-    const updatedUser = await prisma.users.update({
+    // 4️⃣ Update password + clear reset fields
+    await prisma.user.update({
       where: { id },
-      data: { password: hashedPassword },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
     });
 
-    return NextResponse.json({
-      data: { id: updatedUser.id, email: updatedUser.email },
-      message: "Password updated successfully",
-    });
-  } catch (error) {
-    console.error("PUT /api/users failed:", error);
     return NextResponse.json(
-      { data: null, message: "Failed to update user password", error: error.message },
+      { message: "Password updated successfully. You can now log in." },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("UPDATE PASSWORD ERROR:", error);
+    return NextResponse.json(
+      { message: "Failed to update password" },
       { status: 500 }
     );
   }
