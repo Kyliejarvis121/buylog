@@ -40,9 +40,9 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
           <AlignJustify />
         </button>
 
-        {/* HOME BUTTON */}
+        {/* HOME BUTTON → BuyLog Homepage */}
         <Link
-          href="/farmer/products"
+          href="/"
           className="hidden sm:flex items-center gap-2 text-sm font-medium text-lime-700 dark:text-lime-500 hover:text-lime-800"
         >
           <LayoutDashboard size={18} />
@@ -59,11 +59,11 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
           <DropdownMenuTrigger>
             <button
               type="button"
-              className="relative inline-flex items-center p-3 text-sm font-medium text-center text-white bg-transparent rounded-lg"
+              className="relative inline-flex items-center p-3 text-sm font-medium text-center bg-transparent rounded-lg"
             >
               <Bell className="text-lime-700 dark:text-lime-500" />
               <span className="sr-only">Notifications</span>
-              <div className="absolute inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full -top-0 end-6 dark:border-gray-900">
+              <div className="absolute inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full -top-0 end-6">
                 20
               </div>
             </button>
@@ -104,7 +104,6 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* User Avatar */}
         {status === "authenticated" && <UserAvatar user={session?.user} />}
       </div>
     </div>
