@@ -1,13 +1,13 @@
 "use client";
 
 import { UploadButton } from "@uploadthing/react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 export default function AvatarUploader({ currentAvatar }) {
-  const router = useRouter();
   const [preview, setPreview] = useState(currentAvatar);
+  const { update } = useSession();
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -34,13 +34,15 @@ export default function AvatarUploader({ currentAvatar }) {
 
           setPreview(avatarUrl);
 
+          // Save to database
           await fetch("/api/profile/avatar", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ avatar: avatarUrl }),
           });
 
-          router.refresh();
+          // 🔥 Update NextAuth session instantly
+          await update({ image: avatarUrl });
         }}
         onUploadError={(error) => {
           alert(error.message);

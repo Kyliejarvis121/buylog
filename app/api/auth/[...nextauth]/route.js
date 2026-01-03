@@ -42,18 +42,36 @@ export const authOptions = {
       },
     }),
   ],
+
   callbacks: {
-    async jwt({ token, user }) {
+    // JWT callback runs on login, session refresh, and update()
+    async jwt({ token, user, trigger, session }) {
+      // First login
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.name = user.name;
+        token.email = user.email;
+        token.image = user.image; // <-- Add avatar here
       }
+
+      // Update trigger from useSession().update()
+      if (trigger === "update" && session?.image) {
+        token.image = session.image;
+        token.name = session.name || token.name;
+      }
+
       return token;
     },
+
+    // Session callback for useSession()
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.image = token.image; // <-- Navbar now sees avatar
       }
       return session;
     },
