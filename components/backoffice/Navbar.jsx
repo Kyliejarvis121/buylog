@@ -44,10 +44,16 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
         {/* Home Button */}
         <Link
           href="/"
-          className="flex items-center gap-2 text-sm font-medium text-lime-700 hover:text-lime-800 dark:text-lime-500"
+          className="flex items-center gap-2 rounded-lg border border-lime-300 bg-lime-50 px-3 py-2 text-sm font-medium text-lime-800 transition hover:bg-lime-100 dark:border-lime-600 dark:bg-slate-700 dark:text-lime-400 dark:hover:bg-slate-600"
         >
           <LayoutDashboard size={18} />
-          <span className="hidden sm:inline">Home</span>
+
+          <div className="hidden sm:flex flex-col leading-tight">
+            <span className="font-semibold">Home</span>
+            <span className="text-xs opacity-80">
+              View your products
+            </span>
+          </div>
         </Link>
       </div>
 
@@ -64,6 +70,7 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
             >
               <Bell className="text-lime-700 dark:text-lime-500" />
               <span className="sr-only">Notifications</span>
+
               <div className="absolute -top-0 end-6 inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                 20
               </div>
@@ -104,6 +111,7 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
                     </button>
                   </div>
                 </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
               </React.Fragment>
             ))}
