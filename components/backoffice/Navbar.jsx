@@ -1,4 +1,5 @@
 "use client";
+
 import {
   AlignJustify,
   Bell,
@@ -28,11 +29,11 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
   }
 
   return (
-    <div className="flex items-center justify-between bg-white dark:bg-slate-800 text-slate-50 h-20 py-8 fixed top-0 w-full px-8 z-50 sm:pr-[20rem]">
-
+    <div className="fixed top-0 z-50 flex h-20 w-full items-center justify-between bg-white px-8 py-8 text-slate-50 dark:bg-slate-800 sm:pr-[20rem]">
+      
       {/* LEFT SIDE */}
       <div className="flex items-center gap-4">
-        {/* Sidebar toggle */}
+        {/* Sidebar Toggle */}
         <button
           onClick={() => setShowSidebar(!showSidebar)}
           className="text-lime-700 dark:text-lime-500"
@@ -40,36 +41,36 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
           <AlignJustify />
         </button>
 
-        {/* HOME BUTTON → BuyLog Homepage */}
+        {/* Home Button */}
         <Link
           href="/"
-          className="hidden sm:flex items-center gap-2 text-sm font-medium text-lime-700 dark:text-lime-500 hover:text-lime-800"
+          className="flex items-center gap-2 text-sm font-medium text-lime-700 hover:text-lime-800 dark:text-lime-500"
         >
           <LayoutDashboard size={18} />
-          Home
+          <span className="hidden sm:inline">Home</span>
         </Link>
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="flex space-x-3">
+      <div className="flex items-center space-x-3">
         <ThemeSwitcherBtn />
 
         {/* Notifications */}
         <DropdownMenu>
-          <DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="relative inline-flex items-center p-3 text-sm font-medium text-center bg-transparent rounded-lg"
+              className="relative inline-flex items-center rounded-lg bg-transparent p-3 text-sm font-medium"
             >
               <Bell className="text-lime-700 dark:text-lime-500" />
               <span className="sr-only">Notifications</span>
-              <div className="absolute inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full -top-0 end-6">
+              <div className="absolute -top-0 end-6 inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                 20
               </div>
             </button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent className="py-2 px-4 pr-8">
+          <DropdownMenuContent className="px-4 py-2 pr-8">
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
 
@@ -82,19 +83,24 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
                       alt="User profile"
                       width={200}
                       height={200}
-                      className="w-8 h-8 rounded-full"
+                      className="h-8 w-8 rounded-full"
                     />
+
                     <div className="flex flex-col space-y-1">
-                      <p>Yellow Sweet Corn Stock out</p>
-                      <div className="flex items-center space-x-2">
-                        <p className="px-3 py-0.5 bg-red-700 text-white rounded-full text-sm">
+                      <p className="text-sm font-medium">
+                        Yellow Sweet Corn Stock out
+                      </p>
+
+                      <div className="flex items-center space-x-2 text-xs">
+                        <p className="rounded-full bg-red-700 px-3 py-0.5 text-white">
                           Stock Out
                         </p>
                         <p>Dec 12 2021 - 12:40PM</p>
                       </div>
                     </div>
-                    <button>
-                      <X />
+
+                    <button className="text-slate-400 hover:text-red-500">
+                      <X size={16} />
                     </button>
                   </div>
                 </DropdownMenuItem>
@@ -104,7 +110,10 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {status === "authenticated" && <UserAvatar user={session?.user} />}
+        {/* User Avatar */}
+        {status === "authenticated" && (
+          <UserAvatar user={session?.user} />
+        )}
       </div>
     </div>
   );
