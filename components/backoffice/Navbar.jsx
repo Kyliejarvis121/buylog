@@ -3,7 +3,7 @@
 import {
   AlignJustify,
   Bell,
-  LayoutDashboard,
+  Home,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -29,7 +29,7 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
   }
 
   return (
-    <div className="fixed top-0 z-50 flex h-20 w-full items-center justify-between bg-white px-8 py-8 text-slate-50 dark:bg-slate-800 sm:pr-[20rem]">
+    <div className="fixed top-0 z-50 flex h-20 w-full items-center justify-between bg-white px-8 py-8 dark:bg-slate-800 sm:pr-[20rem]">
       
       {/* LEFT SIDE */}
       <div className="flex items-center gap-4">
@@ -41,17 +41,18 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
           <AlignJustify />
         </button>
 
-        {/* Home Button */}
+        {/* HOME BUTTON */}
         <Link
           href="/"
+          title="Click to view your products"
           className="flex items-center gap-2 rounded-lg border border-lime-300 bg-lime-50 px-3 py-2 text-sm font-medium text-lime-800 transition hover:bg-lime-100 dark:border-lime-600 dark:bg-slate-700 dark:text-lime-400 dark:hover:bg-slate-600"
         >
-          <LayoutDashboard size={18} />
+          <Home size={18} />
 
           <div className="hidden sm:flex flex-col leading-tight">
             <span className="font-semibold">Home</span>
             <span className="text-xs opacity-80">
-              View your products
+              Click to view your products
             </span>
           </div>
         </Link>
@@ -66,7 +67,7 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="relative inline-flex items-center rounded-lg bg-transparent p-3 text-sm font-medium"
+              className="relative inline-flex items-center rounded-lg bg-transparent p-3"
             >
               <Bell className="text-lime-700 dark:text-lime-500" />
               <span className="sr-only">Notifications</span>
