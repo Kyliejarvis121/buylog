@@ -1,32 +1,22 @@
-"use client";
+// app/api/farmers/route.js
+import { prisma } from "@/lib/prismadb";
 
-import PageHeader from "@/components/backoffice/PageHeader";
-import DataTable from "@/components/data-table-components/DataTable";
-import { columns } from "@/components/backoffice/farmers/products/columns";
-import { useEffect, useState } from "react";
+// GET /api/farmers
+export async function GET(request) {
+  try {
+    // Fetch all farmers with related user info
+    const farmers = await prisma.farmer.findMany({
+      include: {
+        user: true,        // include user details
+        orders: true,      // optional, include orders if needed
+      },
+    });
 
-export default function FarmerProductsPage() {
-  const [products, setProducts] = useState([]);
-
-  useEffect(() => {
-    fetch("/api/products")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setProducts(data.data);
-      })
-      .catch(console.error);
-  }, []);
-
-  return (
-    <div className="py-6">
-      <PageHeader
-        heading="Products"
-        href="/dashboard/farmers/products/new"
-        linkTitle="Add Product"
-      />
-      <div className="py-4">
-        <DataTable data={products} columns={columns} />
-      </div>
-    </div>
-  );
+    return new Response(JSON.stringify(farmers), { status: 200 });
+  } catch (error) {
+    console.error("Error fetching farmers:", error);
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
 }
+
+// You can still add POST, PUT, DELETE here if needed later
