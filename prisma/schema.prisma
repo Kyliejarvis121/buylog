@@ -12,31 +12,34 @@ datasource db {
 // USERS
 // ===============================
 model User {
-  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+  id                     String    @id @default(auto()) @map("_id") @db.ObjectId
   name                   String
-  email                  String   @unique
-  password               String?
-  role                   String   @default("FARMER")
-  emailVerified          Boolean  @default(false)
+  email                  String    @unique
+  password               String?   // optional
+  role                   String    @default("FARMER")
+  emailVerified          Boolean   @default(false)
   emailVerificationToken String?
-  image                  String?
+
+  image                  String?   // profile image
 
   // 🔐 FORGOT PASSWORD
   resetToken             String?
   resetTokenExpiry       DateTime?
 
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  // ⚡ Timestamps
+  createdAt              DateTime  @default(now())  // automatically set on creation
+  updatedAt              DateTime  @updatedAt      // automatically set on creation & update
 
   // ✅ REQUIRED BY NEXTAUTH
   accounts               Account[]
   sessions               Session[]
 
   // YOUR RELATIONS
-  profile Profile?
-  farmers Farmer[]
-  orders  Order[]
+  profile                Profile?
+  farmers                Farmer[]
+  orders                 Order[]
 }
+
 
 
 //
