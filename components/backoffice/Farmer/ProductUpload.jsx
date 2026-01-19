@@ -96,7 +96,7 @@ export default function ProductUpload({ farmerId, categories, existingProduct })
     >
       <h2 className="text-xl font-semibold mb-4">{existingProduct ? "Edit Product" : "Upload New Product"}</h2>
 
-      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 sm:gap-6">
         <TextInput
           label="Product Title"
           name="title"

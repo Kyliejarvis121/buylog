@@ -62,55 +62,68 @@ export default function NewProductForm({ categories = [], farmers = [], updateDa
       data,
       updateData ? "Product Updated" : "Product Created",
       reset,
-      () => router.push("/dashboard/products") // admin redirect
+      () => router.push("/dashboard/products")
     );
   };
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3"
+      className="w-full max-w-2xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3"
     >
-      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        <TextInput label="Product Title" name="title" register={register} errors={errors} />
-        <TextInput label="Slug" name="slug" register={register} errors={errors} />
-        <TextInput label="Price" name="price" type="number" register={register} errors={errors} />
-        <TextInput label="Sale Price" name="salePrice" type="number" register={register} errors={errors} />
-        <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} />
-        <TextInput label="Quantity" name="qty" type="number" register={register} errors={errors} />
-        <TextInput label="Product Code" name="productCode" register={register} errors={errors} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+        {/* Basic Product Fields */}
+        <TextInput label="Product Title" name="title" register={register} errors={errors} className="w-full" />
+        <TextInput label="Slug" name="slug" register={register} errors={errors} className="w-full" />
+        <TextInput label="Price" name="price" type="number" register={register} errors={errors} className="w-full" />
+        <TextInput label="Sale Price" name="salePrice" type="number" register={register} errors={errors} className="w-full" />
+        <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} className="w-full" />
+        <TextInput label="Quantity" name="qty" type="number" register={register} errors={errors} className="w-full" />
+        <TextInput label="Product Code" name="productCode" register={register} errors={errors} className="w-full" />
 
-        {/* Category Select */}
+        {/* Select Fields */}
         <select {...register("categoryId")} className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600">
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>{cat.title}</option>
           ))}
         </select>
 
-        {/* Farmer Select */}
         <select {...register("farmerId")} className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600">
           {farmers.map((farmer) => (
             <option key={farmer.id} value={farmer.id}>{farmer.title}</option>
           ))}
         </select>
 
-        <TextareaInput label="Description" name="description" register={register} errors={errors} />
+        {/* Description */}
+        <div className="col-span-1 sm:col-span-2">
+          <TextareaInput label="Description" name="description" register={register} errors={errors} className="w-full" />
+        </div>
 
+        {/* Toggles */}
         <ToggleInput label="Active" name="isActive" register={register} trueTitle="Active" falseTitle="Inactive" />
         <ToggleInput label="Is Wholesale" name="isWholesale" register={register} trueTitle="Yes" falseTitle="No" />
 
+        {/* Wholesale Fields */}
         {isWholesale && (
           <>
-            <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} />
-            <TextInput label="Wholesale Quantity" name="wholesaleQty" type="number" register={register} errors={errors} />
+            <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} className="w-full" />
+            <TextInput label="Wholesale Quantity" name="wholesaleQty" type="number" register={register} errors={errors} className="w-full" />
           </>
         )}
 
-        <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
-        <ArrayItemsInput items={productImages} setItems={setProductImages} itemTitle="Product Image URL" />
-        <ImageInput imageUrl={imageUrl} setImageUrl={setImageUrl} endpoint="productUploader" label="Main Product Image" />
+        {/* Tags & Images */}
+        <div className="col-span-1 sm:col-span-2">
+          <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
+        </div>
+        <div className="col-span-1 sm:col-span-2">
+          <ArrayItemsInput items={productImages} setItems={setProductImages} itemTitle="Product Image URL" />
+        </div>
+        <div className="col-span-1 sm:col-span-2">
+          <ImageInput imageUrl={imageUrl} setImageUrl={setImageUrl} endpoint="productUploader" label="Main Product Image" />
+        </div>
       </div>
 
+      {/* Submit Button */}
       <SubmitButton
         isLoading={loading}
         buttonTitle={updateData ? "Update Product" : "Add Product"}
