@@ -16,21 +16,31 @@ export default function FarmerDashboard({
 }) {
   const { data: session, status } = useSession();
 
-  if (status === "loading")
-    return <div className="p-6 text-zinc-300">Loading...</div>;
+  // ✅ Normalize props
+  const safeSales = Array.isArray(sales) ? sales : [];
+  const safeSupports = Array.isArray(supports) ? supports : [];
+  const safeProducts = Array.isArray(products) ? products : [];
 
-  if (!session?.user)
-    return (
-      <div className="p-6 text-red-400">
-        Please login to view your dashboard
-      </div>
-    );
+  const [productList, setProductList] = useState(
+    safeProducts.map(transformProduct)
+  );
 
-  const [productList, setProductList] = useState(products);
-
+  // Update productList whenever products prop changes
   useEffect(() => {
-    setProductList(products);
-  }, [products]);
+    setProductList(safeProducts.map(transformProduct));
+  }, [safeProducts]);
+
+  // Transform a single product to a safe shape
+  function transformProduct(p) {
+    return {
+      id: p.id,
+      title: p.title || "Untitled",
+      category: p.category || { title: "No Category" },
+      price: p.price ?? 0,
+      productStock: p.productStock ?? 0,
+      isActive: p.isActive ?? false,
+    };
+  }
 
   const handleDelete = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
@@ -42,9 +52,7 @@ export default function FarmerDashboard({
       const data = await res.json();
 
       if (data.success) {
-        setProductList((prev) =>
-          prev.filter((p) => p.id !== productId)
-        );
+        setProductList((prev) => prev.filter((p) => p.id !== productId));
       } else {
         alert("Failed to delete product: " + data.message);
       }
@@ -53,6 +61,18 @@ export default function FarmerDashboard({
       alert("Something went wrong");
     }
   };
+
+  if (status === "loading") {
+    return <div className="p-6 text-zinc-300">Loading...</div>;
+  }
+
+  if (!session?.user) {
+    return (
+      <div className="p-6 text-red-400">
+        Please login to view your dashboard
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-8 bg-zinc-950 min-h-screen text-zinc-100">
@@ -67,9 +87,9 @@ export default function FarmerDashboard({
       </div>
 
       {/* STATS */}
-      <LargeCards sales={sales} products={productList} />
-      <SmallCards orders={[]} supports={supports} />
-      <DashboardCharts sales={sales} />
+      <LargeCards sales={safeSales} products={productList} />
+      <SmallCards orders={[]} supports={safeSupports} />
+      <DashboardCharts sales={safeSales} />
 
       {/* QUICK ACTION */}
       <div>
@@ -96,7 +116,7 @@ export default function FarmerDashboard({
       <div className="overflow-x-auto bg-zinc-900 rounded-xl border border-zinc-800">
         {productList.length === 0 ? (
           <p className="p-6 text-zinc-400">
-            No products uploaded yet.
+            No products found. Add some products to get started.
           </p>
         ) : (
           <table className="min-w-full text-sm">
@@ -116,18 +136,10 @@ export default function FarmerDashboard({
                   key={product.id}
                   className="border-t border-zinc-800 hover:bg-zinc-800/50 transition"
                 >
-                  <td className="p-3">
-                    {product.title || "Untitled"}
-                  </td>
-                  <td className="p-3">
-                    {product.category?.title || "No Category"}
-                  </td>
-                  <td className="p-3">
-                    ₦{product.price ?? 0}
-                  </td>
-                  <td className="p-3">
-                    {product.productStock ?? 0}
-                  </td>
+                  <td className="p-3">{product.title}</td>
+                  <td className="p-3">{product.category?.title ?? "No Category"}</td>
+                  <td className="p-3">₦{product.price}</td>
+                  <td className="p-3">{product.productStock}</td>
                   <td className="p-3">
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
