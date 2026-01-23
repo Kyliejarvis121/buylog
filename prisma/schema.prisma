@@ -266,11 +266,10 @@ model VerificationToken {
 }
 
 model SupportMessage {
-  id        String   @id @default(cuid()) @map("_id") // required for MongoDB
-  userId    String?
-  name      String
-  email     String?
-  message   String
-  status    String   @default("pending")
+  id      String   @id @map("_id") @default(auto()) @db.ObjectId
+  name    String
+  email   String?
+  message String
+  status  String   @default("pending")
   createdAt DateTime @default(now())
 }

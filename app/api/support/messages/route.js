@@ -6,19 +6,18 @@ export async function POST(req) {
     const { name, email, message } = await req.json();
 
     if (!message) {
-      return new Response(
-        JSON.stringify({ error: "Message is required" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "Message is required" }), {
+        status: 400,
+      });
     }
 
-    // Save the support message in the database
+    // Save the support message in MongoDB
     const savedMessage = await prisma.supportMessage.create({
       data: {
-        name,
-        email,
+        name: name || "Anonymous",
+        email: email || null,
         message,
-        status: "pending", // default status
+        status: "pending",
       },
     });
 
