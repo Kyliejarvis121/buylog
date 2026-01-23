@@ -8,6 +8,7 @@ import DashboardCharts from "./DashboardCharts";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import ProfileCard from "@/components/backoffice/profile/ProfileCard";
+import { useRouter } from "next/navigation";
 
 export default function FarmerDashboard({
   sales = [],
@@ -15,6 +16,7 @@ export default function FarmerDashboard({
   supports = [],
 }) {
   const { data: session, status } = useSession();
+  const router = useRouter(); // ✅ Router for chat button
 
   // ✅ Normalize props
   const safeSales = Array.isArray(sales) ? sales : [];
@@ -25,12 +27,10 @@ export default function FarmerDashboard({
     safeProducts.map(transformProduct)
   );
 
-  // Update productList whenever products prop changes
   useEffect(() => {
     setProductList(safeProducts.map(transformProduct));
   }, [safeProducts]);
 
-  // Transform a single product to a safe shape
   function transformProduct(p) {
     return {
       id: p.id,
@@ -80,9 +80,24 @@ export default function FarmerDashboard({
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
         <Heading title="Farmer Dashboard" />
 
-        {/* PROFILE CARD */}
-        <div className="w-full lg:w-[320px]">
+        <div className="w-full lg:w-[320px] space-y-3">
           <ProfileCard user={session.user} />
+
+          {/* CHAT WITH CUSTOMER CARE */}
+          <button
+            onClick={() => router.push("/customer-support/chat")}
+            className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm hover:bg-emerald-700 transition"
+          >
+            Chat with Customer Care
+          </button>
+
+          {/* OPTIONAL: AI Support Button */}
+          <button
+            onClick={() => router.push("/customer-support/ai")}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 transition"
+          >
+            Ask AI Assistant
+          </button>
         </div>
       </div>
 
@@ -116,7 +131,7 @@ export default function FarmerDashboard({
       <div className="overflow-x-auto bg-zinc-900 rounded-xl border border-zinc-800">
         {productList.length === 0 ? (
           <p className="p-6 text-zinc-400">
-            No products found. Add some products to get started.
+            Click to View Your Product.
           </p>
         ) : (
           <table className="min-w-full text-sm">
