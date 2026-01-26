@@ -8,72 +8,108 @@ export default function LiveSupportChat() {
     email: "",
     message: "",
   });
-  const [sent, setSent] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [sending, setSending] = useState(false);
 
   const sendMessage = async () => {
-    if (!form.message) return;
+    if (!form.message.trim()) return;
 
-    await fetch("/api/support/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    });
+    const userMessage = {
+      role: "user",
+      content: form.message,
+    };
 
-    setSent(true);
+    setMessages((prev) => [...prev, userMessage]);
+    setSending(true);
+
+    try {
+      await fetch("/api/customer-support/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      setForm({ ...form, message: "" });
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "support",
+          content: "Thanks for reaching out. A customer care agent will reply shortly.",
+        },
+      ]);
+    } catch (err) {
+      console.error(err);
+    }
+
+    setSending(false);
   };
 
-  if (sent) {
-    return (
-      <div className="max-w-xl mx-auto p-6 text-center">
-        <h2 className="text-xl font-bold mb-2">Message Sent</h2>
-        <p className="text-gray-600">
-          Our support team will respond as soon as possible.
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+      {/* HEADER */}
+      <div className="border-b border-zinc-800 p-4">
+        <h1 className="text-lg font-semibold">Live Customer Support</h1>
+        <p className="text-sm text-zinc-400">
+          Chat with a customer care agent
         </p>
       </div>
-    );
-  }
 
-  return (
-    <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">
-        Chat with Customer Care
-      </h1>
+      {/* CHAT BODY */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.length === 0 && (
+          <p className="text-zinc-500 text-sm">
+            Start a conversation with our support team.
+          </p>
+        )}
 
-      <input
-        type="text"
-        placeholder="Full Name"
-        className="w-full border p-2 rounded mb-3"
-        onChange={(e) =>
-          setForm({ ...form, name: e.target.value })
-        }
-      />
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`max-w-[75%] p-3 rounded-xl text-sm ${
+              msg.role === "user"
+                ? "ml-auto bg-emerald-600 text-white"
+                : "bg-zinc-800 text-zinc-200"
+            }`}
+          >
+            {msg.content}
+          </div>
+        ))}
+      </div>
 
-      <input
-        type="email"
-        placeholder="Email (optional)"
-        className="w-full border p-2 rounded mb-3"
-        onChange={(e) =>
-          setForm({ ...form, email: e.target.value })
-        }
-      />
+      {/* INPUT */}
+      <div className="border-t border-zinc-800 p-4">
+        <input
+          placeholder="Full Name"
+          className="w-full mb-2 bg-zinc-900 border border-zinc-800 rounded p-2 text-sm"
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
 
-      <textarea
-        placeholder="Type your message..."
-        className="w-full border p-2 rounded mb-3"
-        rows={4}
-        onChange={(e) =>
-          setForm({ ...form, message: e.target.value })
-        }
-      />
+        <input
+          placeholder="Email (optional)"
+          className="w-full mb-2 bg-zinc-900 border border-zinc-800 rounded p-2 text-sm"
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
 
-      <button
-        onClick={sendMessage}
-        className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-      >
-        Start Chat
-      </button>
+        <div className="flex gap-2">
+          <input
+            placeholder="Type your message..."
+            className="flex-1 bg-zinc-900 border border-zinc-800 rounded p-2 text-sm"
+            value={form.message}
+            onChange={(e) =>
+              setForm({ ...form, message: e.target.value })
+            }
+          />
+
+          <button
+            onClick={sendMessage}
+            disabled={sending}
+            className="px-4 bg-emerald-600 rounded text-sm hover:bg-emerald-700 disabled:opacity-50"
+          >
+            Send
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
