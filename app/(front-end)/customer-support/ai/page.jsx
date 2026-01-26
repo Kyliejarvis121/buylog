@@ -2,47 +2,102 @@
 
 import { useState } from "react";
 
-export default function AIChatSupport() {
+export default function AISupportChat() {
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [messages, setMessages] = useState([
+    {
+      role: "ai",
+      content:
+        "Hi 👋 I’m Buylog AI Support. Ask me anything about selling, withdrawals, or safety.",
+    },
+  ]);
+  const [loading, setLoading] = useState(false);
 
-  const handleAsk = () => {
-    // Simple AI-like responses before real backend
-    const responses = {
-      "how do i sell": "To sell, go to 'Add New Product' and fill in the details.",
-      "how do i withdraw": "Withdrawals can be done from your wallet section once your balance is available.",
-      "is buylog safe": "Yes! Buylog is secure and protects both buyers and sellers.",
-    };
+  const askAI = async () => {
+    if (!question.trim()) return;
 
-    const lowerQ = question.toLowerCase();
-    const reply =
-      responses[lowerQ] || "Sorry, I don't understand that question yet.";
+    const userMessage = { role: "user", content: question };
+    setMessages((prev) => [...prev, userMessage]);
+    setQuestion("");
+    setLoading(true);
 
-    setAnswer(reply);
+    try {
+      const res = await fetch("/api/customer-support/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+
+      const data = await res.json();
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", content: data.answer || "Sorry, I couldn't answer that." },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", content: "Something went wrong. Please try again." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">AI Chat Support</h1>
-      <input
-        type="text"
-        placeholder="Ask your question..."
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        className="w-full p-2 border rounded mb-3"
-      />
-      <button
-        onClick={handleAsk}
-        className="w-full bg-green-600 text-white py-2 rounded mb-3"
-      >
-        Ask
-      </button>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">AI Customer Support</h1>
 
-      {answer && (
-        <div className="p-3 border rounded bg-gray-50 mt-2">
-          <strong>AI:</strong> {answer}
+        {/* CHAT BOX */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 h-[400px] overflow-y-auto space-y-4">
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`p-3 rounded-lg max-w-[85%] ${
+                msg.role === "user"
+                  ? "ml-auto bg-emerald-600 text-white"
+                  : "mr-auto bg-zinc-800 text-zinc-200"
+              }`}
+            >
+              {msg.content}
+            </div>
+          ))}
+
+          {loading && (
+            <div className="mr-auto bg-zinc-800 p-3 rounded-lg text-zinc-400">
+              Buylog AI is typing...
+            </div>
+          )}
         </div>
-      )}
+
+        {/* INPUT */}
+        <div className="mt-4 flex gap-2">
+          <input
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ask a question..."
+            className="flex-1 p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+          />
+          <button
+            onClick={askAI}
+            className="px-5 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+          >
+            Send
+          </button>
+        </div>
+
+        {/* FALLBACK TO HUMAN */}
+        <p className="text-sm text-zinc-400 mt-4">
+          Need a human?
+          <a
+            href="/customer-support/chat"
+            className="ml-1 text-emerald-500 underline"
+          >
+            Chat with customer care
+          </a>
+        </p>
+      </div>
     </div>
   );
 }
