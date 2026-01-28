@@ -8,7 +8,7 @@ import DashboardCharts from "./DashboardCharts";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import ProfileCard from "@/components/backoffice/profile/ProfileCard";
-import { useRouter } from "next/navigation";
+import SupportWidget from "@/components/support/SupportWidget";
 
 export default function FarmerDashboard({
   sales = [],
@@ -16,7 +16,6 @@ export default function FarmerDashboard({
   supports = [],
 }) {
   const { data: session, status } = useSession();
-  const router = useRouter(); // ✅ Router for chat button
 
   // ✅ Normalize props
   const safeSales = Array.isArray(sales) ? sales : [];
@@ -80,24 +79,8 @@ export default function FarmerDashboard({
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
         <Heading title="Farmer Dashboard" />
 
-        <div className="w-full lg:w-[320px] space-y-3">
+        <div className="w-full lg:w-[320px]">
           <ProfileCard user={session.user} />
-
-          {/* CHAT WITH CUSTOMER CARE */}
-          <button
-            onClick={() => router.push("/customer-support/chat")}
-            className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm hover:bg-emerald-700 transition"
-          >
-            Chat with Customer Care
-          </button>
-
-          {/* OPTIONAL: AI Support Button */}
-          <button
-            onClick={() => router.push("/customer-support/ai")}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 transition"
-          >
-            Ask AI Assistant
-          </button>
         </div>
       </div>
 
@@ -152,7 +135,9 @@ export default function FarmerDashboard({
                   className="border-t border-zinc-800 hover:bg-zinc-800/50 transition"
                 >
                   <td className="p-3">{product.title}</td>
-                  <td className="p-3">{product.category?.title ?? "No Category"}</td>
+                  <td className="p-3">
+                    {product.category?.title ?? "No Category"}
+                  </td>
                   <td className="p-3">₦{product.price}</td>
                   <td className="p-3">{product.productStock}</td>
                   <td className="p-3">
@@ -186,6 +171,9 @@ export default function FarmerDashboard({
           </table>
         )}
       </div>
+
+      {/* 🔥 FLOATING SUPPORT CHAT */}
+      <SupportWidget />
     </div>
   );
 }
