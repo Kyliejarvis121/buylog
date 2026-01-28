@@ -158,14 +158,7 @@ export default function RegisterForm() {
         loadingButtonTitle="Creating account..."
       />
 
-      {/* Google Sign Up */}
-      <button
-        type="button"
-        onClick={handleGoogleSignup}
-        className="w-full mt-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
-      >
-        Continue with Google
-      </button>
+  
 
       {/* Login Link */}
       <p className="text-[0.75rem] text-gray-500 py-4 text-center">

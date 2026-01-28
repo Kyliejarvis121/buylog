@@ -129,14 +129,7 @@ export default function LoginForm() {
         <hr className="flex-grow border-gray-300 dark:border-gray-600" />
       </div>
 
-      {/* Google Login */}
-      <button
-        onClick={handleGoogleLogin}
-        disabled={loadingGoogle}
-        className="flex items-center justify-center gap-2 w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
-      >
-        {loadingGoogle ? "Signing in with Google..." : <><FaGoogle /> Login with Google</>}
-      </button>
+      
 
       {/* Sign up link */}
       <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
