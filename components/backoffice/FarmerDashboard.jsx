@@ -8,7 +8,7 @@ import DashboardCharts from "./DashboardCharts";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import ProfileCard from "@/components/backoffice/profile/ProfileCard";
-import SupportWidget from "@/components/support/SupportWidget";
+import SupportWidget from "@/components/Support/SupportWidget";
 
 export default function FarmerDashboard({
   sales = [],
