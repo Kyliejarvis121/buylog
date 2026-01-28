@@ -6,11 +6,11 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   try {
-    const { question } = await req.json();
+    const { messages } = await req.json();
 
-    if (!question) {
+    if (!messages || !Array.isArray(messages)) {
       return new Response(
-        JSON.stringify({ error: "Question is required" }),
+        JSON.stringify({ error: "Messages are required" }),
         { status: 400 }
       );
     }
@@ -21,19 +21,27 @@ export async function POST(req) {
         {
           role: "system",
           content: `
-You are Buylog AI Customer Support.
-Answer clearly and simply.
-Only answer questions related to:
-- Selling on Buylog
-- Withdrawals
-- Safety and scams
-- How Buylog works
+You are Buylog AI Support.
 
-If the question is unrelated, politely redirect.
+PRIMARY ROLE:
+- Help users understand Buylog
+- Selling, withdrawals, safety, disputes, how the app works
+
+SECONDARY ROLE:
+- You MAY answer general questions politely (tech, business, basic info)
+- If a question is totally unrelated, respond briefly and guide back to Buylog
+
+STYLE:
+- Friendly
+- Clear
+- Professional
+- Not robotic
           `,
         },
-        { role: "user", content: question },
-      ],
+        ...messages.filter((m) => m.role !== "ai"), // map ai → assistant
+      ].map((m) =>
+        m.role === "ai" ? { role: "assistant", content: m.content } : m
+      ),
     });
 
     return new Response(

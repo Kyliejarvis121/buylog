@@ -6,18 +6,25 @@ export default function AISupportChat() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([
     {
+      role: "system",
+      content:
+        "You are Buylog AI Support. You help users with Buylog features AND you may answer general questions politely if asked.",
+    },
+    {
       role: "ai",
       content:
-        "Hi 👋 I’m Buylog AI Support. Ask me anything about selling, withdrawals, or safety.",
+        "Hi 👋 I’m Buylog AI Support. Ask me anything about Buylog or general questions too.",
     },
   ]);
   const [loading, setLoading] = useState(false);
 
   const askAI = async () => {
-    if (!question.trim()) return;
+    if (!question.trim() || loading) return;
 
     const userMessage = { role: "user", content: question };
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+
+    setMessages(updatedMessages);
     setQuestion("");
     setLoading(true);
 
@@ -25,19 +32,27 @@ export default function AISupportChat() {
       const res = await fetch("/api/customer-support/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({
+          messages: updatedMessages, // 👈 SEND FULL CONTEXT
+        }),
       });
 
       const data = await res.json();
 
       setMessages((prev) => [
         ...prev,
-        { role: "ai", content: data.answer || "Sorry, I couldn't answer that." },
+        {
+          role: "ai",
+          content: data.answer || "Sorry, I couldn’t answer that.",
+        },
       ]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: "ai", content: "Something went wrong. Please try again." },
+        {
+          role: "ai",
+          content: "Something went wrong. Please try again.",
+        },
       ]);
     } finally {
       setLoading(false);
@@ -51,22 +66,24 @@ export default function AISupportChat() {
 
         {/* CHAT BOX */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 h-[400px] overflow-y-auto space-y-4">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`p-3 rounded-lg max-w-[85%] ${
-                msg.role === "user"
-                  ? "ml-auto bg-emerald-600 text-white"
-                  : "mr-auto bg-zinc-800 text-zinc-200"
-              }`}
-            >
-              {msg.content}
-            </div>
-          ))}
+          {messages
+            .filter((m) => m.role !== "system")
+            .map((msg, i) => (
+              <div
+                key={i}
+                className={`p-3 rounded-lg max-w-[85%] ${
+                  msg.role === "user"
+                    ? "ml-auto bg-emerald-600 text-white"
+                    : "mr-auto bg-zinc-800 text-zinc-200"
+                }`}
+              >
+                {msg.content}
+              </div>
+            ))}
 
           {loading && (
             <div className="mr-auto bg-zinc-800 p-3 rounded-lg text-zinc-400">
-              Buylog AI is typing...
+              Buylog AI is typing…
             </div>
           )}
         </div>
@@ -76,18 +93,20 @@ export default function AISupportChat() {
           <input
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Ask a question..."
+            onKeyDown={(e) => e.key === "Enter" && askAI()}
+            placeholder="Ask Buylog AI anything…"
             className="flex-1 p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-600"
           />
           <button
+            disabled={loading}
             onClick={askAI}
-            className="px-5 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+            className="px-5 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition disabled:opacity-50"
           >
             Send
           </button>
         </div>
 
-        {/* FALLBACK TO HUMAN */}
+        {/* FALLBACK */}
         <p className="text-sm text-zinc-400 mt-4">
           Need a human?
           <a
