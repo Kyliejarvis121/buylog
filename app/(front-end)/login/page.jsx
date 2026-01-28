@@ -40,13 +40,7 @@ export default function Login() {
               <hr className="flex-1 border-gray-300" />
             </div>
 
-            {/* Google login */}
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-2 py-2 text-white bg-red-500 rounded hover:bg-red-600 transition"
-            >
-              Continue with Google
-            </button>
+            
           </div>
         </div>
       </div>
