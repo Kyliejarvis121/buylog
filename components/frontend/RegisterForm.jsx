@@ -23,16 +23,15 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [emailErr, setEmailErr] = useState("");
 
-  // Manual registration
+  // ✅ Manual registration
   async function onSubmit(data) {
     try {
       setLoading(true);
       setEmailErr("");
 
-      // Force role to FARMER
+      // Force role to FARMER (if backend expects it)
       data.role = "FARMER";
 
-      // 1️⃣ Register user via API
       const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -41,32 +40,23 @@ export default function RegisterForm() {
 
       const res = await response.json();
 
+      // ❌ Error handling
       if (!response.ok) {
         if (response.status === 409) {
           setEmailErr("Email already exists");
           toast.error("Email already registered");
         } else {
-          toast.error(res.message || "Registration failed");
+          toast.error(res?.message || "Registration failed");
         }
         return;
       }
 
-      toast.success("Account created successfully");
-
-      // 2️⃣ Auto login
-      const login = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
-
-      if (login?.error) {
-        toast.error("Login failed. Please login manually.");
-        return;
-      }
-
+      // ✅ Success
+      toast.success("Account created! Please check your email to verify.");
       reset();
-      router.push("/dashboard");
+
+      // 👉 Redirect to login page after successful registration
+      router.push("/login");
     } catch (error) {
       console.error(error);
       toast.error("Network error, try again.");
@@ -75,11 +65,16 @@ export default function RegisterForm() {
     }
   }
 
-  // Google signup/login
+  // ✅ Google signup/login
   const handleGoogleSignup = async () => {
     try {
-      // Redirects to NextAuth Google provider
-      await signIn("google", { callbackUrl: "/dashboard" });
+      const res = await signIn("google", { redirect: false, callbackUrl: "/dashboard" });
+
+      if (res?.error) {
+        toast.error("Google signup failed");
+      } else if (res?.url) {
+        window.location.href = res.url;
+      }
     } catch (err) {
       console.error(err);
       toast.error("Google signup failed");
@@ -158,7 +153,16 @@ export default function RegisterForm() {
         loadingButtonTitle="Creating account..."
       />
 
-  
+      {/* Google signup button (optional UI hook) */}
+      {/* 
+      <button
+        type="button"
+        onClick={handleGoogleSignup}
+        className="w-full mt-3 bg-red-600 text-white py-2 rounded hover:bg-red-700"
+      >
+        Sign up with Google
+      </button>
+      */}
 
       {/* Login Link */}
       <p className="text-[0.75rem] text-gray-500 py-4 text-center">
