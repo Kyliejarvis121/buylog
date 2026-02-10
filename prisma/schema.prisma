@@ -86,6 +86,7 @@ model Category {
   slug        String?  @unique
   description String?
   imageUrl    String?
+  iconKey     String?   // 👈 NEW FIELD (e.g. "car", "electronics", "fashion")
   isActive    Boolean? @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

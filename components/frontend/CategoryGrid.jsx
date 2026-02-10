@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   FaCar,
   FaHome,
@@ -18,46 +18,38 @@ import {
 } from "react-icons/fa";
 
 const ICONS_MAP = {
-  "Car": <FaCar />,
-  "House": <FaHome />,
-  "Property": <FaBuilding />,
-  "Gadgets": <FaLaptop />,
-  "Electronics": <FaMobileAlt />,
-  "Home Interiors & Furniture": <FaCouch />,
-  "Clothes & Shoes": <FaTshirt />,
-  "Beauty Tools": <FaSpa />,
-  "Kids Items": <FaBaby />,
-  "Food Items": <FaPizzaSlice />,
-  "Livestock": <FaDrumstickBite />,
-  "Service Rendering": <FaHandsHelping />,
-  "Job Offers": <FaBriefcase />,
+  car: <FaCar size={28} />,
+  house: <FaHome size={28} />,
+  property: <FaBuilding size={28} />,
+  gadgets: <FaLaptop size={28} />,
+  electronics: <FaMobileAlt size={28} />,
+  furniture: <FaCouch size={28} />,
+  fashion: <FaTshirt size={28} />,
+  beauty: <FaSpa size={28} />,
+  kids: <FaBaby size={28} />,
+  food: <FaPizzaSlice size={28} />,
+  livestock: <FaDrumstickBite size={28} />,
+  services: <FaHandsHelping size={28} />,
+  jobs: <FaBriefcase size={28} />,
 };
 
 export default function CategoryGrid({ categories = [] }) {
-  const router = useRouter();
-
-  const handleClick = (name) => {
-    router.push(`/products?category=${encodeURIComponent(name)}`);
-  };
-
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-0">
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-        {categories.map((cat) => (
-          <button
-            key={cat.id || cat.name}
-            onClick={() => handleClick(cat.name)}
-            className="flex flex-col items-center hover:scale-105 transition-transform"
-          >
-            <div className="bg-gray-100 p-3 rounded-full w-16 h-16 flex items-center justify-center text-purple-600 text-2xl">
-              {ICONS_MAP[cat.name] || <span>📦</span>}
-            </div>
-            <span className="mt-2 text-sm font-medium text-gray-700 text-center">
-              {cat.name}
-            </span>
-          </button>
-        ))}
-      </div>
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 py-6">
+      {categories.map((cat) => (
+        <Link
+          key={cat.id}
+          href={`/category/${cat.slug || cat.id}`}
+          className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border hover:shadow-md transition bg-white"
+        >
+          <div className="text-purple-600">
+            {ICONS_MAP[cat.iconKey] || <span className="text-2xl">📦</span>}
+          </div>
+          <span className="text-xs font-medium text-center">
+            {cat.title}
+          </span>
+        </Link>
+      ))}
     </div>
   );
 }
