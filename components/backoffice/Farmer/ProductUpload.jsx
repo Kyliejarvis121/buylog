@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
-import SelectInput from "@/components/FormInputs/SelectInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
@@ -33,11 +32,12 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
   } = useForm({
     defaultValues: {
       title: existingProduct?.title || "",
+      slug: existingProduct?.slug || "",
       productPrice: existingProduct?.price || "",
       salePrice: existingProduct?.salePrice || "",
-      qty: existingProduct?.qty || 1,
       productStock: existingProduct?.productStock || 0,
-      productCode: existingProduct?.productCode || "",
+      qty: existingProduct?.qty || 1,
+      productCode: existingProduct?.productCode || generateUserCode("LLP", existingProduct?.title || ""),
       categoryId: existingProduct?.categoryId || (categories[0]?.value || ""),
       isActive: existingProduct?.isActive ?? true,
       isWholesale: existingProduct?.isWholesale ?? false,
@@ -50,12 +50,14 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
   const isWholesale = watch("isWholesale");
 
   const onSubmit = async (data) => {
-    if (!imageUrl && productImages.length < 1) {
-      return alert("Upload at least one product image");
-    }
+    if (!imageUrl && productImages.length < 1) return alert("Upload at least one product image");
 
     const slug = generateSlug(data.title);
     const productCode = existingProduct?.productCode || generateUserCode("LLP", data.title);
+
+    const allImages = existingProduct?.productImages
+      ? [...existingProduct.productImages, ...productImages.filter(img => !existingProduct.productImages.includes(img))]
+      : productImages;
 
     const payload = {
       id: existingProduct?.id,
@@ -64,13 +66,13 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
       description: data.description,
       price: parseFloat(data.productPrice),
       salePrice: data.salePrice ? parseFloat(data.salePrice) : 0,
-      qty: parseInt(data.qty),
       productStock: parseInt(data.productStock),
+      qty: parseInt(data.qty),
       productCode,
-      categoryId: data.categoryId || null,
+      categoryId: data.categoryId,
       farmerId,
-      imageUrl: imageUrl || productImages[0] || "",
-      productImages: productImages || [],
+      imageUrl: imageUrl || allImages[0],
+      productImages: allImages,
       tags,
       isWholesale: !!data.isWholesale,
       wholesalePrice: data.wholesalePrice ? parseFloat(data.wholesalePrice) : 0,
@@ -85,7 +87,7 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
       setLoading,
       endpoint,
       payload,
-      existingProduct ? "Product updated" : "Product created",
+      existingProduct ? "Product updated" : "Product uploaded",
       () => {
         reset();
         setTags([]);
@@ -107,34 +109,23 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
       </h2>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 sm:gap-6">
-        {/* Basic Fields */}
         <TextInput label="Product Title" name="title" register={register} errors={errors} />
+        <TextInput label="Slug" name="slug" register={register} errors={errors} />
         <TextInput label="Product Price" name="productPrice" type="number" register={register} errors={errors} />
         <TextInput label="Discount Price" name="salePrice" type="number" register={register} errors={errors} />
-        <TextInput label="Quantity" name="qty" type="number" register={register} errors={errors} />
         <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} />
+        <TextInput label="Quantity" name="qty" type="number" register={register} errors={errors} />
         <TextInput label="Product Code" name="productCode" register={register} errors={errors} readOnly />
 
-        {/* Category Dropdown */}
-        <SelectInput
-          label="Select Category"
-          name="categoryId"
-          register={register}
-          errors={errors}
-          defaultValue={existingProduct?.categoryId || (categories[0]?.value || "")}
-          options={categories}
-        />
+        {/* Categories Dropdown fixed */}
+        <select {...register("categoryId")} className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600">
+          {categories.map(cat => (
+            <option key={cat.value} value={cat.value}>{cat.label}</option>
+          ))}
+        </select>
 
-        {/* Toggle Wholesale */}
-        <ToggleInput
-          label="Supports Wholesale"
-          name="isWholesale"
-          trueTitle="Yes"
-          falseTitle="No"
-          register={register}
-        />
+        <ToggleInput label="Supports Wholesale" name="isWholesale" register={register} trueTitle="Yes" falseTitle="No" />
 
-        {/* Conditional wholesale fields */}
         {isWholesale && (
           <>
             <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} />
@@ -142,18 +133,14 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
           </>
         )}
 
-        {/* Images */}
         <ImageInput imageUrl={imageUrl} setImageUrl={setImageUrl} endpoint="productUploader" label="Main Product Image" />
         <MultipleImageInput imageUrls={productImages} setImageUrls={setProductImages} endpoint="multipleProductsUploader" label="Upload Product Images" />
 
-        {/* Tags */}
         <ArrayItemsInput setItems={setTags} items={tags} itemTitle="Tag" />
 
-        {/* Description */}
         <TextareaInput label="Product Description" name="description" register={register} errors={errors} />
 
-        {/* Publish toggle */}
-        <ToggleInput label="Publish Product" name="isActive" trueTitle="Active" falseTitle="Draft" register={register} />
+        <ToggleInput label="Publish Product" name="isActive" register={register} trueTitle="Active" falseTitle="Draft" />
       </div>
 
       <SubmitButton
