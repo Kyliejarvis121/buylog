@@ -1,10 +1,10 @@
 import HeroCarousel from "@/components/frontend/HeroCarousel";
 import MarketList from "@/components/frontend/MarketList";
-import CategoryList from "@/components/frontend/CategoryList";
-import CommunityTrainings from "@/components/frontend/CommunityTrainings";
+import CategoryGrid from "@/components/frontend/CategoryGrid";
+
 import { getData } from "@/lib/getData";
 
-export default async function Home() {
+export default async function HomePage() {
   // Fetch banners
   const bannersRes = await getData("banners");
   const banners = Array.isArray(bannersRes?.data) ? bannersRes.data : [];
@@ -19,28 +19,16 @@ export default async function Home() {
     ? categoriesRes.data
     : [];
 
-  // Fetch products per category safely
-  const categories = await Promise.all(
-    categoriesArray.map(async (cat) => {
-      const productsRes = await getData(`products?catId=${cat.id}`);
-      const products = Array.isArray(productsRes?.data)
-        ? productsRes.data.map((p) => ({
-            ...p,
-            farmer: p.farmer ?? null,
-            category: p.category ?? null,
-          }))
-        : [];
-      return { ...cat, products };
-    })
-  );
-
-  const filteredCategories = categories.filter((c) => c.products.length > 3);
-
   // Fetch trainings
   const trainingsRes = await getData("trainings");
   const trainings = Array.isArray(trainingsRes?.data)
     ? trainingsRes.data
     : [];
+
+  // Category click handler
+  const handleCategoryClick = (categoryName) => {
+    window.location.href = `/products?category=${categoryName}`;
+  };
 
   return (
     <div className="min-h-screen">
@@ -50,33 +38,21 @@ export default async function Home() {
       {/* Markets */}
       <MarketList markets={markets} />
 
-      {/* Categories */}
-      {filteredCategories.map((category, i) => (
-        <div className="py-8" key={category.id || i}>
-          <CategoryList
-            isMarketPage={false}
-            category={{
-              ...category,
-              products: category.products.map((p) => ({
-                ...p,
-                title: p.title || "Untitled Product",
-                price: p.price ?? 0,
-                salePrice: p.salePrice ?? 0,
-                imageUrl: p.imageUrl || "",
-                farmer: p.farmer ?? { name: "Unknown Farmer" },
-              })),
-            }}
-          />
-        </div>
-      ))}
-
-      {/* Trainings */}
-      {trainings.length > 0 && (
-        <CommunityTrainings
-          title="Featured Trainings"
-          trainings={trainings.slice(0, 3)}
+      {/* Categories Only */}
+      <div className="py-8">
+        <h2 className="text-2xl font-bold text-center mb-6">
+          Browse by Category
+        </h2>
+        <CategoryGrid
+          categories={categoriesArray.map((cat) => ({
+            id: cat.id,
+            name: cat.name,
+          }))}
+          onSelectCategory={handleCategoryClick}
         />
-      )}
+      </div>
+
+      
     </div>
   );
 }
