@@ -14,7 +14,7 @@ export default async function ProductDetailPage({ params: { slug } }) {
 
   if (!product) return <div className="text-red-600 p-4">Product not found</div>;
 
-  const sellerPhone = product.farmer?.phoneNumber || "Not provided";
+  const sellerPhone = product.phoneNumber || "Not provided"; // ✅ Use product.phoneNumber
 
   return (
     <div className="max-w-4xl mx-auto p-6">
