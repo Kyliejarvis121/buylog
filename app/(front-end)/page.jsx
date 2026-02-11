@@ -24,6 +24,7 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen">
       {banners.length > 0 && <HeroCarousel banners={banners} />}
+
       <MarketList markets={markets} />
 
       {/* Categories only */}
@@ -35,7 +36,9 @@ export default async function HomePage() {
         <CategoryGrid
           categories={categoriesArray.map((cat) => ({
             id: cat.id,
-            name: cat.name,
+            name: cat.title,   // ✅ FIXED: use `title` from Prisma, not `name`
+            imageUrl: cat.imageUrl || null, // optional (if your grid uses images)
+            slug: cat.slug || null,         // optional (for routing)
           }))}
         />
       </div>

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// CREATE CATEGORY
 export async function POST(request) {
   try {
     const { title, slug, imageUrl, description, isActive, iconKey } =
@@ -31,7 +32,7 @@ export async function POST(request) {
         slug,
         imageUrl: imageUrl ?? "",
         description: description ?? "",
-        iconKey: iconKey ?? null,   // ✅ ADD THIS
+        iconKey: iconKey ?? null,
         isActive: Boolean(isActive),
       },
     });
@@ -44,6 +45,28 @@ export async function POST(request) {
     console.error("POST /api/categories failed:", error);
     return NextResponse.json(
       { data: null, message: "Failed to create category", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// ✅ GET ALL ACTIVE CATEGORIES (FOR HOMEPAGE & PRODUCT FORM)
+export async function GET() {
+  try {
+    const categories = await prisma.category.findMany({
+      where: { isActive: true },  // ✅ only active categories
+      orderBy: { createdAt: "asc" },
+    });
+
+    return NextResponse.json({
+      data: categories,
+      total: categories.length,
+      message: "Categories fetched successfully",
+    });
+  } catch (error) {
+    console.error("GET /api/categories failed:", error);
+    return NextResponse.json(
+      { data: [], message: "Failed to fetch categories", error: error.message },
       { status: 500 }
     );
   }
