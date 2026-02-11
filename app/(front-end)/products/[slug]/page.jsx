@@ -14,6 +14,8 @@ export default async function ProductDetailPage({ params: { slug } }) {
 
   if (!product) return <div className="text-red-600 p-4">Product not found</div>;
 
+  const sellerPhone = product.farmer?.phoneNumber || "Not provided";
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <ProductImageCarousel
@@ -29,9 +31,16 @@ export default async function ProductDetailPage({ params: { slug } }) {
       </p>
 
       {/* SELLER PHONE */}
-      <p className="text-gray-800 mt-1">
-        Seller Phone: {product.farmer?.phoneNumber || "Not provided"}
-      </p>
+      {sellerPhone !== "Not provided" ? (
+        <p className="text-blue-600 mt-1">
+          Seller Phone:{" "}
+          <a href={`tel:${sellerPhone}`} className="underline hover:text-blue-800">
+            {sellerPhone}
+          </a>
+        </p>
+      ) : (
+        <p className="text-gray-800 mt-1">Seller Phone: Not provided</p>
+      )}
 
       <p className="text-2xl font-semibold text-green-600 mt-4">
         ₦{Number(product.price).toLocaleString()}

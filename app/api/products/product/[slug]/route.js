@@ -9,8 +9,8 @@ export async function GET(req, { params }) {
     const product = await prisma.product.findUnique({
       where: { slug },
       include: {
-        category: true,
-        farmer: true,
+        category: true, // include category object
+        farmer: true,   // include farmer object
       },
     });
 
@@ -21,13 +21,17 @@ export async function GET(req, { params }) {
       });
     }
 
-    // Return product including phone number
+    // Prepare product data for frontend
+    const productData = {
+      ...product,
+      phoneNumber: product.phoneNumber || "Not provided",
+      categoryName: product.category?.title || "Uncategorized",
+      farmerName: product.farmer?.name || "Unknown",
+    };
+
     return NextResponse.json({
       success: true,
-      data: {
-        ...product,
-        phoneNumber: product.phoneNumber || null,
-      },
+      data: productData,
     });
   } catch (error) {
     console.error("PRODUCT GET ERROR:", error);
