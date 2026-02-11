@@ -13,7 +13,7 @@ export default function CategoryGrid({ categories = [] }) {
         return (
           <Link
             key={cat.id}
-            href={`/category/${cat.slug}`}
+            href={`/category/${cat.slug}`} // ensure this route filters products by category
             className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border hover:shadow-sm transition bg-white"
           >
             {imageUrl ? (
@@ -31,7 +31,7 @@ export default function CategoryGrid({ categories = [] }) {
               </div>
             )}
 
-            <span className="text-[11px] font-medium text-center leading-tight">
+            <span className="text-[11px] font-medium text-center leading-tight text-gray-800">
               {label}
             </span>
           </Link>

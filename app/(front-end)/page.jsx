@@ -40,13 +40,14 @@ export default async function HomePage() {
         </h2>
 
         <CategoryGrid
-          categories={categoriesArray.map((cat) => ({
-            id: cat.id,
-            name: cat.title,      // ✅ correct field
-            slug: cat.slug,       // ✅ needed for routing
-            iconKey: cat.iconKey, // ✅ needed for dynamic icons
-          }))}
-        />
+  categories={categoriesArray.map((cat) => ({
+    id: cat.id,
+    name: cat.title,
+    imageUrl: cat.imageUrl || null,
+    slug: cat.slug || null,
+  }))}
+/>
+
       </div>
 
       {/* Trainings */}
