@@ -217,6 +217,15 @@ export default function ProductUpload({
           defaultValue={existingProduct?.description}
         />
 
+<TextInput
+  label="Contact Number"
+  name="phoneNumber"
+  register={register}
+  errors={errors}
+  defaultValue={existingProduct?.phoneNumber}
+/>
+
+
         <ToggleInput
           label="Publish Product"
           name="isActive"

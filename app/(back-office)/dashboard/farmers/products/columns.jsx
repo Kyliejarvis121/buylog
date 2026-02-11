@@ -1,4 +1,3 @@
-// app/(back-office)/dashboard/farmers/products/columns.js
 "use client";
 
 import SortableColumn from "@/components/DataTableColumns/SortableColumn";
@@ -30,6 +29,11 @@ export const columns = [
     header: "Stock",
   },
   {
+    accessorKey: "phoneNumber", // ✅ New column for seller phone
+    header: "Seller Phone",
+    cell: ({ row }) => row.original.phoneNumber || "N/A",
+  },
+  {
     accessorKey: "isActive",
     header: "Status",
     cell: ({ row }) => <Status row={row} accessorKey="isActive" />,
@@ -48,11 +52,10 @@ export const columns = [
         <ActionColumn
           row={row}
           title="Product"
-          editEndpoint={`/dashboard/farmers/products/${product.id}/edit`} // ✅ CORRECT
-          endpoint={`/api/farmers/products/${product.id}`}               // ✅ CORRECT
+          editEndpoint={`/dashboard/farmers/products/${product.id}/edit`}
+          endpoint={`/api/farmers/products/${product.id}`}
         />
       );
     },
-  }
-  
+  },
 ];

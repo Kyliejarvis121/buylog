@@ -63,6 +63,9 @@ export async function POST(req) {
         wholesaleQty: Number(body.wholesaleQty) || 0,
         isActive: body.isActive ?? true,
 
+        // ✅ New field for seller contact
+        phoneNumber: body.phoneNumber || "",
+
         farmer: { connect: { id: body.farmerId } },
 
         category: body.categoryId

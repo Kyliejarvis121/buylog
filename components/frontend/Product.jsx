@@ -58,6 +58,13 @@ export default function Product({ product }) {
             <span>Add</span>
           </button>
         </div>
+
+        {/* ✅ Seller Phone Number */}
+        {product.phoneNumber && (
+          <p className="mt-2 text-xs text-center text-slate-700 dark:text-slate-300">
+            📞 Seller: {product.phoneNumber}
+          </p>
+        )}
       </div>
     </div>
   );
