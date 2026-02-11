@@ -6,78 +6,88 @@ import { useRouter } from "next/navigation";
 
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
+import SelectInput from "@/components/FormInputs/SelectInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
-import ImageInput from "@/components/FormInputs/ImageInput";
 import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
 
 import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
 import { makePostRequest } from "@/lib/apiRequest";
 
-export default function ProductUpload({ farmerId, categories = [], existingProduct = null }) {
+export default function ProductUpload({
+  farmerId,
+  categories,
+  existingProduct,
+}) {
   const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState(existingProduct?.tags || []);
-  const [imageUrl, setImageUrl] = useState(existingProduct?.imageUrl || "");
-  const [productImages, setProductImages] = useState(existingProduct?.productImages || []);
+  const [productImages, setProductImages] = useState(
+    existingProduct?.productImages || []
+  );
 
   const {
     register,
-    handleSubmit,
     watch,
+    handleSubmit,
     reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
-      title: existingProduct?.title || "",
-      slug: existingProduct?.slug || "",
-      productPrice: existingProduct?.price || "",
-      salePrice: existingProduct?.salePrice || "",
-      productStock: existingProduct?.productStock || 0,
-      qty: existingProduct?.qty || 1,
-      productCode: existingProduct?.productCode || generateUserCode("LLP", existingProduct?.title || ""),
-      categoryId: existingProduct?.categoryId || (categories[0]?.value || ""),
       isActive: existingProduct?.isActive ?? true,
       isWholesale: existingProduct?.isWholesale ?? false,
-      wholesalePrice: existingProduct?.wholesalePrice || "",
-      wholesaleQty: existingProduct?.wholesaleQty || "",
-      description: existingProduct?.description || "",
     },
   });
 
   const isWholesale = watch("isWholesale");
 
   const onSubmit = async (data) => {
-    if (!imageUrl && productImages.length < 1) return alert("Upload at least one product image");
+    if (productImages.length < 1) {
+      alert("Upload at least one product image");
+      return;
+    }
+
+    // Merge existing images if editing
+    let allImages = productImages;
+
+    if (existingProduct?.productImages?.length) {
+      allImages = [
+        ...existingProduct.productImages,
+        ...productImages.filter(
+          (img) => !existingProduct.productImages.includes(img)
+        ),
+      ];
+    }
 
     const slug = generateSlug(data.title);
-    const productCode = existingProduct?.productCode || generateUserCode("LLP", data.title);
-
-    const allImages = existingProduct?.productImages
-      ? [...existingProduct.productImages, ...productImages.filter(img => !existingProduct.productImages.includes(img))]
-      : productImages;
+    const productCode = generateUserCode("LLP", data.title);
 
     const payload = {
-      id: existingProduct?.id,
+      id: existingProduct?.id, // for edit
       title: data.title,
+      description: data.description ?? "",
       slug,
-      description: data.description,
       price: parseFloat(data.productPrice),
       salePrice: data.salePrice ? parseFloat(data.salePrice) : 0,
-      productStock: parseInt(data.productStock),
-      qty: parseInt(data.qty),
-      productCode,
-      categoryId: data.categoryId,
+      productStock: parseInt(data.productStock ?? 0),
+      categoryId: data.categoryId || null,
       farmerId,
-      imageUrl: imageUrl || allImages[0],
+      imageUrl: allImages[0],
       productImages: allImages,
       tags,
+      productCode,
       isWholesale: !!data.isWholesale,
-      wholesalePrice: data.wholesalePrice ? parseFloat(data.wholesalePrice) : 0,
-      wholesaleQty: data.wholesaleQty ? parseInt(data.wholesaleQty) : 0,
+      wholesalePrice: data.wholesalePrice
+        ? parseFloat(data.wholesalePrice)
+        : 0,
+      wholesaleQty: data.wholesaleQty
+        ? parseInt(data.wholesaleQty)
+        : 0,
       isActive: !!data.isActive,
+      qty: 1,
     };
 
     const method = existingProduct ? "PUT" : "POST";
@@ -87,11 +97,10 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
       setLoading,
       endpoint,
       payload,
-      existingProduct ? "Product updated" : "Product uploaded",
+      existingProduct ? "Product updated" : "Product",
       () => {
         reset();
         setTags([]);
-        setImageUrl("");
         setProductImages([]);
       },
       () => router.push("/dashboard/farmers/products"),
@@ -109,44 +118,120 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
       </h2>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 sm:gap-6">
-        <TextInput label="Product Title" name="title" register={register} errors={errors} />
-        <TextInput label="Slug" name="slug" register={register} errors={errors} />
-        <TextInput label="Product Price" name="productPrice" type="number" register={register} errors={errors} />
-        <TextInput label="Discount Price" name="salePrice" type="number" register={register} errors={errors} />
-        <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} />
-        <TextInput label="Quantity" name="qty" type="number" register={register} errors={errors} />
-        <TextInput label="Product Code" name="productCode" register={register} errors={errors} readOnly />
+        <TextInput
+          label="Product Title"
+          name="title"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.title}
+        />
 
-        {/* Categories Dropdown fixed */}
-        <select {...register("categoryId")} className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600">
-          {categories.map(cat => (
-            <option key={cat.value} value={cat.value}>{cat.label}</option>
-          ))}
-        </select>
+        <TextInput
+          label="Product Price"
+          name="productPrice"
+          type="number"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.price}
+        />
 
-        <ToggleInput label="Supports Wholesale" name="isWholesale" register={register} trueTitle="Yes" falseTitle="No" />
+        <TextInput
+          label="Discount Price"
+          name="salePrice"
+          type="number"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.salePrice}
+        />
+
+        <TextInput
+          label="Product Stock"
+          name="productStock"
+          type="number"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.productStock}
+        />
+
+        {/* Replace the select input for category like this */}
+<select
+  {...register("categoryId")}
+  className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
+  defaultValue={existingProduct?.categoryId || ""}
+>
+  <option value="" disabled>Select Category</option>
+  {categories.map((cat) => (
+    <option key={cat.id} value={cat.id}>{cat.title}</option>
+  ))}
+</select>
+
+        <ToggleInput
+          label="Supports Wholesale"
+          name="isWholesale"
+          trueTitle="Enabled"
+          falseTitle="Disabled"
+          register={register}
+        />
 
         {isWholesale && (
           <>
-            <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} />
-            <TextInput label="Minimum Wholesale Qty" name="wholesaleQty" type="number" register={register} errors={errors} />
+            <TextInput
+              label="Wholesale Price"
+              name="wholesalePrice"
+              type="number"
+              register={register}
+              errors={errors}
+              defaultValue={existingProduct?.wholesalePrice}
+            />
+
+            <TextInput
+              label="Minimum Wholesale Qty"
+              name="wholesaleQty"
+              type="number"
+              register={register}
+              errors={errors}
+              defaultValue={existingProduct?.wholesaleQty}
+            />
           </>
         )}
 
-        <ImageInput imageUrl={imageUrl} setImageUrl={setImageUrl} endpoint="productUploader" label="Main Product Image" />
-        <MultipleImageInput imageUrls={productImages} setImageUrls={setProductImages} endpoint="multipleProductsUploader" label="Upload Product Images" />
+        <MultipleImageInput
+          imageUrls={productImages}
+          setImageUrls={setProductImages}
+          endpoint="multipleProductsUploader"
+          label="Upload Product Images"
+          existingImages={existingProduct?.productImages || []}
+        />
 
-        <ArrayItemsInput setItems={setTags} items={tags} itemTitle="Tag" />
+        <ArrayItemsInput
+          items={tags}
+          setItems={setTags}
+          itemTitle="Tag"
+        />
 
-        <TextareaInput label="Product Description" name="description" register={register} errors={errors} />
+        <TextareaInput
+          label="Product Description"
+          name="description"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.description}
+        />
 
-        <ToggleInput label="Publish Product" name="isActive" register={register} trueTitle="Active" falseTitle="Draft" />
+        <ToggleInput
+          label="Publish Product"
+          name="isActive"
+          trueTitle="Active"
+          falseTitle="Draft"
+          register={register}
+        />
       </div>
 
       <SubmitButton
         isLoading={loading}
         buttonTitle={existingProduct ? "Update Product" : "Add Product"}
-        loadingButtonTitle={existingProduct ? "Updating Product..." : "Uploading Product..."}
+        loadingButtonTitle={
+          existingProduct ? "Updating Product..." : "Uploading Product..."
+        }
       />
     </form>
   );
