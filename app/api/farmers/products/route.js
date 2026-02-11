@@ -62,17 +62,18 @@ export async function POST(req) {
         wholesalePrice: Number(body.wholesalePrice) || 0,
         wholesaleQty: Number(body.wholesaleQty) || 0,
         isActive: body.isActive ?? true,
-
-        // ✅ New field for seller contact
+    
+        // ✅ ADD THIS
         phoneNumber: body.phoneNumber || "",
-
+    
         farmer: { connect: { id: body.farmerId } },
-
+    
         category: body.categoryId
           ? { connect: { id: body.categoryId } }
           : undefined,
       },
     });
+    
 
     return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {

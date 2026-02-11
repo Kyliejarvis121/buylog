@@ -19,26 +19,35 @@ export async function POST(request) {
     const product = await prisma.product.create({
       data: {
         title: body.title,
-        slug: body.slug,
+        slug: body.slug || body.title.toLowerCase().replace(/\s+/g, "-"),
         description: body.description || "",
         price: Number(body.price) || 0,
         salePrice: Number(body.salePrice) || 0,
         productStock: Number(body.productStock) || 0,
-        imageUrl: body.imageUrl,
+        qty: Number(body.qty) || 1,
+        imageUrl: Array.isArray(body.productImages) ? body.productImages[0] : body.imageUrl,
         productImages: body.productImages || [],
         tags: body.tags || [],
-        productCode: body.productCode || null,
+        productCode: body.productCode || "",
+        sku: body.sku || "",
+        barcode: body.barcode || "",
+        unit: body.unit || "",
         isWholesale: !!body.isWholesale,
         wholesalePrice: Number(body.wholesalePrice) || 0,
         wholesaleQty: Number(body.wholesaleQty) || 0,
         isActive: body.isActive ?? true,
-        qty: body.qty || 1,
+    
+        // ✅ ADD THIS
+        phoneNumber: body.phoneNumber || "",
+    
         farmer: { connect: { id: body.farmerId } },
+    
         category: body.categoryId
           ? { connect: { id: body.categoryId } }
           : undefined,
       },
     });
+    
 
     return NextResponse.json({
       success: true,
