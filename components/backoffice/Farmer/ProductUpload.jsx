@@ -88,7 +88,11 @@ export default function ProductUpload({
         : 0,
       isActive: !!data.isActive,
       qty: 1,
+    
+      // ✅ Add this line
+      phoneNumber: data.phoneNumber || "",
     };
+    
 
     const method = existingProduct ? "PUT" : "POST";
     const endpoint = "/api/products";
