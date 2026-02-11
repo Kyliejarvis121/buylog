@@ -1,42 +1,40 @@
-import dynamic from "next/dynamic";
-import { getData } from "@/lib/getData";
+import { prisma } from "@/lib/prismadb";
+import { NextResponse } from "next/server";
 
-// Dynamic import (client-only)
-const ProductImageCarousel = dynamic(
-  () => import("@/components/frontend/ProductImageCarousel"),
-  { ssr: false }
-);
+export async function GET(req, { params }) {
+  try {
+    const { slug } = params;
 
-export default async function ProductDetailPage({ params: { slug } }) {
-  const productRes = await getData(`products/product/${slug}`);
-  const product = productRes?.success ? productRes.data : null;
+    // Fetch product with farmer and category
+    const product = await prisma.product.findUnique({
+      where: { slug },
+      include: {
+        category: true,
+        farmer: true,
+      },
+    });
 
-  if (!product) return <div className="text-red-600 p-4">Product not found</div>;
+    if (!product) {
+      return NextResponse.json({
+        success: false,
+        message: "Product not found",
+      });
+    }
 
-  return (
-    <div className="max-w-4xl mx-auto p-6">
-      <ProductImageCarousel
-        productImages={product.productImages ?? []}
-        thumbnail={product.imageUrl ?? null}
-      />
-
-      <h1 className="text-3xl font-bold mt-6">{product.title}</h1>
-
-      <p className="text-gray-800 font-medium mt-2">
-        Category: {product.category?.title || "Uncategorized"}
-      </p>
-
-      <p className="text-gray-800 font-medium mt-1">
-        Seller Phone: {product.phoneNumber || "Not provided"}
-      </p>
-
-      <p className="text-2xl font-semibold text-green-600 mt-4">
-        ₦{Number(product.price).toLocaleString()}
-      </p>
-
-      <p className="text-gray-700 mt-4 whitespace-pre-line">
-        {product.description || "No description available."}
-      </p>
-    </div>
-  );
+    // Return product including phone number
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...product,
+        phoneNumber: product.phoneNumber || null,
+      },
+    });
+  } catch (error) {
+    console.error("PRODUCT GET ERROR:", error);
+    return NextResponse.json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
 }
