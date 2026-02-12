@@ -42,7 +42,7 @@ export async function POST(request) {
         // ✅ Existing
         phoneNumber: body.phoneNumber || "",
 
-        // ✅ NEW (Location)
+        // ✅ NEW: Location
         location: body.location || "",
 
         farmer: { connect: { id: body.farmerId } },
@@ -66,15 +66,14 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create product",
-        error: error.message,
+        message: error.message || "Failed to create product",
       },
       { status: 500 }
     );
   }
 }
 
-// GET ALL PRODUCTS
+// GET ALL PRODUCTS (with optional category filter)
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -83,23 +82,28 @@ export async function GET(request) {
     const limit = Number(searchParams.get("limit") || 1000);
     const skip = (page - 1) * limit;
     const searchQuery = searchParams.get("q")?.trim() || "";
+    const categoryId = searchParams.get("categoryId") || "";
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where: searchQuery
-          ? { title: { contains: searchQuery, mode: "insensitive" } }
-          : undefined,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-        include: { category: true, farmer: true },
-      }),
-      prisma.product.count({
-        where: searchQuery
-          ? { title: { contains: searchQuery, mode: "insensitive" } }
-          : undefined,
-      }),
-    ]);
+    // Build the where clause like your current code
+    const where = {};
+    if (searchQuery) {
+      where.title = { contains: searchQuery, mode: "insensitive" };
+    }
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+
+    const products = await prisma.product.findMany({
+      where: Object.keys(where).length ? where : undefined,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      include: { category: true, farmer: true },
+    });
+
+    const total = await prisma.product.count({
+      where: Object.keys(where).length ? where : undefined,
+    });
 
     return NextResponse.json({
       success: true,
@@ -111,14 +115,11 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error("GET /api/products failed:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        data: [],
-        message: "Failed to fetch products",
-        error: error.message,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      data: [],
+      message: "Failed to fetch products",
+      error: error.message,
+    });
   }
 }

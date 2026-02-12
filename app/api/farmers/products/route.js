@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// GET all products for a farmer
+// GET all products for a farmer (optional category filter)
 export async function GET(req) {
   try {
     const url = new URL(req.url);
     const farmerId = url.searchParams.get("farmerId");
+    const categoryId = url.searchParams.get("categoryId"); // optional
 
     if (!farmerId) {
       return NextResponse.json(
@@ -14,8 +15,14 @@ export async function GET(req) {
       );
     }
 
+    // Build the where clause
+    const whereClause = { farmerId };
+    if (categoryId) {
+      whereClause['categoryId'] = categoryId;
+    }
+
     const products = await prisma.product.findMany({
-      where: { farmerId },
+      where: whereClause,
       orderBy: { createdAt: "desc" },
       include: { category: true },
     });
@@ -24,7 +31,7 @@ export async function GET(req) {
   } catch (error) {
     console.error("❌ GET FARMER PRODUCTS ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products", error: error.message },
+      { success: false, message: "Failed to fetch products", error: error?.message || String(error) },
       { status: 500 }
     );
   }
@@ -83,7 +90,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("❌ CREATE PRODUCT ERROR:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to create product" },
+      { success: false, message: error?.message || "Failed to create product" },
       { status: 500 }
     );
   }
