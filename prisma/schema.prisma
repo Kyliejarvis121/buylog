@@ -120,7 +120,10 @@ model Product {
   wholesalePrice Float?   @default(0)
   wholesaleQty   Int?     @default(0)
   isActive       Boolean? @default(true)
-  phoneNumber    String?   // ✅ new field
+  phoneNumber    String?
+
+  location       String?   // ✅ NEW FIELD (e.g. "Benin City, Edo")
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -128,7 +131,6 @@ model Product {
   farmer     Farmer?     @relation(fields: [farmerId], references: [id])
   orderItems OrderItem[]
 }
-
 
 //
 // ===============================

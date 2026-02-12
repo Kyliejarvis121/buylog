@@ -25,7 +25,9 @@ export async function POST(request) {
         salePrice: Number(body.salePrice) || 0,
         productStock: Number(body.productStock) || 0,
         qty: Number(body.qty) || 1,
-        imageUrl: Array.isArray(body.productImages) ? body.productImages[0] : body.imageUrl,
+        imageUrl: Array.isArray(body.productImages)
+          ? body.productImages[0]
+          : body.imageUrl,
         productImages: body.productImages || [],
         tags: body.tags || [],
         productCode: body.productCode || "",
@@ -36,31 +38,39 @@ export async function POST(request) {
         wholesalePrice: Number(body.wholesalePrice) || 0,
         wholesaleQty: Number(body.wholesaleQty) || 0,
         isActive: body.isActive ?? true,
-    
-        // ✅ ADD THIS
+
+        // ✅ Existing
         phoneNumber: body.phoneNumber || "",
-    
+
+        // ✅ NEW (Location)
+        location: body.location || "",
+
         farmer: { connect: { id: body.farmerId } },
-    
+
         category: body.categoryId
           ? { connect: { id: body.categoryId } }
           : undefined,
       },
     });
-    
 
-    return NextResponse.json({
-      success: true,
-      message: "Product created successfully",
-      data: product,
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Product created successfully",
+        data: product,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("POST /api/products failed:", error);
-    return NextResponse.json({
-      success: false,
-      message: "Failed to create product",
-      error: error.message,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to create product",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -70,7 +80,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
 
     const page = Number(searchParams.get("page") || 1);
-    const limit = Number(searchParams.get("limit") || 1000); // fetch all
+    const limit = Number(searchParams.get("limit") || 1000);
     const skip = (page - 1) * limit;
     const searchQuery = searchParams.get("q")?.trim() || "";
 
@@ -101,11 +111,14 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error("GET /api/products failed:", error);
-    return NextResponse.json({
-      success: false,
-      data: [],
-      message: "Failed to fetch products",
-      error: error.message,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        data: [],
+        message: "Failed to fetch products",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }

@@ -66,7 +66,7 @@ export default function ProductUpload({
     const productCode = generateUserCode("LLP", data.title);
 
     const payload = {
-      id: existingProduct?.id, // for edit
+      id: existingProduct?.id,
       title: data.title,
       description: data.description ?? "",
       slug,
@@ -88,10 +88,12 @@ export default function ProductUpload({
         : 0,
       isActive: !!data.isActive,
       qty: 1,
-    
-      // ✅ Add this line
       phoneNumber: data.phoneNumber || "",
+    
+      // ✅ NEW
+      location: data.location || "",
     };
+    
     
 
     const method = existingProduct ? "PUT" : "POST";
@@ -228,6 +230,17 @@ export default function ProductUpload({
   errors={errors}
   defaultValue={existingProduct?.phoneNumber}
 />
+
+<TextInput
+  label="Location"
+  name="location"
+  placeholder="e.g. Benin City, Edo"
+  register={register}
+  errors={errors}
+  defaultValue={existingProduct?.location}
+/>
+
+
 
 
         <ToggleInput

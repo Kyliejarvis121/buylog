@@ -51,7 +51,9 @@ export async function POST(req) {
         salePrice: Number(body.salePrice) || 0,
         productStock: Number(body.productStock) || 0,
         qty: Number(body.qty) || 1,
-        imageUrl: Array.isArray(body.productImages) ? body.productImages[0] : body.imageUrl,
+        imageUrl: Array.isArray(body.productImages)
+          ? body.productImages[0]
+          : body.imageUrl,
         productImages: body.productImages || [],
         tags: body.tags || [],
         productCode: body.productCode || "",
@@ -62,18 +64,20 @@ export async function POST(req) {
         wholesalePrice: Number(body.wholesalePrice) || 0,
         wholesaleQty: Number(body.wholesaleQty) || 0,
         isActive: body.isActive ?? true,
-    
-        // ✅ ADD THIS
+
+        // ✅ Existing
         phoneNumber: body.phoneNumber || "",
-    
+
+        // ✅ NEW (Location)
+        location: body.location || "",
+
         farmer: { connect: { id: body.farmerId } },
-    
+
         category: body.categoryId
           ? { connect: { id: body.categoryId } }
           : undefined,
       },
     });
-    
 
     return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
