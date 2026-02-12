@@ -3,6 +3,7 @@ export const revalidate = 0;
 
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 
 // CREATE PRODUCT
 export async function POST(request) {
@@ -90,7 +91,7 @@ export async function GET(request) {
       where.title = { contains: searchQuery, mode: "insensitive" };
     }
     if (categoryId) {
-      where.categoryId = categoryId;
+      where.categoryId = new ObjectId(categoryId);
     }
 
     const products = await prisma.product.findMany({
