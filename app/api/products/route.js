@@ -91,7 +91,7 @@ export async function GET(request) {
       where.title = { contains: searchQuery, mode: "insensitive" };
     }
     if (categoryId) {
-      where.categoryId = new ObjectId(categoryId);
+      where.categoryId = categoryId;
     }
 
     const products = await prisma.product.findMany({

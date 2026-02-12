@@ -52,11 +52,17 @@ export default async function page({ params: { slug } }) {
 
       <div className="grid grid-cols-12 gap-6 py-8 w-full">
         <div className="col-span-full sm:col-span-12 rounded-md">
-          {marketCategories.map((category, i) => (
-            <div className="space-y-8" key={i}>
-              <CategoryList isMarketPage={false} category={category} />
-            </div>
-          ))}
+        {marketCategories.map((category) => (
+  <div className="space-y-8" key={category.id}>
+    {/* Pass the category id so CategoryList can fetch products correctly */}
+    <CategoryList
+      isMarketPage={false}
+      category={category}
+      categoryId={category.id}  // ✅ pass id
+    />
+  </div>
+))}
+
         </div>
       </div>
     </>

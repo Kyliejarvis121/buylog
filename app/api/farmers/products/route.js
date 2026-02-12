@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 
 // GET all products for a farmer (optional category filter)
 export async function GET(req) {
@@ -15,11 +16,13 @@ export async function GET(req) {
       );
     }
 
+    // 
     // Build the where clause
     const whereClause = { farmerId };
     if (categoryId) {
-      whereClause['categoryId'] = categoryId;
+      where.categoryId = categoryId;
     }
+    
 
     const products = await prisma.product.findMany({
       where: whereClause,
