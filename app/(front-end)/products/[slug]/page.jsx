@@ -49,6 +49,17 @@ export default async function ProductDetailPage({ params: { slug } }) {
       <p className="text-gray-700 mt-4 whitespace-pre-line">
         {product.description || "No description available."}
       </p>
+
+     {/* LOCATION */}
+{product.location ? (
+  <p className="text-gray-600 mt-1">
+    📍 Location: <span className="font-medium">{product.location}</span>
+  </p>
+) : (
+  <p className="text-gray-400 mt-1">📍 Location: Not provided</p>
+)}
+
+
     </div>
   );
 }
