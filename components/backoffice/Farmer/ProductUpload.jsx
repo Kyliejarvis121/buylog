@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
@@ -16,34 +16,35 @@ import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
 import { makePostRequest } from "@/lib/apiRequest";
 
-export default function ProductUpload({
-  farmerId,
-  categories,
-  markets,
-  existingProduct,
-}) {
+export default function ProductUpload({ farmerId, categories = [], markets = [], existingProduct }) {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState(existingProduct?.tags || []);
-  const [productImages, setProductImages] = useState(
-    existingProduct?.productImages || []
-  );
+  const [productImages, setProductImages] = useState(existingProduct?.productImages || []);
 
   const {
     register,
     watch,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
       isActive: existingProduct?.isActive ?? true,
       isWholesale: existingProduct?.isWholesale ?? false,
+      categoryId: existingProduct?.categoryId ?? undefined,
+      marketId: existingProduct?.marketId ?? undefined,
     },
   });
 
   const isWholesale = watch("isWholesale");
+
+  useEffect(() => {
+    if (existingProduct?.categoryId) setValue("categoryId", existingProduct.categoryId);
+    if (existingProduct?.marketId) setValue("marketId", existingProduct.marketId);
+  }, [existingProduct, setValue]);
 
   const onSubmit = async (data) => {
     if (productImages.length < 1) {
@@ -51,53 +52,33 @@ export default function ProductUpload({
       return;
     }
 
-    // Merge existing images if editing
-    let allImages = productImages;
-
-    if (existingProduct?.productImages?.length) {
-      allImages = [
-        ...existingProduct.productImages,
-        ...productImages.filter(
-          (img) => !existingProduct.productImages.includes(img)
-        ),
-      ];
-    }
-
-    const slug = generateSlug(data.title);
-    const productCode = generateUserCode("LLP", data.title);
+    const allImages = existingProduct?.productImages
+      ? [...existingProduct.productImages, ...productImages.filter(img => !existingProduct.productImages.includes(img))]
+      : productImages;
 
     const payload = {
       id: existingProduct?.id,
       title: data.title,
       description: data.description ?? "",
-      slug,
+      slug: generateSlug(data.title),
       price: parseFloat(data.productPrice),
       salePrice: data.salePrice ? parseFloat(data.salePrice) : 0,
       productStock: parseInt(data.productStock ?? 0),
       categoryId: data.categoryId || null,
+      marketId: data.marketId || null,
       farmerId,
       imageUrl: allImages[0],
       productImages: allImages,
       tags,
-      productCode,
+      productCode: generateUserCode("LLP", data.title),
       isWholesale: !!data.isWholesale,
-      wholesalePrice: data.wholesalePrice
-        ? parseFloat(data.wholesalePrice)
-        : 0,
-      wholesaleQty: data.wholesaleQty
-        ? parseInt(data.wholesaleQty)
-        : 0,
+      wholesalePrice: data.wholesalePrice ? parseFloat(data.wholesalePrice) : 0,
+      wholesaleQty: data.wholesaleQty ? parseInt(data.wholesaleQty) : 0,
       isActive: !!data.isActive,
       qty: 1,
       phoneNumber: data.phoneNumber || "",
-    
-      // ✅ NEW
       location: data.location || "",
-
-      marketId: data.marketId || null,
     };
-    
-    
 
     const method = existingProduct ? "PUT" : "POST";
     const endpoint = "/api/products";
@@ -106,7 +87,7 @@ export default function ProductUpload({
       setLoading,
       endpoint,
       payload,
-      existingProduct ? "Product updated" : "Product",
+      existingProduct ? "Product updated" : "Product uploaded",
       () => {
         reset();
         setTags([]);
@@ -127,89 +108,38 @@ export default function ProductUpload({
       </h2>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 sm:gap-6">
-        <TextInput
-          label="Product Title"
-          name="title"
-          register={register}
-          errors={errors}
-          defaultValue={existingProduct?.title}
-        />
+        <TextInput label="Product Title" name="title" register={register} errors={errors} defaultValue={existingProduct?.title} />
 
-        <TextInput
-          label="Product Price"
-          name="productPrice"
-          type="number"
-          register={register}
-          errors={errors}
-          defaultValue={existingProduct?.price}
-        />
+        <TextInput label="Product Price" name="productPrice" type="number" register={register} errors={errors} defaultValue={existingProduct?.price} />
 
-        <TextInput
-          label="Discount Price"
-          name="salePrice"
-          type="number"
-          register={register}
-          errors={errors}
-          defaultValue={existingProduct?.salePrice}
-        />
+        <TextInput label="Discount Price" name="salePrice" type="number" register={register} errors={errors} defaultValue={existingProduct?.salePrice} />
 
-        <TextInput
-          label="Product Stock"
-          name="productStock"
-          type="number"
-          register={register}
-          errors={errors}
-          defaultValue={existingProduct?.productStock}
-        />
+        <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} defaultValue={existingProduct?.productStock} />
 
-        {/* Replace the select input for category like this */}
-{/* Category Dropdown */}
-<SelectInput
+        {/* Category Select */}
+        <SelectInput
           label="Category"
           name="categoryId"
           register={register}
-          options={categories.map((c) => ({ value: c.id, label: c.title }))}
-          defaultValue={existingProduct?.categoryId || ""}
+          options={categories.map(c => ({ value: c.id, label: c.title }))}
+          defaultValue={existingProduct?.categoryId ?? undefined}
         />
 
-
-{/* Market Dropdown */}
-<SelectInput
+        {/* Market Select */}
+        <SelectInput
           label="Market"
           name="marketId"
           register={register}
-          options={markets.map((m) => ({ value: m.id, label: m.title }))}
-          defaultValue={existingProduct?.marketId || ""}
-
-/>
-
-        <ToggleInput
-          label="Supports Wholesale"
-          name="isWholesale"
-          trueTitle="Enabled"
-          falseTitle="Disabled"
-          register={register}
+          options={markets.map(m => ({ value: m.id, label: m.title }))}
+          defaultValue={existingProduct?.marketId ?? undefined}
         />
+
+        <ToggleInput label="Supports Wholesale" name="isWholesale" trueTitle="Enabled" falseTitle="Disabled" register={register} />
 
         {isWholesale && (
           <>
-            <TextInput
-              label="Wholesale Price"
-              name="wholesalePrice"
-              type="number"
-              register={register}
-              errors={errors}
-              defaultValue={existingProduct?.wholesalePrice}
-            />
-
-            <TextInput
-              label="Minimum Wholesale Qty"
-              name="wholesaleQty"
-              type="number"
-              register={register}
-              errors={errors}
-              defaultValue={existingProduct?.wholesaleQty}
-            />
+            <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} defaultValue={existingProduct?.wholesalePrice} />
+            <TextInput label="Minimum Wholesale Qty" name="wholesaleQty" type="number" register={register} errors={errors} defaultValue={existingProduct?.wholesaleQty} />
           </>
         )}
 
@@ -221,55 +151,21 @@ export default function ProductUpload({
           existingImages={existingProduct?.productImages || []}
         />
 
-        <ArrayItemsInput
-          items={tags}
-          setItems={setTags}
-          itemTitle="Tag"
-        />
+        <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
 
-        <TextareaInput
-          label="Product Description"
-          name="description"
-          register={register}
-          errors={errors}
-          defaultValue={existingProduct?.description}
-        />
+        <TextareaInput label="Product Description" name="description" register={register} errors={errors} defaultValue={existingProduct?.description} />
 
-<TextInput
-  label="Contact Number"
-  name="phoneNumber"
-  register={register}
-  errors={errors}
-  defaultValue={existingProduct?.phoneNumber}
-/>
+        <TextInput label="Contact Number" name="phoneNumber" register={register} errors={errors} defaultValue={existingProduct?.phoneNumber} />
 
-<TextInput
-  label="Location"
-  name="location"
-  placeholder="e.g. Benin City, Edo"
-  register={register}
-  errors={errors}
-  defaultValue={existingProduct?.location}
-/>
+        <TextInput label="Location" name="location" placeholder="e.g. Benin City, Edo" register={register} errors={errors} defaultValue={existingProduct?.location} />
 
-
-
-
-        <ToggleInput
-          label="Publish Product"
-          name="isActive"
-          trueTitle="Active"
-          falseTitle="Draft"
-          register={register}
-        />
+        <ToggleInput label="Publish Product" name="isActive" trueTitle="Active" falseTitle="Draft" register={register} />
       </div>
 
       <SubmitButton
         isLoading={loading}
         buttonTitle={existingProduct ? "Update Product" : "Add Product"}
-        loadingButtonTitle={
-          existingProduct ? "Updating Product..." : "Uploading Product..."
-        }
+        loadingButtonTitle={existingProduct ? "Updating Product..." : "Uploading Product..."}
       />
     </form>
   );
