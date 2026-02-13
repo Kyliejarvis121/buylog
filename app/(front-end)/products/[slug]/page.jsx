@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import { getData } from "@/lib/getData";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/authOptions"; // or "@/lib/auth"
 import { updateLastSeen } from "@/lib/updateLastSeen";
 
 const ProductImageCarousel = dynamic(
@@ -14,18 +14,23 @@ const ProductChatSection = dynamic(
   { ssr: false }
 );
 
-export default async function ProductDetailPage({ params: { slug }, req, res }) {
+export default async function ProductDetailPage({ params: { slug } }) {
   const productRes = await getData(`products/product/${slug}`);
   const product = productRes?.success ? productRes.data : null;
-  if (!product) return <div className="text-red-600 p-4">Product not found</div>;
 
-  // Get current user session
-  const session = await getServerSession(req, res, authOptions);
+  if (!product) {
+    return <div className="text-red-600 p-4">Product not found</div>;
+  }
+
+  const session = await getServerSession(authOptions);
   const currentUser = session?.user;
 
-  // Update online status
   if (currentUser?.id) {
-    await updateLastSeen(currentUser.id);
+    try {
+      await updateLastSeen(currentUser.id);
+    } catch (err) {
+      console.error("updateLastSeen failed:", err);
+    }
   }
 
   return (
@@ -78,7 +83,6 @@ export default async function ProductDetailPage({ params: { slug }, req, res }) 
         {product.description || "No description available."}
       </p>
 
-      {/* ✅ Chat section */}
       <ProductChatSection product={product} currentUser={currentUser} />
     </div>
   );
