@@ -81,17 +81,18 @@ model Farmer {
 // CATEGORIES
 // ===============================
 model Category {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
   title       String
-  slug        String?  @unique
+  slug        String?      @unique
   description String?
   imageUrl    String?
-  iconKey     String?   // 👈 ADD THIS
-  isActive    Boolean? @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  iconKey     String?
+  isActive    Boolean?     @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  products Product[]
+  products    Product[]
+  marketCategories MarketCategory[]
 }
 
 //
@@ -164,14 +165,16 @@ model Banner {
 // MARKETS
 // ===============================
 model Market {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
   title       String
-  slug        String?  @unique
+  slug        String?      @unique
   description String?
   logoUrl     String?
-  isActive    Boolean? @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean?     @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  marketCategories MarketCategory[]
 }
 
 //
@@ -277,4 +280,16 @@ model SupportMessage {
   message String
   status  String   @default("pending")
   createdAt DateTime @default(now())
+}
+
+// Join table
+model MarketCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  market     Market   @relation(fields: [marketId], references: [id])
+  marketId   String   @db.ObjectId
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String   @db.ObjectId
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

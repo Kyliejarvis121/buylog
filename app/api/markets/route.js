@@ -8,17 +8,19 @@ export const revalidate = 0;
 // GET all markets
 export async function GET() {
   try {
-    const markets = await prisma.market.findMany();
+    const markets = await prisma.market.findMany({
+      include: {
+        marketCategories: {
+          include: { category: true },
+        },
+      },
+    });
 
-    // Fetch categories for each market
-    const marketsWithCategories = await Promise.all(
-      markets.map(async (market) => {
-        const categories = await prisma.category.findMany({
-          where: { id: { in: market.categoryIds || [] } },
-        });
-        return { ...market, categories };
-      })
-    );
+    // Map to include categories directly
+    const marketsWithCategories = markets.map((market) => ({
+      ...market,
+      categories: market.marketCategories.map((mc) => mc.category),
+    }));
 
     return NextResponse.json({
       success: true,
@@ -39,7 +41,6 @@ export async function POST(request) {
     const body = await request.json();
     let { title, slug, description, logoUrl, isActive, categoryIds } = body;
 
-    // Validate required fields
     if (!title) {
       return NextResponse.json(
         { success: false, data: null, message: "Title is required" },
@@ -48,11 +49,9 @@ export async function POST(request) {
     }
 
     // Ensure categoryIds is an array
-    if (!Array.isArray(categoryIds)) {
-      categoryIds = categoryIds ? [categoryIds] : [];
-    }
+    if (!Array.isArray(categoryIds)) categoryIds = categoryIds ? [categoryIds] : [];
 
-    // Create new market
+    // Create the market with explicit many-to-many relation
     const newMarket = await prisma.market.create({
       data: {
         title,
@@ -60,13 +59,24 @@ export async function POST(request) {
         description: description || "",
         logoUrl: logoUrl || "",
         isActive: isActive ?? true,
-        categoryIds,
+        marketCategories: {
+          create: categoryIds.map((id) => ({ categoryId: id })),
+        },
+      },
+      include: {
+        marketCategories: { include: { category: true } },
       },
     });
 
+    // Map categories for the response
+    const result = {
+      ...newMarket,
+      categories: newMarket.marketCategories.map((mc) => mc.category),
+    };
+
     return NextResponse.json({
       success: true,
-      data: newMarket,
+      data: result,
       message: "Market created successfully",
     }, { status: 201 });
 
