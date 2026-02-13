@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// GET all products for a farmer (optional category filter)
+// GET all products for a farmer (optional category & market filter)
 export async function GET(req) {
   try {
     const url = new URL(req.url);
     const farmerId = url.searchParams.get("farmerId");
     const categoryId = url.searchParams.get("categoryId"); // optional
+    const marketId = url.searchParams.get("marketId");     // optional
 
     if (!farmerId) {
       return NextResponse.json(
@@ -15,17 +16,16 @@ export async function GET(req) {
       );
     }
 
-    // ✅ Correct where clause
+    // ✅ Build the where clause
     const whereClause = { farmerId };
 
-    if (categoryId) {
-      whereClause.categoryId = categoryId;
-    }
+    if (categoryId) whereClause.categoryId = categoryId;
+    if (marketId) whereClause.marketId = marketId;
 
     const products = await prisma.product.findMany({
       where: whereClause,
       orderBy: { createdAt: "desc" },
-      include: { category: true },
+      include: { category: true, market: true }, // include market info
     });
 
     return NextResponse.json({ success: true, data: products });
@@ -83,6 +83,11 @@ export async function POST(req) {
 
         category: body.categoryId
           ? { connect: { id: body.categoryId } }
+          : undefined,
+
+        // ✅ Attach to a market if provided
+        market: body.marketId
+          ? { connect: { id: body.marketId } }
           : undefined,
       },
     });

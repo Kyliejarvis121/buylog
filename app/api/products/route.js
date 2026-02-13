@@ -27,7 +27,7 @@ export async function POST(request) {
         qty: Number(body.qty) || 1,
         imageUrl: Array.isArray(body.productImages)
           ? body.productImages[0]
-          : body.imageUrl,
+          : body.imageUrl || "",
         productImages: body.productImages || [],
         tags: body.tags || [],
         productCode: body.productCode || "",
@@ -48,6 +48,9 @@ export async function POST(request) {
         category: body.categoryId
           ? { connect: { id: body.categoryId } }
           : undefined,
+
+        // ✅ Attach to a market if provided
+        market: body.marketId ? { connect: { id: body.marketId } } : undefined,
       },
     });
 
@@ -81,6 +84,7 @@ export async function GET(request) {
     const skip = (page - 1) * limit;
     const searchQuery = searchParams.get("q")?.trim() || "";
     const categoryId = searchParams.get("categoryId");
+    const marketId = searchParams.get("marketId"); // ✅ optional market filter
 
     const where = {};
 
@@ -88,9 +92,8 @@ export async function GET(request) {
       where.title = { contains: searchQuery, mode: "insensitive" };
     }
 
-    if (categoryId) {
-      where.categoryId = categoryId; // ✅ Prisma expects string id, NOT ObjectId
-    }
+    if (categoryId) where.categoryId = categoryId;
+    if (marketId) where.marketId = marketId;
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
@@ -98,7 +101,7 @@ export async function GET(request) {
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
-        include: { category: true, farmer: true },
+        include: { category: true, farmer: true, market: true }, // ✅ include market info
       }),
       prisma.product.count({
         where: Object.keys(where).length ? where : undefined,

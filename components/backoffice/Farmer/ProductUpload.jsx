@@ -19,6 +19,7 @@ import { makePostRequest } from "@/lib/apiRequest";
 export default function ProductUpload({
   farmerId,
   categories,
+  markets,
   existingProduct,
 }) {
   const router = useRouter();
@@ -92,6 +93,8 @@ export default function ProductUpload({
     
       // ✅ NEW
       location: data.location || "",
+
+      marketId: data.marketId || null,
     };
     
     
@@ -160,16 +163,25 @@ export default function ProductUpload({
         />
 
         {/* Replace the select input for category like this */}
-<select
-  {...register("categoryId")}
-  className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-  defaultValue={existingProduct?.categoryId || ""}
->
-  <option value="" disabled>Select Category</option>
-  {categories.map((cat) => (
-    <option key={cat.id} value={cat.id}>{cat.title}</option>
-  ))}
-</select>
+{/* Category Dropdown */}
+<SelectInput
+          label="Category"
+          name="categoryId"
+          register={register}
+          options={categories.map((c) => ({ value: c.id, label: c.title }))}
+          defaultValue={existingProduct?.categoryId || ""}
+        />
+
+
+{/* Market Dropdown */}
+<SelectInput
+          label="Market"
+          name="marketId"
+          register={register}
+          options={markets.map((m) => ({ value: m.id, label: m.title }))}
+          defaultValue={existingProduct?.marketId || ""}
+
+/>
 
         <ToggleInput
           label="Supports Wholesale"

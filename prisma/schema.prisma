@@ -131,6 +131,10 @@ model Product {
   category   Category?   @relation(fields: [categoryId], references: [id])
   farmer     Farmer?     @relation(fields: [farmerId], references: [id])
   orderItems OrderItem[]
+
+  market   Market?  @relation(fields: [marketId], references: [id])
+  marketId String?  @db.ObjectId
+
 }
 
 //
