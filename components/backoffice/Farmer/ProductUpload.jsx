@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
-import SelectInput from "@/components/FormInputs/SelectInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
@@ -16,36 +15,22 @@ import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
 import { makePostRequest } from "@/lib/apiRequest";
 
-export default function ProductUpload({ farmerId, categories = [], markets = [], existingProduct }) {
+export default function ProductUpload({ farmerId, categories = [], existingProduct }) {
   const router = useRouter();
-
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState(existingProduct?.tags || []);
   const [productImages, setProductImages] = useState(existingProduct?.productImages || []);
 
-  const {
-    register,
-    watch,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm({
+  const { register, watch, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
       isActive: existingProduct?.isActive ?? true,
       isWholesale: existingProduct?.isWholesale ?? false,
       categoryId: existingProduct?.categoryId ?? "",
-      marketId: existingProduct?.marketId ?? "",
+      location: existingProduct?.location ?? "",
     },
   });
 
   const isWholesale = watch("isWholesale");
-
-  // Ensure existing product values are set in the select inputs
-  useEffect(() => {
-    if (existingProduct?.categoryId) setValue("categoryId", existingProduct.categoryId);
-    if (existingProduct?.marketId) setValue("marketId", existingProduct.marketId);
-  }, [existingProduct, setValue]);
 
   const onSubmit = async (data) => {
     if (productImages.length < 1) {
@@ -66,7 +51,6 @@ export default function ProductUpload({ farmerId, categories = [], markets = [],
       salePrice: data.salePrice ? parseFloat(data.salePrice) : 0,
       productStock: parseInt(data.productStock ?? 0),
       categoryId: data.categoryId || null,
-      marketId: data.marketId || null,
       farmerId,
       imageUrl: allImages[0],
       productImages: allImages,
@@ -144,23 +128,20 @@ export default function ProductUpload({ farmerId, categories = [], markets = [],
           defaultValue={existingProduct?.productStock}
         />
 
-        {/* Fixed Category Select */}
-        <SelectInput
-          label="Category"
-          name="categoryId"
-          register={register}
-          options={categories.map(c => ({ value: c.id, label: c.title }))}
-          defaultValue={existingProduct?.categoryId ?? ""}
-        />
-
-        {/* Fixed Market Select */}
-        <SelectInput
-          label="Market"
-          name="marketId"
-          register={register}
-          options={markets.map(m => ({ value: m.id, label: m.title }))}
-          defaultValue={existingProduct?.marketId ?? ""}
-        />
+        {/* Category Select */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Category</label>
+          <select
+            {...register("categoryId")}
+            className="border rounded-md px-3 py-2 text-sm bg-gray-800 text-white"
+            defaultValue={existingProduct?.categoryId || ""}
+          >
+            <option value="" disabled>Select Category</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.title}</option>
+            ))}
+          </select>
+        </div>
 
         <ToggleInput
           label="Supports Wholesale"
@@ -222,6 +203,7 @@ export default function ProductUpload({ farmerId, categories = [], markets = [],
           defaultValue={existingProduct?.phoneNumber}
         />
 
+        {/* Location Input */}
         <TextInput
           label="Location"
           name="location"
