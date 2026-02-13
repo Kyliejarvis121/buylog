@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import { getData } from "@/lib/getData";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/authOptions"; // or "@/lib/auth"
+import { authOptions } from "@/lib/auth";
 import { updateLastSeen } from "@/lib/updateLastSeen";
 
 const ProductImageCarousel = dynamic(
@@ -14,23 +14,20 @@ const ProductChatSection = dynamic(
   { ssr: false }
 );
 
-export default async function ProductDetailPage({ params: { slug } }) {
+export default async function ProductDetailPage({ params }) {
+  const { slug } = params;
+
   const productRes = await getData(`products/product/${slug}`);
   const product = productRes?.success ? productRes.data : null;
 
-  if (!product) {
-    return <div className="text-red-600 p-4">Product not found</div>;
-  }
+  if (!product) return <div className="text-red-600 p-4">Product not found</div>;
 
+  // ✅ Correct App Router session call
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
 
   if (currentUser?.id) {
-    try {
-      await updateLastSeen(currentUser.id);
-    } catch (err) {
-      console.error("updateLastSeen failed:", err);
-    }
+    await updateLastSeen(currentUser.id);
   }
 
   return (
@@ -67,7 +64,10 @@ export default async function ProductDetailPage({ params: { slug } }) {
       {product.phoneNumber ? (
         <p className="text-blue-600 mt-1">
           Seller Phone:{" "}
-          <a href={`tel:${product.phoneNumber}`} className="underline hover:text-blue-800">
+          <a
+            href={`tel:${product.phoneNumber}`}
+            className="underline hover:text-blue-800"
+          >
             {product.phoneNumber}
           </a>
         </p>
