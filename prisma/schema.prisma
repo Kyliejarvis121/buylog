@@ -12,35 +12,33 @@ datasource db {
 // USERS
 // ===============================
 model User {
-  id                     String    @id @default(auto()) @map("_id") @db.ObjectId
+  id                     String  @id @default(auto()) @map("_id") @db.ObjectId
   name                   String
-  email                  String    @unique
-  password               String?   // optional
-  role                   String    @default("FARMER")
-  emailVerified          Boolean   @default(false)
+  email                  String  @unique
+  password               String? // optional
+  role                   String  @default("FARMER")
+  emailVerified          Boolean @default(false)
   emailVerificationToken String?
 
-  image                  String?   // profile image
+  image String? // profile image
 
   // 🔐 FORGOT PASSWORD
-  resetToken             String?
-  resetTokenExpiry       DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
 
   // ⚡ Timestamps
-  createdAt              DateTime  @default(now())  // automatically set on creation
-  updatedAt              DateTime  @updatedAt      // automatically set on creation & update
+  createdAt DateTime @default(now()) // automatically set on creation
+  updatedAt DateTime @updatedAt // automatically set on creation & update
 
   // ✅ REQUIRED BY NEXTAUTH
-  accounts               Account[]
-  sessions               Session[]
+  accounts Account[]
+  sessions Session[]
 
   // YOUR RELATIONS
-  profile                Profile?
-  farmers                Farmer[]
-  orders                 Order[]
+  profile Profile?
+  farmers Farmer[]
+  orders  Order[]
 }
-
-
 
 //
 // ===============================
@@ -81,17 +79,17 @@ model Farmer {
 // CATEGORIES
 // ===============================
 model Category {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
-  slug        String?      @unique
+  slug        String?  @unique
   description String?
   imageUrl    String?
   iconKey     String?
-  isActive    Boolean?     @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  products    Product[]
+  products         Product[]
   marketCategories MarketCategory[]
 }
 
@@ -123,18 +121,17 @@ model Product {
   isActive       Boolean? @default(true)
   phoneNumber    String?
 
-  location       String?   // ✅ NEW FIELD (e.g. "Benin City, Edo")
+  location String? // ✅ NEW FIELD (e.g. "Benin City, Edo")
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   category   Category?   @relation(fields: [categoryId], references: [id])
   farmer     Farmer?     @relation(fields: [farmerId], references: [id])
   orderItems OrderItem[]
 
-  market   Market?  @relation(fields: [marketId], references: [id])
-  marketId String?  @db.ObjectId
-
+  market   Market? @relation(fields: [marketId], references: [id])
+  marketId String? @db.ObjectId
 }
 
 //
@@ -169,16 +166,18 @@ model Banner {
 // MARKETS
 // ===============================
 model Market {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
-  slug        String?      @unique
+  slug        String?  @unique
   description String?
   logoUrl     String?
-  isActive    Boolean?     @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  isActive    Boolean? @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   marketCategories MarketCategory[]
+  // ✅ Add this opposite relation
+  products         Product[]
 }
 
 //
@@ -278,11 +277,11 @@ model VerificationToken {
 }
 
 model SupportMessage {
-  id      String   @id @map("_id") @default(auto()) @db.ObjectId
-  name    String
-  email   String?
-  message String
-  status  String   @default("pending")
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String?
+  message   String
+  status    String   @default("pending")
   createdAt DateTime @default(now())
 }
 
@@ -294,6 +293,6 @@ model MarketCategory {
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String   @db.ObjectId
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
