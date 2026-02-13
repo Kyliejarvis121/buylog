@@ -10,7 +10,7 @@ const ProductImageCarousel = dynamic(
 );
 
 const ProductChatSection = dynamic(
-  () => import("@/components/chat/ProductChatSection"),
+  () => import("@/components/frontend/chat/ProductChatSection"),
   { ssr: false }
 );
 
