@@ -41,6 +41,7 @@ export default function ProductUpload({ farmerId, categories = [], markets = [],
 
   const isWholesale = watch("isWholesale");
 
+  // Ensure existing product values are set correctly in react-hook-form
   useEffect(() => {
     if (existingProduct?.categoryId) setValue("categoryId", existingProduct.categoryId);
     if (existingProduct?.marketId) setValue("marketId", existingProduct.marketId);
@@ -108,13 +109,40 @@ export default function ProductUpload({ farmerId, categories = [], markets = [],
       </h2>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 sm:gap-6">
-        <TextInput label="Product Title" name="title" register={register} errors={errors} defaultValue={existingProduct?.title} />
+        <TextInput
+          label="Product Title"
+          name="title"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.title}
+        />
 
-        <TextInput label="Product Price" name="productPrice" type="number" register={register} errors={errors} defaultValue={existingProduct?.price} />
+        <TextInput
+          label="Product Price"
+          name="productPrice"
+          type="number"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.price}
+        />
 
-        <TextInput label="Discount Price" name="salePrice" type="number" register={register} errors={errors} defaultValue={existingProduct?.salePrice} />
+        <TextInput
+          label="Discount Price"
+          name="salePrice"
+          type="number"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.salePrice}
+        />
 
-        <TextInput label="Product Stock" name="productStock" type="number" register={register} errors={errors} defaultValue={existingProduct?.productStock} />
+        <TextInput
+          label="Product Stock"
+          name="productStock"
+          type="number"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.productStock}
+        />
 
         {/* Category Select */}
         <SelectInput
@@ -134,12 +162,33 @@ export default function ProductUpload({ farmerId, categories = [], markets = [],
           defaultValue={existingProduct?.marketId ?? undefined}
         />
 
-        <ToggleInput label="Supports Wholesale" name="isWholesale" trueTitle="Enabled" falseTitle="Disabled" register={register} />
+        <ToggleInput
+          label="Supports Wholesale"
+          name="isWholesale"
+          trueTitle="Enabled"
+          falseTitle="Disabled"
+          register={register}
+        />
 
         {isWholesale && (
           <>
-            <TextInput label="Wholesale Price" name="wholesalePrice" type="number" register={register} errors={errors} defaultValue={existingProduct?.wholesalePrice} />
-            <TextInput label="Minimum Wholesale Qty" name="wholesaleQty" type="number" register={register} errors={errors} defaultValue={existingProduct?.wholesaleQty} />
+            <TextInput
+              label="Wholesale Price"
+              name="wholesalePrice"
+              type="number"
+              register={register}
+              errors={errors}
+              defaultValue={existingProduct?.wholesalePrice}
+            />
+
+            <TextInput
+              label="Minimum Wholesale Qty"
+              name="wholesaleQty"
+              type="number"
+              register={register}
+              errors={errors}
+              defaultValue={existingProduct?.wholesaleQty}
+            />
           </>
         )}
 
@@ -151,21 +200,52 @@ export default function ProductUpload({ farmerId, categories = [], markets = [],
           existingImages={existingProduct?.productImages || []}
         />
 
-        <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
+        <ArrayItemsInput
+          items={tags}
+          setItems={setTags}
+          itemTitle="Tag"
+        />
 
-        <TextareaInput label="Product Description" name="description" register={register} errors={errors} defaultValue={existingProduct?.description} />
+        <TextareaInput
+          label="Product Description"
+          name="description"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.description}
+        />
 
-        <TextInput label="Contact Number" name="phoneNumber" register={register} errors={errors} defaultValue={existingProduct?.phoneNumber} />
+        <TextInput
+          label="Contact Number"
+          name="phoneNumber"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.phoneNumber}
+        />
 
-        <TextInput label="Location" name="location" placeholder="e.g. Benin City, Edo" register={register} errors={errors} defaultValue={existingProduct?.location} />
+        <TextInput
+          label="Location"
+          name="location"
+          placeholder="e.g. Benin City, Edo"
+          register={register}
+          errors={errors}
+          defaultValue={existingProduct?.location}
+        />
 
-        <ToggleInput label="Publish Product" name="isActive" trueTitle="Active" falseTitle="Draft" register={register} />
+        <ToggleInput
+          label="Publish Product"
+          name="isActive"
+          trueTitle="Active"
+          falseTitle="Draft"
+          register={register}
+        />
       </div>
 
       <SubmitButton
         isLoading={loading}
         buttonTitle={existingProduct ? "Update Product" : "Add Product"}
-        loadingButtonTitle={existingProduct ? "Updating Product..." : "Uploading Product..."}
+        loadingButtonTitle={
+          existingProduct ? "Updating Product..." : "Uploading Product..."
+        }
       />
     </form>
   );
