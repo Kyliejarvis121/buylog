@@ -12,37 +12,41 @@ datasource db {
 // USERS
 // ===============================
 model User {
-  id                     String  @id @default(auto()) @map("_id") @db.ObjectId
-  name                   String
-  email                  String  @unique
-  password               String?
-  role                   String  @default("FARMER")
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  email    String  @unique
+  password String?
+  role     String  @default("FARMER")
+
+  // ✅ Email verification
   emailVerified          Boolean @default(false)
   emailVerificationToken String?
-  image                  String?
 
-  // FORGOT PASSWORD
+  image String?
+
+  // 🔐 Forgot password
   resetToken       String?
   resetTokenExpiry DateTime?
 
-  // Online tracking
+  // ⏱ Online tracking
   lastSeen DateTime? @updatedAt
 
-  // Timestamps
+  // ⚡ Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // NextAuth
+  // 🔑 NextAuth
   accounts Account[]
   sessions Session[]
 
-  // Relations
+  // 👥 Relations
   profile Profile?
   farmers Farmer[]
   orders  Order[]
-  BuyerChats  Chat[] @relation("BuyerChats")
-  SellerChats Chat[] @relation("SellerChats")
-  Messages    Message[]
+
+  // 💬 Chat relations
+  BuyerChats Chat[]    @relation("BuyerChats") // Buyer side only
+  Messages   Message[]
 }
 
 //
@@ -76,7 +80,8 @@ model Farmer {
   isActive Boolean? @default(false)
 
   products Product[]
-  chats    Chat[]    @relation("SellerChats")
+
+  chats    Chat[]    @relation("SellerChats", fields: [], references: [])
   Messages Message[]
 
   user User @relation(fields: [userId], references: [id])
@@ -316,14 +321,14 @@ model MarketCategory {
 // ===============================
 model Chat {
   id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  productId String  @db.ObjectId
   product   Product @relation(fields: [productId], references: [id])
+  productId String  @db.ObjectId
 
-  buyerId String @db.ObjectId
   buyer   User   @relation("BuyerChats", fields: [buyerId], references: [id])
+  buyerId String @db.ObjectId
 
-  sellerId String @db.ObjectId
-  seller   Farmer @relation("SellerChats", fields: [sellerId], references: [id])
+  seller   Farmer @relation("SellerChats", fields: [farmerId], references: [id])
+  farmerId String @db.ObjectId
 
   messages    Message[]
   lastMessage String?
