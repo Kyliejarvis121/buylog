@@ -1,24 +1,32 @@
 import dynamic from "next/dynamic";
 import { getData } from "@/lib/getData";
-import ProductChatSection from "@/components/chat/ProductChatSection";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth"; // adjust path to your auth config
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { updateLastSeen } from "@/lib/updateLastSeen";
 
 const ProductImageCarousel = dynamic(
   () => import("@/components/frontend/ProductImageCarousel"),
   { ssr: false }
 );
 
-export default async function ProductDetailPage({ params: { slug } }) {
-  const session = await getServerSession(authOptions);   // ✅ who is logged in?
-  const currentUser = session?.user || null;
+const ProductChatSection = dynamic(
+  () => import("@/components/chat/ProductChatSection"),
+  { ssr: false }
+);
 
+export default async function ProductDetailPage({ params: { slug }, req, res }) {
   const productRes = await getData(`products/product/${slug}`);
   const product = productRes?.success ? productRes.data : null;
-
   if (!product) return <div className="text-red-600 p-4">Product not found</div>;
 
-  const sellerPhone = product.phoneNumber || "Not provided";
+  // Get current user session
+  const session = await getServerSession(req, res, authOptions);
+  const currentUser = session?.user;
+
+  // Update online status
+  if (currentUser?.id) {
+    await updateLastSeen(currentUser.id);
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -51,11 +59,11 @@ export default async function ProductDetailPage({ params: { slug } }) {
         <p className="text-gray-400 mt-1">📍 Location: Not provided</p>
       )}
 
-      {sellerPhone !== "Not provided" ? (
+      {product.phoneNumber ? (
         <p className="text-blue-600 mt-1">
           Seller Phone:{" "}
-          <a href={`tel:${sellerPhone}`} className="underline hover:text-blue-800">
-            {sellerPhone}
+          <a href={`tel:${product.phoneNumber}`} className="underline hover:text-blue-800">
+            {product.phoneNumber}
           </a>
         </p>
       ) : (
@@ -70,7 +78,7 @@ export default async function ProductDetailPage({ params: { slug } }) {
         {product.description || "No description available."}
       </p>
 
-      {/* ✅ CHAT SECTION (now knows who is logged in) */}
+      {/* ✅ Chat section */}
       <ProductChatSection product={product} currentUser={currentUser} />
     </div>
   );
