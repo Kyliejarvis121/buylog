@@ -3,7 +3,6 @@ export const revalidate = 0;
 
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
 
 // CREATE PRODUCT
 export async function POST(request) {
@@ -35,15 +34,13 @@ export async function POST(request) {
         sku: body.sku || "",
         barcode: body.barcode || "",
         unit: body.unit || "",
-        isWholesale: !!body.isWholesale,
+        isWholesale: Boolean(body.isWholesale),
         wholesalePrice: Number(body.wholesalePrice) || 0,
         wholesaleQty: Number(body.wholesaleQty) || 0,
         isActive: body.isActive ?? true,
 
-        // ✅ Existing
+        // ✅ Extra fields
         phoneNumber: body.phoneNumber || "",
-
-        // ✅ NEW: Location
         location: body.location || "",
 
         farmer: { connect: { id: body.farmerId } },
@@ -67,14 +64,14 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Failed to create product",
+        message: error?.message || "Failed to create product",
       },
       { status: 500 }
     );
   }
 }
 
-// GET ALL PRODUCTS (with optional category filter)
+// GET ALL PRODUCTS (with optional filters)
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -83,28 +80,30 @@ export async function GET(request) {
     const limit = Number(searchParams.get("limit") || 1000);
     const skip = (page - 1) * limit;
     const searchQuery = searchParams.get("q")?.trim() || "";
-    const categoryId = searchParams.get("categoryId") || "";
+    const categoryId = searchParams.get("categoryId");
 
-    // Build the where clause like your current code
     const where = {};
+
     if (searchQuery) {
       where.title = { contains: searchQuery, mode: "insensitive" };
     }
+
     if (categoryId) {
-      where.categoryId = categoryId;
+      where.categoryId = categoryId; // ✅ Prisma expects string id, NOT ObjectId
     }
 
-    const products = await prisma.product.findMany({
-      where: Object.keys(where).length ? where : undefined,
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
-      include: { category: true, farmer: true },
-    });
-
-    const total = await prisma.product.count({
-      where: Object.keys(where).length ? where : undefined,
-    });
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where: Object.keys(where).length ? where : undefined,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: { category: true, farmer: true },
+      }),
+      prisma.product.count({
+        where: Object.keys(where).length ? where : undefined,
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -112,7 +111,7 @@ export async function GET(request) {
       total,
       page,
       limit,
-      message: `Fetched ${products.length} products out of ${total}`,
+      message: `Fetched ${products.length} products`,
     });
   } catch (error) {
     console.error("GET /api/products failed:", error);
@@ -120,7 +119,7 @@ export async function GET(request) {
       success: false,
       data: [],
       message: "Failed to fetch products",
-      error: error.message,
+      error: error?.message || String(error),
     });
   }
 }

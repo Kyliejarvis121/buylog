@@ -27,6 +27,7 @@ export default async function ProductsPage() {
     ? await prisma.product.findMany({
         where: { farmerId: farmer.id },
         orderBy: { createdAt: "desc" },
+        include: { category: true },
       })
     : [];
 

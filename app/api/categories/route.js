@@ -1,4 +1,4 @@
-// Route: app/api/categories/route.js
+// app/api/categories/route.js
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
@@ -13,7 +13,7 @@ export async function POST(request) {
 
     if (!title || !slug) {
       return NextResponse.json(
-        { data: null, message: "Title and slug are required" },
+        { success: false, data: null, message: "Title and slug are required" },
         { status: 400 }
       );
     }
@@ -21,7 +21,7 @@ export async function POST(request) {
     const existing = await prisma.category.findUnique({ where: { slug } });
     if (existing) {
       return NextResponse.json(
-        { data: null, message: `Category (${title}) already exists` },
+        { success: false, data: null, message: `Category (${title}) already exists` },
         { status: 409 }
       );
     }
@@ -38,27 +38,34 @@ export async function POST(request) {
     });
 
     return NextResponse.json(
-      { data: newCategory, message: "Category created successfully" },
+      { success: true, data: newCategory, message: "Category created successfully" },
       { status: 201 }
     );
   } catch (error) {
     console.error("POST /api/categories failed:", error);
     return NextResponse.json(
-      { data: null, message: "Failed to create category", error: error.message },
+      { success: false, data: null, message: "Failed to create category" },
       { status: 500 }
     );
   }
 }
 
-// ✅ GET ALL ACTIVE CATEGORIES (FOR HOMEPAGE & PRODUCT FORM)
+// ✅ GET ALL ACTIVE CATEGORIES (WITH PRODUCTS)
 export async function GET() {
   try {
     const categories = await prisma.category.findMany({
-      where: { isActive: true },  // ✅ only active categories
+      where: { isActive: true },
       orderBy: { createdAt: "asc" },
+      include: {
+        products: {
+          where: { isActive: true },
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
 
     return NextResponse.json({
+      success: true,
       data: categories,
       total: categories.length,
       message: "Categories fetched successfully",
@@ -66,7 +73,7 @@ export async function GET() {
   } catch (error) {
     console.error("GET /api/categories failed:", error);
     return NextResponse.json(
-      { data: [], message: "Failed to fetch categories", error: error.message },
+      { success: false, data: [], message: "Failed to fetch categories" },
       { status: 500 }
     );
   }

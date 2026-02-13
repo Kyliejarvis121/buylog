@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
 
 // GET all products for a farmer (optional category filter)
 export async function GET(req) {
@@ -16,13 +15,12 @@ export async function GET(req) {
       );
     }
 
-    // 
-    // Build the where clause
+    // ✅ Correct where clause
     const whereClause = { farmerId };
+
     if (categoryId) {
-      where.categoryId = categoryId;
+      whereClause.categoryId = categoryId;
     }
-    
 
     const products = await prisma.product.findMany({
       where: whereClause,
@@ -34,7 +32,11 @@ export async function GET(req) {
   } catch (error) {
     console.error("❌ GET FARMER PRODUCTS ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch products", error: error?.message || String(error) },
+      {
+        success: false,
+        message: "Failed to fetch products",
+        error: error?.message || String(error),
+      },
       { status: 500 }
     );
   }
@@ -63,7 +65,7 @@ export async function POST(req) {
         qty: Number(body.qty) || 1,
         imageUrl: Array.isArray(body.productImages)
           ? body.productImages[0]
-          : body.imageUrl,
+          : body.imageUrl || "",
         productImages: body.productImages || [],
         tags: body.tags || [],
         productCode: body.productCode || "",
@@ -74,11 +76,7 @@ export async function POST(req) {
         wholesalePrice: Number(body.wholesalePrice) || 0,
         wholesaleQty: Number(body.wholesaleQty) || 0,
         isActive: body.isActive ?? true,
-
-        // ✅ Existing
         phoneNumber: body.phoneNumber || "",
-
-        // ✅ NEW (Location)
         location: body.location || "",
 
         farmer: { connect: { id: body.farmerId } },

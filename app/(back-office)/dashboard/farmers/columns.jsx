@@ -17,8 +17,19 @@ export const columns = [
     header: ({ column }) => <SortableColumn column={column} title="Title" />,
   },
   {
+    accessorKey: "farmer",
+    header: "Farmer",
+    cell: ({ row }) => row.original.farmer?.name || "—", // ✅ display farmer name
+  },
+  {
+    accessorKey: "category",
+    header: "Category",
+    cell: ({ row }) => row.original.category?.title || "—", // ✅ display category title
+  },
+  {
     accessorKey: "price",
     header: "Price",
+    cell: ({ row }) => `UGX ${row.original.salePrice ?? row.original.price}`,
   },
   {
     accessorKey: "productStock",
@@ -42,8 +53,8 @@ export const columns = [
         <ActionColumn
           row={row}
           title="Product"
-          editEndpoint={`farmers/products/update/${product.id}`}
-          endpoint={`farmers/products/${product.id}`}
+          editEndpoint={`admin/products/update/${product.id}`} // updated for admin
+          endpoint={`admin/products/${product.id}`}
         />
       );
     },

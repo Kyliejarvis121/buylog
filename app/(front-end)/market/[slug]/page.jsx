@@ -2,7 +2,6 @@ import Breadcrumb from "@/components/frontend/Breadcrumb";
 import CategoryList from "@/components/frontend/CategoryList";
 import { getData } from "@/lib/getData";
 import Image from "next/image";
-import Link from "next/link";
 import React from "react";
 
 export default async function page({ params: { slug } }) {
@@ -25,18 +24,16 @@ export default async function page({ params: { slug } }) {
 
   const categoriesData = categoriesRes.data;
 
-  const categories = categoriesData.filter(
-    (category) => category.products && category.products.length > 3
-  );
-
-  const marketCategories = categories.filter((category) =>
+  // ✅ DO NOT filter by category.products here (products come from API in CategoryList)
+  const marketCategories = categoriesData.filter((category) =>
     marketCategoryIds.includes(category.id)
   );
 
   return (
     <>
       <Breadcrumb />
-      <div className=" bg-white border border-gray-300 rounded-lg p-4 flex items-center gap-6">
+
+      <div className="bg-white border border-gray-300 rounded-lg p-4 flex items-center gap-6">
         <Image
           src={market.logoUrl}
           width={50}
@@ -52,17 +49,15 @@ export default async function page({ params: { slug } }) {
 
       <div className="grid grid-cols-12 gap-6 py-8 w-full">
         <div className="col-span-full sm:col-span-12 rounded-md">
-        {marketCategories.map((category) => (
-  <div className="space-y-8" key={category.id}>
-    {/* Pass the category id so CategoryList can fetch products correctly */}
-    <CategoryList
-      isMarketPage={false}
-      category={category}
-      categoryId={category.id}  // ✅ pass id
-    />
-  </div>
-))}
-
+          {marketCategories.map((category) => (
+            <div className="space-y-8" key={category.id}>
+              <CategoryList
+                isMarketPage={false}
+                category={category}
+                categoryId={category.id}   // ✅ this is correct
+              />
+            </div>
+          ))}
         </div>
       </div>
     </>

@@ -1,4 +1,3 @@
-// app/(back-office)/dashboard/farmers/products/columns.js
 "use client";
 
 import SortableColumn from "@/components/DataTableColumns/SortableColumn";
@@ -24,10 +23,16 @@ export const columns = [
   {
     accessorKey: "price",
     header: "Price",
+    cell: ({ row }) => `UGX ${row.original.salePrice ?? row.original.price}`,
   },
   {
     accessorKey: "productStock",
     header: "Stock",
+  },
+  {
+    accessorKey: "category",
+    header: "Category",
+    cell: ({ row }) => row.original.category?.title || "—", // ✅ show category title
   },
   {
     accessorKey: "isActive",

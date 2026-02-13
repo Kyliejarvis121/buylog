@@ -1,28 +1,35 @@
-import { prisma } from "@/lib/db";
+// app/api/categories/[slug]/route.js
+import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params: { slug } }) {
   try {
     const category = await prisma.category.findUnique({
       where: { slug },
-      include: { products: true },
+      include: {
+        products: {
+          where: { isActive: true },
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
 
     if (!category) {
       return NextResponse.json(
-        { data: null, message: "Category not found" },
-        { status: 200 }
+        { success: false, data: null, message: "Category not found" },
+        { status: 404 }
       );
     }
 
-    return NextResponse.json({ data: category });
+    return NextResponse.json({
+      success: true,
+      data: category,
+      message: "Category fetched successfully",
+    });
   } catch (error) {
-    console.error("Failed to fetch category:", error);
+    console.error("GET /api/categories/[slug] failed:", error);
     return NextResponse.json(
-      {
-        message: "Failed to Fetch Category",
-        error: error.message || error,
-      },
+      { success: false, message: "Failed to fetch category" },
       { status: 500 }
     );
   }

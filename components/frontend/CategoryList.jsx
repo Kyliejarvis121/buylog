@@ -1,23 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import CategoryCarousel from "./CategoryCarousel";
-import { getData } from "@/lib/getData";
 
-export default function CategoryList({ category, categoryId, isMarketPage }) {
-  const [products, setProducts] = useState([]);
+export default function CategoryList({ category, isMarketPage }) {
+  const products = category?.products || [];
 
-  useEffect(() => {
-    async function fetchProducts() {
-      if (!categoryId) return;
-
-      const res = await getData(`products?categoryId=${categoryId}`);
-      if (res?.success) setProducts(res.data);
-    }
-
-    fetchProducts();
-  }, [categoryId]);
+  if (!products.length) return null; // optional: hide empty categories
 
   return (
     <div className="bg-white border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-700 text-slate-800 overflow-hidden">
@@ -30,6 +20,7 @@ export default function CategoryList({ category, categoryId, isMarketPage }) {
           See All
         </Link>
       </div>
+
       <div className="bg-white dark:bg-slate-700 p-4">
         <CategoryCarousel
           isMarketPage={isMarketPage}
@@ -39,3 +30,4 @@ export default function CategoryList({ category, categoryId, isMarketPage }) {
     </div>
   );
 }
+
