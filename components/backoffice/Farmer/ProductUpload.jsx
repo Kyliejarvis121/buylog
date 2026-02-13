@@ -34,14 +34,14 @@ export default function ProductUpload({ farmerId, categories = [], markets = [],
     defaultValues: {
       isActive: existingProduct?.isActive ?? true,
       isWholesale: existingProduct?.isWholesale ?? false,
-      categoryId: existingProduct?.categoryId ?? undefined,
-      marketId: existingProduct?.marketId ?? undefined,
+      categoryId: existingProduct?.categoryId ?? "",
+      marketId: existingProduct?.marketId ?? "",
     },
   });
 
   const isWholesale = watch("isWholesale");
 
-  // Ensure existing product values are set correctly in react-hook-form
+  // Ensure existing product values are set in the select inputs
   useEffect(() => {
     if (existingProduct?.categoryId) setValue("categoryId", existingProduct.categoryId);
     if (existingProduct?.marketId) setValue("marketId", existingProduct.marketId);
@@ -144,22 +144,22 @@ export default function ProductUpload({ farmerId, categories = [], markets = [],
           defaultValue={existingProduct?.productStock}
         />
 
-        {/* Category Select */}
+        {/* Fixed Category Select */}
         <SelectInput
           label="Category"
           name="categoryId"
           register={register}
           options={categories.map(c => ({ value: c.id, label: c.title }))}
-          defaultValue={existingProduct?.categoryId ?? undefined}
+          defaultValue={existingProduct?.categoryId ?? ""}
         />
 
-        {/* Market Select */}
+        {/* Fixed Market Select */}
         <SelectInput
           label="Market"
           name="marketId"
           register={register}
           options={markets.map(m => ({ value: m.id, label: m.title }))}
-          defaultValue={existingProduct?.marketId ?? undefined}
+          defaultValue={existingProduct?.marketId ?? ""}
         />
 
         <ToggleInput
