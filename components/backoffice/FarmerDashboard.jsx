@@ -10,6 +10,9 @@ import { useSession } from "next-auth/react";
 import ProfileCard from "@/components/backoffice/profile/ProfileCard";
 import SupportWidget from "@/components/Support/SupportWidget";
 
+/* ✅ NEW: Customer Inbox Preview */
+import CustomerInboxPreview from "@/components/backoffice/chat/CustomerInboxPreview";
+
 export default function FarmerDashboard({
   sales = [],
   products = [],
@@ -88,6 +91,21 @@ export default function FarmerDashboard({
       <LargeCards sales={safeSales} products={productList} />
       <SmallCards orders={[]} supports={safeSupports} />
       <DashboardCharts sales={safeSales} />
+
+      {/* 🟢 CUSTOMER MESSAGES SECTION (NEW) */}
+      <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6">
+        <div className="flex justify-between items-center mb-4">
+          <Heading title="Customer Messages" />
+          <Link
+            href="/dashboard/inbox"
+            className="text-sm text-blue-500 hover:underline"
+          >
+            View All
+          </Link>
+        </div>
+
+        <CustomerInboxPreview />
+      </div>
 
       {/* QUICK ACTION */}
       <div>
@@ -172,7 +190,7 @@ export default function FarmerDashboard({
         )}
       </div>
 
-      {/* 🔥 FLOATING SUPPORT CHAT */}
+      {/* 🔥 FLOATING SUPPORT CHAT (UNCHANGED) */}
       <SupportWidget />
     </div>
   );
