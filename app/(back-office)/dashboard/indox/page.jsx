@@ -2,14 +2,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prismadb";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 
 const ChatBox = dynamic(
   () => import("@/components/frontend/chat/ChatBox"),
   { ssr: false }
 );
 
-export default async function FarmerInboxPage({ searchParams }) {
+export default async function InboxPage({ searchParams }) {
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "FARMER") {
@@ -37,20 +36,20 @@ export default async function FarmerInboxPage({ searchParams }) {
   });
 
   const selectedChatId = searchParams?.chatId || chats[0]?.id;
-  const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+  const selectedChat = chats.find((c) => c.id === selectedChatId);
 
   return (
     <div className="p-6 bg-zinc-950 min-h-screen text-zinc-100">
       <h1 className="text-2xl font-bold mb-6">Customer Inbox</h1>
 
       <div className="grid md:grid-cols-3 gap-6">
-        {/* LEFT SIDE — CONVERSATION LIST */}
+        {/* LEFT SIDE — CHAT LIST */}
         <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-3">
           {chats.length === 0 ? (
             <p className="text-zinc-400">No conversations yet.</p>
           ) : (
             chats.map((chat) => (
-              <Link
+              <a
                 key={chat.id}
                 href={`/dashboard/inbox?chatId=${chat.id}`}
                 className={`block p-3 rounded-lg transition ${
@@ -65,7 +64,7 @@ export default async function FarmerInboxPage({ searchParams }) {
                 <p className="text-xs text-zinc-400">
                   Product: {chat.product?.title}
                 </p>
-              </Link>
+              </a>
             ))
           )}
         </div>
