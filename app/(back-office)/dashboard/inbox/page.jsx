@@ -1,88 +1,59 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+// /app/(back-office)/dashboard/inbox/page.jsx
 import { prisma } from "@/lib/prismadb";
-import dynamic from "next/dynamic";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
-const ChatBox = dynamic(
-  () => import("@/components/frontend/chat/ChatBox"),
-  { ssr: false }
-);
-
-export default async function InboxPage({ searchParams }) {
+export default async function InboxPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session || session.user.role !== "FARMER") {
-    return (
-      <div className="p-6 text-red-500">
-        Access denied. Farmers only.
-      </div>
-    );
+  if (!session?.user) {
+    return <div>Please login to view inbox</div>;
   }
 
-  const chats = await prisma.chat.findMany({
-    where: {
-      farmerId: session.user.id,
-    },
-    include: {
-      buyer: true,
-      product: true,
-      messages: {
-        orderBy: { createdAt: "asc" },
-      },
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
+  // Find the farmer linked to this user
+  const farmer = await prisma.farmer.findFirst({
+    where: { userId: session.user.id },
   });
 
-  const selectedChatId = searchParams?.chatId || chats[0]?.id;
-  const selectedChat = chats.find((c) => c.id === selectedChatId);
+  if (!farmer) return <div>No farmer profile found</div>;
+
+  // Fetch chats where this farmer is seller
+  const chats = await prisma.chat.findMany({
+    where: { farmerId: farmer.id },
+    include: {
+      messages: { orderBy: { createdAt: "asc" } },
+      buyer: true,
+      product: true,
+    },
+    orderBy: { updatedAt: "desc" },
+  });
 
   return (
-    <div className="p-6 bg-zinc-950 min-h-screen text-zinc-100">
-      <h1 className="text-2xl font-bold mb-6">Customer Inbox</h1>
-
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* LEFT SIDE — CHAT LIST */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-3">
-          {chats.length === 0 ? (
-            <p className="text-zinc-400">No conversations yet.</p>
-          ) : (
-            chats.map((chat) => (
-              <a
-                key={chat.id}
-                href={`/dashboard/inbox?chatId=${chat.id}`}
-                className={`block p-3 rounded-lg transition ${
-                  selectedChatId === chat.id
-                    ? "bg-zinc-700"
-                    : "bg-zinc-800 hover:bg-zinc-700"
+    <div className="p-6 space-y-4">
+      <h1 className="text-2xl font-bold">Customer Inbox</h1>
+      {chats.length === 0 && <p>No messages yet</p>}
+      {chats.map((chat) => (
+        <div key={chat.id} className="p-4 border rounded bg-zinc-900">
+          <h2 className="font-semibold">{chat.product.title}</h2>
+          <p>
+            Buyer: {chat.buyer.name} ({chat.buyer.email})
+          </p>
+          <div className="mt-2 space-y-1">
+            {chat.messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`p-2 rounded ${
+                  msg.senderUserId === session.user.id
+                    ? "bg-blue-600 text-white"
+                    : "bg-zinc-700 text-zinc-200"
                 }`}
               >
-                <p className="font-medium">
-                  {chat.buyer?.name || "Buyer"}
-                </p>
-                <p className="text-xs text-zinc-400">
-                  Product: {chat.product?.title}
-                </p>
-              </a>
-            ))
-          )}
+                {msg.text}
+              </div>
+            ))}
+          </div>
         </div>
-
-        {/* RIGHT SIDE — CHAT WINDOW */}
-        <div className="md:col-span-2 bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-          {selectedChat ? (
-            <ChatBox
-              chat={selectedChat}
-              currentUser={session.user}
-            />
-          ) : (
-            <p className="text-zinc-400">
-              Select a conversation to start chatting.
-            </p>
-          )}
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
