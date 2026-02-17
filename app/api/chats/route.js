@@ -52,17 +52,19 @@ export async function POST(req) {
     }
 
     const product = await prisma.product.findUnique({
-      where: { id: productId },
-    });
-
-    if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
-    }
-
-    const farmerId = product.farmerId;
+        where: { id: productId },
+        include: { farmer: true },
+      });
+      
+      if (!product || !product.farmer) {
+        return NextResponse.json(
+          { error: "Product or farmer not found" },
+          { status: 404 }
+        );
+      }
+      
+      const farmerId = product.farmer.id;
+      
 
     let chat = await prisma.chat.findFirst({
       where: {
