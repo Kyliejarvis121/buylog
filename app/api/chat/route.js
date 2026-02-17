@@ -1,7 +1,3 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prismadb";
-import Pusher from "pusher";
-
 export async function POST(req) {
   try {
     const { productId, chatId, senderId, senderType, text } =
@@ -14,7 +10,15 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Initialize Pusher INSIDE function
+    // 🔍 DEBUG ENV VARIABLES
+    console.log("ENV CHECK:", {
+      appId: process.env.PUSHER_APP_ID,
+      key: process.env.PUSHER_KEY,
+      secret: process.env.PUSHER_SECRET,
+      cluster: process.env.PUSHER_CLUSTER,
+    });
+
+    // ✅ Initialize Pusher ONCE
     const pusher = new Pusher({
       appId: process.env.PUSHER_APP_ID,
       key: process.env.PUSHER_KEY,
@@ -54,7 +58,8 @@ export async function POST(req) {
         data: {
           productId,
           buyerId: senderType === "buyer" ? senderId : null,
-          farmerId: senderType === "farmer" ? senderId : product.farmerId,
+          farmerId:
+            senderType === "farmer" ? senderId : product.farmerId,
         },
       });
     }
@@ -68,7 +73,6 @@ export async function POST(req) {
       },
     });
 
-    // ✅ Trigger AFTER message saved
     await pusher.trigger(`chat-${chat.id}`, "new-message", message);
 
     return NextResponse.json({ success: true, chat, message });
