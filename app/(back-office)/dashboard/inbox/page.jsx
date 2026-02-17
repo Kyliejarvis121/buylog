@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import ReplyBox from "@/components/backoffice/chat/ReplyBox"; // ✅ ADD THIS
 
 export default async function InboxPage() {
   const session = await getServerSession(authOptions);
