@@ -44,7 +44,7 @@ export default async function ProductDetailPage({ params }) {
         Category: {product.category?.title || "Uncategorized"}
       </p>
 
-      {/* ✅ LOCATION */}
+      {/* LOCATION */}
       {product.location ? (
         <p className="text-gray-600 mt-1">
           📍 Location:{" "}
@@ -63,7 +63,7 @@ export default async function ProductDetailPage({ params }) {
         <p className="text-gray-400 mt-1">📍 Location: Not provided</p>
       )}
 
-      {/* ✅ PHONE */}
+      {/* PHONE */}
       {product.phoneNumber ? (
         <p className="text-blue-600 mt-1">
           Seller Phone:{" "}
@@ -88,7 +88,7 @@ export default async function ProductDetailPage({ params }) {
         {product.description || "No description available."}
       </p>
 
-      {/* ✅ SAFE CHAT PROPS (NO CRASH) */}
+      {/* ✅ CONTACT SELLER BUTTON + CHAT */}
       <ProductChatSection
         productId={product.id}
         farmerId={product.farmerId}
