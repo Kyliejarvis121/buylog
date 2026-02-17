@@ -20,9 +20,10 @@ export default async function ProductDetailPage({ params }) {
   const productRes = await getData(`products/product/${slug}`);
   const product = productRes?.success ? productRes.data : null;
 
-  if (!product) return <div className="text-red-600 p-4">Product not found</div>;
+  if (!product) {
+    return <div className="text-red-600 p-4">Product not found</div>;
+  }
 
-  // ✅ Correct App Router session call
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
 
@@ -43,6 +44,7 @@ export default async function ProductDetailPage({ params }) {
         Category: {product.category?.title || "Uncategorized"}
       </p>
 
+      {/* ✅ LOCATION */}
       {product.location ? (
         <p className="text-gray-600 mt-1">
           📍 Location:{" "}
@@ -61,6 +63,7 @@ export default async function ProductDetailPage({ params }) {
         <p className="text-gray-400 mt-1">📍 Location: Not provided</p>
       )}
 
+      {/* ✅ PHONE */}
       {product.phoneNumber ? (
         <p className="text-blue-600 mt-1">
           Seller Phone:{" "}
@@ -72,7 +75,9 @@ export default async function ProductDetailPage({ params }) {
           </a>
         </p>
       ) : (
-        <p className="text-gray-800 mt-1">Seller Phone: Not provided</p>
+        <p className="text-gray-800 mt-1">
+          Seller Phone: Not provided
+        </p>
       )}
 
       <p className="text-2xl font-semibold text-green-600 mt-4">
@@ -83,7 +88,12 @@ export default async function ProductDetailPage({ params }) {
         {product.description || "No description available."}
       </p>
 
-      <ProductChatSection product={product} currentUser={currentUser} />
+      {/* ✅ SAFE CHAT PROPS (NO CRASH) */}
+      <ProductChatSection
+        productId={product.id}
+        farmerId={product.farmerId}
+        currentUserId={currentUser?.id ?? null}
+      />
     </div>
   );
 }

@@ -22,7 +22,7 @@ export async function POST(req) {
       );
     }
 
-    // ✅ 1️⃣ FARMER REPLY (chat already exists)
+    // ✅ FARMER REPLY
     if (chatId) {
       const message = await prisma.message.create({
         data: {
@@ -33,7 +33,6 @@ export async function POST(req) {
         },
       });
 
-      // Update last message
       await prisma.chat.update({
         where: { id: chatId },
         data: { lastMessage: text },
@@ -44,44 +43,40 @@ export async function POST(req) {
       return NextResponse.json({ success: true, message });
     }
 
-    // ✅ 2️⃣ BUYER STARTING CHAT (needs productId)
+    // ✅ BUYER STARTING CHAT
     if (!productId) {
       return NextResponse.json(
-        { error: "productId required to start chat" },
+        { error: "productId required" },
         { status: 400 }
       );
     }
 
-    // Find product + farmer
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      include: { farmer: true },
     });
 
-    if (!product || !product.farmer) {
+    if (!product) {
       return NextResponse.json(
-        { error: "Product or farmer not found" },
+        { error: "Product not found" },
         { status: 404 }
       );
     }
 
-    const farmerId = product.farmer.id;
+    const farmerId = product.farmerId;
 
-    // Check if chat already exists
     let chat = await prisma.chat.findFirst({
       where: {
         productId,
-        buyerId: senderType === "buyer" ? senderId : undefined,
+        buyerId: senderId,
         farmerId,
       },
     });
 
-    // Create chat if not exists
     if (!chat) {
       chat = await prisma.chat.create({
         data: {
           productId,
-          buyerId: senderType === "buyer" ? senderId : null,
+          buyerId: senderId,
           farmerId,
           lastMessage: text,
         },
@@ -93,13 +88,11 @@ export async function POST(req) {
       });
     }
 
-    // Create message
     const message = await prisma.message.create({
       data: {
         chatId: chat.id,
         text,
-        senderUserId: senderType === "buyer" ? senderId : null,
-        senderFarmerId: senderType === "farmer" ? senderId : null,
+        senderUserId: senderId,
       },
     });
 
@@ -118,3 +111,4 @@ export async function POST(req) {
     );
   }
 }
+
