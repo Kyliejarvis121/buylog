@@ -1,61 +1,67 @@
 import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import ReplyBox from "@/components/backoffice/chat/ReplyBox"; // ✅ ADD THIS
+import ReplyBox from "@/components/backoffice/inbox/ReplyBox"; // ✅ Client component
 
 export default async function InboxPage() {
+  // 🔑 Get the logged-in session
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return <div className="p-6">Please login</div>;
+    return <div className="p-6 text-red-400">Please login to view inbox</div>;
   }
 
-  // 🔎 Find farmer linked to user
+  // 🔎 Find the farmer linked to this user
   const farmer = await prisma.farmer.findFirst({
     where: { userId: session.user.id },
   });
 
   if (!farmer) {
-    return <div className="p-6">No farmer profile found</div>;
+    return <div className="p-6 text-yellow-400">No farmer profile found</div>;
   }
 
-  // 📩 Get chats
+  // 📩 Fetch chats for this farmer with messages and product/buyer info
   const chats = await prisma.chat.findMany({
     where: { farmerId: farmer.id },
     include: {
-      buyer: true,
-      product: true,
+      buyer: true, // get buyer info
+      product: true, // get product info
       messages: {
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "asc" }, // oldest first
       },
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: { updatedAt: "desc" }, // latest chat on top
   });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-zinc-950 min-h-screen text-zinc-100">
       <h1 className="text-2xl font-bold">Customer Inbox</h1>
 
-      {chats.length === 0 && <p>No messages yet.</p>}
+      {chats.length === 0 && (
+        <p className="text-zinc-400">No messages yet.</p>
+      )}
 
       {chats.map((chat) => (
-        <div key={chat.id} className="border p-4 rounded-lg bg-zinc-900">
+        <div
+          key={chat.id}
+          className="border border-zinc-800 rounded-lg p-4 bg-zinc-900"
+        >
           <h2 className="font-semibold text-lg">
-            Product: {chat.product.title}
+            Product: {chat.product?.title ?? "Unknown Product"}
           </h2>
-
           <p className="text-sm text-gray-400">
-            Buyer: {chat.buyer.name}
+            Buyer: {chat.buyer?.name ?? "Unknown Buyer"}
           </p>
 
+          {/* Messages */}
           <div className="mt-3 space-y-2">
             {chat.messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`p-2 rounded ${
+                className={`p-2 rounded max-w-[70%] ${
                   msg.senderFarmerId
-                    ? "bg-green-600 text-white ml-auto w-fit"
-                    : "bg-zinc-700 text-white w-fit"
+                    ? "bg-green-600 text-white ml-auto"
+                    : "bg-zinc-700 text-white"
                 }`}
               >
                 {msg.text}
@@ -63,8 +69,10 @@ export default async function InboxPage() {
             ))}
           </div>
 
-          {/* Reply form */}
-          <ReplyBox chatId={chat.id} farmerId={farmer.id} />
+          {/* Reply Box */}
+          <div className="mt-4">
+            <ReplyBox chatId={chat.id} farmerId={farmer.id} />
+          </div>
         </div>
       ))}
     </div>
