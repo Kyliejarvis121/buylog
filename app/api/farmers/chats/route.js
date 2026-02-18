@@ -1,36 +1,43 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prismadb";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "FARMER") {
-    return Response.json({ success: false }, { status: 403 });
+    return NextResponse.json(
+      { success: false },
+      { status: 403 }
+    );
+  }
+
+  // 🔎 Find actual farmer profile
+  const farmer = await prisma.farmer.findFirst({
+    where: { userId: session.user.id },
+  });
+
+  if (!farmer) {
+    return NextResponse.json(
+      { success: false, message: "Farmer not found" },
+      { status: 404 }
+    );
   }
 
   const chats = await prisma.chat.findMany({
     where: {
-      farmerId: session.user.id,
+      farmerId: farmer.id, // ✅ correct id now
     },
     include: {
       buyer: true,
+      product: true,
       messages: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
+        orderBy: { createdAt: "asc" }, // full chat
       },
     },
     orderBy: { updatedAt: "desc" },
   });
 
-  const formattedChats = chats.map((chat) => ({
-    id: chat.id,
-    buyer: chat.buyer,
-    lastMessage: chat.messages[0]?.content || null,
-  }));
-
-  return Response.json({
-    success: true,
-    chats: formattedChats,
-  });
+  return NextResponse.json(chats);
 }
