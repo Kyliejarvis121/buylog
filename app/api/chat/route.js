@@ -1,24 +1,16 @@
+import { NextResponse } from "next/server";
+import Pusher from "pusher";
+import { prisma } from "@/lib/prismadb";
+
 export async function POST(req) {
   try {
-    const { productId, chatId, senderId, senderType, text } =
-      await req.json();
+    const { productId, chatId, senderId, senderType, text } = await req.json();
 
     if (!senderId || !senderType || !text) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // 🔍 DEBUG ENV VARIABLES
-    console.log("ENV CHECK:", {
-      appId: process.env.PUSHER_APP_ID,
-      key: process.env.PUSHER_KEY,
-      secret: process.env.PUSHER_SECRET,
-      cluster: process.env.PUSHER_CLUSTER,
-    });
-
-    // ✅ Initialize Pusher ONCE
+    // ✅ Pusher server-side initialization
     const pusher = new Pusher({
       appId: process.env.PUSHER_APP_ID,
       key: process.env.PUSHER_KEY,
@@ -30,58 +22,41 @@ export async function POST(req) {
     let chat;
 
     if (chatId) {
-      chat = await prisma.chat.findUnique({
-        where: { id: chatId },
-      });
+      chat = await prisma.chat.findUnique({ where: { id: chatId } });
     }
 
     if (!chat) {
       if (!productId) {
-        return NextResponse.json(
-          { error: "Product ID required for new chat" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Product ID required for new chat" }, { status: 400 });
       }
 
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-      });
-
-      if (!product) {
-        return NextResponse.json(
-          { error: "Product not found" },
-          { status: 404 }
-        );
-      }
+      const product = await prisma.product.findUnique({ where: { id: productId } });
+      if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
       chat = await prisma.chat.create({
         data: {
           productId,
           buyerId: senderType === "buyer" ? senderId : null,
-          farmerId:
-            senderType === "farmer" ? senderId : product.farmerId,
+          farmerId: senderType === "farmer" ? senderId : product.farmerId,
+          lastMessage: text,
         },
+      });
+    } else {
+      await prisma.chat.update({
+        where: { id: chat.id },
+        data: { lastMessage: text },
       });
     }
 
     const message = await prisma.message.create({
-      data: {
-        chatId: chat.id,
-        senderId,
-        senderType,
-        text,
-      },
+      data: { chatId: chat.id, senderId, senderType, text },
     });
 
     await pusher.trigger(`chat-${chat.id}`, "new-message", message);
 
     return NextResponse.json({ success: true, chat, message });
-
   } catch (error) {
     console.error("CHAT ERROR:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

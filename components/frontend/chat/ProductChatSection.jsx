@@ -1,71 +1,47 @@
 "use client";
+import ReplyBox from "./ReplyBox";
+import { useEffect, useState } from "react";
 
-import { useState } from "react";
+export default function ProductChatSection({ productId, farmerId, currentUserId }) {
+  const [chatId, setChatId] = useState(null);
 
-export default function ProductChatSection({
-  productId,
-  farmerId,
-  currentUserId,
-}) {
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Create or fetch chat for this product
+  useEffect(() => {
+    const fetchChat = async () => {
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId,
+            senderId: currentUserId,
+            senderType: "buyer",
+            text: "Hello!", // placeholder first message
+          }),
+        });
 
-  if (!currentUserId) {
-    return (
-      <div className="mt-6 text-gray-500">
-        Please login to contact seller.
-      </div>
-    );
-  }
+        const data = await res.json();
+        if (data.success) setChatId(data.chat.id);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  const handleSend = async () => {
-    if (!text.trim()) return;
+    if (currentUserId && !chatId) fetchChat();
+  }, [productId, currentUserId]);
 
-    try {
-      setLoading(true);
-
-      await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId,
-          senderId: currentUserId,
-          senderType: "buyer",
-          text,
-        }),
-      });
-
-      setText("");
-    } catch (error) {
-      console.error("Send error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!currentUserId) return null;
 
   return (
-    <div className="mt-8 border-t pt-6">
-      <h2 className="text-xl font-semibold mb-3">
-        Contact Seller
-      </h2>
-
-      <div className="flex gap-2">
-        <input
-          className="flex-1 p-2 border rounded"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Write your message..."
+    <div className="mt-6">
+      <h2 className="text-xl font-semibold mb-2">Contact Seller</h2>
+      {chatId && (
+        <ReplyBox
+          chatId={chatId}
+          currentUserId={currentUserId}
+          senderType="buyer"
         />
-        <button
-          onClick={handleSend}
-          disabled={loading}
-          className="bg-green-600 text-white px-4 rounded"
-        >
-          {loading ? "Sending..." : "Send"}
-        </button>
-      </div>
+      )}
     </div>
   );
 }
