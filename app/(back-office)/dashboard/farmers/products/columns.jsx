@@ -48,12 +48,14 @@ export const columns = [
     cell: ({ row }) => {
       const product = row.original;
 
+      if (!product?.id) return null; // ❌ Prevent undefined ID
+
       return (
         <ActionColumn
           row={row}
           title="Product"
           editEndpoint={`/dashboard/farmers/products/${product.id}/edit`}
-          endpoint={`/api/farmer/product/${product.id}`} // ✅ Corrected endpoint
+          endpoint={`/api/farmer/product/${product.id}`} // ✅ Correct endpoint
         />
       );
     },
