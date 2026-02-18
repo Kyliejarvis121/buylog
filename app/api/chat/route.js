@@ -4,21 +4,16 @@ import Pusher from "pusher";
 
 export async function POST(req) {
   try {
-    const { productId, chatId, senderId, senderType, text } = await req.json();
+    const { productId, chatId, senderId, senderType, text } =
+      await req.json();
 
     if (!senderId || !senderType || !text) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    // 🔍 Debug
-    console.log("ENV CHECK:", {
-      appId: process.env.PUSHER_APP_ID,
-      key: process.env.PUSHER_KEY,
-      secret: process.env.PUSHER_SECRET,
-      cluster: process.env.PUSHER_CLUSTER,
-    });
-
-    // ✅ Initialize Pusher
     const pusher = new Pusher({
       appId: process.env.PUSHER_APP_ID,
       key: process.env.PUSHER_KEY,
@@ -29,35 +24,65 @@ export async function POST(req) {
 
     let chat;
 
-    // Fetch existing chat
+    // =========================================
+    // 1️⃣ IF CHAT ID PROVIDED → FIND CHAT
+    // =========================================
     if (chatId) {
-      chat = await prisma.chat.findUnique({ where: { id: chatId } });
+      chat = await prisma.chat.findUnique({
+        where: { id: chatId },
+      });
+
+      if (!chat) {
+        return NextResponse.json(
+          { error: "Chat not found" },
+          { status: 404 }
+        );
+      }
     }
 
-    // If no chat exists, create a new one
+    // =========================================
+    // 2️⃣ IF NO CHAT → CREATE ONE PROPERLY
+    // =========================================
     if (!chat) {
-      if (!productId) return NextResponse.json({ error: "Product ID required" }, { status: 400 });
+      if (!productId) {
+        return NextResponse.json(
+          { error: "Product ID required" },
+          { status: 400 }
+        );
+      }
 
-      const product = await prisma.product.findUnique({ where: { id: productId } });
-      if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+      });
+
+      if (!product) {
+        return NextResponse.json(
+          { error: "Product not found" },
+          { status: 404 }
+        );
+      }
+
+      // Only buyer can create chat first
+      if (senderType !== "buyer") {
+        return NextResponse.json(
+          { error: "Chat must be created by buyer first" },
+          { status: 400 }
+        );
+      }
 
       chat = await prisma.chat.create({
         data: {
           productId,
-          buyerId: senderType === "buyer" ? senderId : null,
-          farmerId: senderType === "farmer" ? senderId : product.farmerId,
+          buyerId: senderId,
+          farmerId: product.farmerId,
           lastMessage: text,
         },
       });
-    } else {
-      // Update last message
-      await prisma.chat.update({
-        where: { id: chat.id },
-        data: { lastMessage: text },
-      });
     }
 
-    // ✅ Create message using the correct Prisma fields
+    // =========================================
+    // 3️⃣ CREATE MESSAGE
+    // =========================================
     const message = await prisma.message.create({
       data: {
         chatId: chat.id,
@@ -68,13 +93,29 @@ export async function POST(req) {
       },
     });
 
-    // Trigger Pusher
+    // =========================================
+    // 4️⃣ UPDATE LAST MESSAGE
+    // =========================================
+    await prisma.chat.update({
+      where: { id: chat.id },
+      data: { lastMessage: text },
+    });
+
+    // =========================================
+    // 5️⃣ PUSHER TRIGGER
+    // =========================================
     await pusher.trigger(`chat-${chat.id}`, "new-message", message);
 
-    return NextResponse.json({ success: true, chat, message });
-
+    return NextResponse.json({
+      success: true,
+      chat,
+      message,
+    });
   } catch (error) {
     console.error("CHAT ERROR:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

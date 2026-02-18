@@ -12,34 +12,31 @@ export default function ProductChatSection({
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
 
-  // Create chat if it doesn't exist
+  // =========================================
+  // 1️⃣ CHECK IF CHAT EXISTS & LOAD MESSAGES
+  // =========================================
   useEffect(() => {
-    const createChat = async () => {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId,
-          senderId: currentUserId,
-          senderType: "buyer",
-          text: "Hello",
-        }),
-      });
+    const fetchChat = async () => {
+      const res = await fetch(
+        `/api/chat/find?productId=${productId}&buyerId=${currentUserId}`
+      );
 
       const data = await res.json();
 
-      if (data.success) {
+      if (data.success && data.chat) {
         setChatId(data.chat.id);
-        setMessages([data.message]);
+        setMessages(data.chat.messages);
       }
     };
 
-    if (currentUserId && !chatId) {
-      createChat();
+    if (productId && currentUserId) {
+      fetchChat();
     }
-  }, [currentUserId]);
+  }, [productId, currentUserId]);
 
-  // ✅ Listen for farmer replies
+  // =========================================
+  // 2️⃣ LISTEN FOR PUSHER EVENTS
+  // =========================================
   useEffect(() => {
     if (!chatId) return;
 
@@ -59,6 +56,9 @@ export default function ProductChatSection({
     };
   }, [chatId]);
 
+  // =========================================
+  // 3️⃣ SEND MESSAGE
+  // =========================================
   const handleSend = async () => {
     if (!text.trim()) return;
 
@@ -67,6 +67,7 @@ export default function ProductChatSection({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chatId,
+        productId,
         senderId: currentUserId,
         senderType: "buyer",
         text,
@@ -77,6 +78,11 @@ export default function ProductChatSection({
 
     if (data.success) {
       setText("");
+
+      // If chat was just created
+      if (!chatId) {
+        setChatId(data.chat.id);
+      }
     }
   };
 
