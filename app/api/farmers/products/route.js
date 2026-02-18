@@ -17,7 +17,7 @@ export async function GET(req) {
     }
 
     // Build where clause
-    const whereClause: any = { farmerId };
+    const whereClause = { farmerId };
 
     if (categoryId) whereClause.categoryId = Number(categoryId);
     if (marketId) whereClause.marketId = Number(marketId);
