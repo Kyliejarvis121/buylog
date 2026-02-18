@@ -16,11 +16,10 @@ export async function GET(req) {
       );
     }
 
-    // Build where clause
     const whereClause = { farmerId };
 
-    if (categoryId) whereClause.categoryId = Number(categoryId);
-    if (marketId) whereClause.marketId = Number(marketId);
+    if (categoryId) whereClause.categoryId = categoryId;
+    if (marketId) whereClause.marketId = marketId;
 
     const products = await prisma.product.findMany({
       where: whereClause,
@@ -54,7 +53,6 @@ export async function POST(req) {
       );
     }
 
-    // Convert numbers safely
     const price = Number(body.price) || 0;
     const salePrice = Number(body.salePrice) || 0;
     const productStock = Number(body.productStock) || 0;
@@ -88,11 +86,13 @@ export async function POST(req) {
         location: body.location || "",
 
         farmer: { connect: { id: body.farmerId } },
+
+        // ✅ Use string IDs as-is
         category: body.categoryId
-          ? { connect: { id: Number(body.categoryId) } }
+          ? { connect: { id: body.categoryId } }
           : undefined,
         market: body.marketId
-          ? { connect: { id: Number(body.marketId) } }
+          ? { connect: { id: body.marketId } }
           : undefined,
       },
       include: {
