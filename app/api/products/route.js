@@ -1,6 +1,37 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
+import { prisma } from "@/lib/prismadb";
+import { NextResponse } from "next/server";
+
+// DELETE /api/products/:id
+export async function DELETE(req, { params }) {
+  try {
+    const { id } = params;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: "Product ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Delete the product
+    await prisma.product.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true, message: "Product deleted successfully" });
+  } catch (error) {
+    console.error("❌ DELETE PRODUCT ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: error?.message || "Failed to delete product" },
+      { status: 500 }
+    );
+  }
+}
+
+
 // 🚀 API to CREATE or UPDATE a product
 export async function POST(req) {
   try {
