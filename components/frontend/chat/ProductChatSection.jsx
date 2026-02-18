@@ -1,76 +1,99 @@
 "use client";
-import ReplyBox from "@/components/backoffice/inbox/replyBox";
-import { useEffect, useState } from "react";
 
-export default function ProductChatSection({ productId, farmerId, currentUserId }) {
+import { useEffect, useState } from "react";
+import Pusher from "pusher-js";
+
+export default function ProductChatSection({
+  productId,
+  farmerId,
+  currentUserId,
+}) {
   const [chatId, setChatId] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState("");
+  const [text, setText] = useState("");
 
-  // Create or fetch chat
+  // Create chat if it doesn't exist
   useEffect(() => {
-    const fetchChat = async () => {
-      try {
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            productId,
-            senderId: currentUserId,
-            senderType: "buyer",
-            text: "Hello!", // placeholder first message
-          }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          setChatId(data.chat.id);
-          setMessages([data.message]);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    if (currentUserId && !chatId) fetchChat();
-  }, [productId, currentUserId]);
-
-  if (!currentUserId) return null;
-
-  const handleSend = async () => {
-    if (!inputText.trim()) return;
-
-    try {
+    const createChat = async () => {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          chatId,
+          productId,
           senderId: currentUserId,
           senderType: "buyer",
-          text: inputText,
+          text: "Hello",
         }),
       });
+
       const data = await res.json();
+
       if (data.success) {
-        setMessages((prev) => [...prev, data.message]);
-        setInputText("");
+        setChatId(data.chat.id);
+        setMessages([data.message]);
       }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to send message.");
+    };
+
+    if (currentUserId && !chatId) {
+      createChat();
+    }
+  }, [currentUserId]);
+
+  // ✅ Listen for farmer replies
+  useEffect(() => {
+    if (!chatId) return;
+
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+    });
+
+    const channel = pusher.subscribe(`chat-${chatId}`);
+
+    channel.bind("new-message", function (message) {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+    };
+  }, [chatId]);
+
+  const handleSend = async () => {
+    if (!text.trim()) return;
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId,
+        senderId: currentUserId,
+        senderType: "buyer",
+        text,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      setText("");
     }
   };
 
+  if (!currentUserId) return null;
+
   return (
-    <div className="mt-6 border p-4 rounded-lg bg-zinc-900">
-      <h2 className="text-xl font-semibold mb-2">Contact Seller</h2>
+    <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+      <h2 className="text-lg font-semibold mb-4 text-white">
+        Contact Seller
+      </h2>
 
       {/* Messages */}
-      <div className="max-h-64 overflow-y-auto mb-4 space-y-2">
+      <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`p-2 rounded max-w-xs ${
+            className={`p-2 rounded max-w-[70%] break-words ${
               msg.senderUserId === currentUserId
                 ? "bg-blue-600 text-white ml-auto"
                 : "bg-green-600 text-white"
@@ -85,10 +108,10 @@ export default function ProductChatSection({ productId, farmerId, currentUserId 
       <div className="flex gap-2">
         <input
           type="text"
-          className="flex-1 bg-zinc-800 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
           placeholder="Type your message..."
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
+          className="flex-1 bg-zinc-800 text-white p-2 rounded-md border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
         <button
