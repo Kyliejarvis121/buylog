@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import ReplyBox from "@/components/backoffice/inbox/ReplyBox"; // ✅ Client component
+import ReplyBox from "@/components/backoffice/inbox/replyBox"; // ✅ Client component
 
 export default async function InboxPage() {
   // 🔑 Get the logged-in session
