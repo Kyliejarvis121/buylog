@@ -84,24 +84,29 @@ export async function POST(req) {
         isActive: body.isActive ?? true,
         phoneNumber: body.phoneNumber || "",
         location: body.location || "",
-
         farmer: { connect: { id: body.farmerId } },
-
-        // ✅ Use string IDs as-is
-        category: body.categoryId
-          ? { connect: { id: body.categoryId } }
-          : undefined,
-        market: body.marketId
-          ? { connect: { id: body.marketId } }
-          : undefined,
+    
+        ...(body.categoryId &&
+          body.categoryId !== "String" && {
+            category: {
+              connect: { id: body.categoryId },
+            },
+          }),
+    
+        ...(body.marketId &&
+          body.marketId !== "String" && {
+            market: {
+              connect: { id: body.marketId },
+            },
+          }),
       },
       include: {
         category: true,
-        market: true,
         farmer: true,
+        market: true,
       },
     });
-
+    
     return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
     console.error("❌ CREATE PRODUCT ERROR:", error);
