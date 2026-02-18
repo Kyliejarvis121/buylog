@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prismadb";
-import { NextResponse } from "next/server";
+
+
 
 // DELETE /api/products/:id
 export async function DELETE(req, { params }) {
