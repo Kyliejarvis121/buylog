@@ -1,20 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Pusher from "pusher-js";
 import ReplyBox from "./replyBox";
 
 export default function InboxClient({ initialChats, farmerId }) {
   const [chats, setChats] = useState(initialChats);
 
-  // 🔄 Auto refresh every 3 seconds (real-time feeling)
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const res = await fetch("/api/farmer/chats");
-      const data = await res.json();
-      setChats(data);
-    }, 3000);
+    if (!chats.length) return;
 
-    return () => clearInterval(interval);
+    const key = process.env.NEXT_PUBLIC_PUSHER_KEY;
+const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+
+if (!key || !cluster) {
+  console.error("Pusher key or cluster missing");
+  return;
+}
+
+const pusher = new Pusher(key, { cluster });
+
+
+    // Subscribe to each chat channel
+    chats.forEach((chat) => {
+      const channel = pusher.subscribe(`chat-${chat.id}`);
+
+      channel.bind("new-message", (newMessage) => {
+        setChats((prevChats) =>
+          prevChats.map((c) =>
+            c.id === chat.id
+              ? {
+                  ...c,
+                  messages: [...c.messages, newMessage],
+                }
+              : c
+          )
+        );
+      });
+    });
+
+    return () => {
+      pusher.disconnect();
+    };
   }, []);
 
   return (
