@@ -16,16 +16,16 @@ export async function GET(req) {
       );
     }
 
-    // ✅ Build the where clause
-    const whereClause = { farmerId };
+    // Build where clause
+    const whereClause: any = { farmerId };
 
-    if (categoryId) whereClause.categoryId = categoryId;
-    if (marketId) whereClause.marketId = marketId;
+    if (categoryId) whereClause.categoryId = Number(categoryId);
+    if (marketId) whereClause.marketId = Number(marketId);
 
     const products = await prisma.product.findMany({
       where: whereClause,
       orderBy: { createdAt: "desc" },
-      include: { category: true, market: true }, // include market info
+      include: { category: true, market: true, farmer: true },
     });
 
     return NextResponse.json({ success: true, data: products });
@@ -54,15 +54,23 @@ export async function POST(req) {
       );
     }
 
+    // Convert numbers safely
+    const price = Number(body.price) || 0;
+    const salePrice = Number(body.salePrice) || 0;
+    const productStock = Number(body.productStock) || 0;
+    const qty = Number(body.qty) || 1;
+    const wholesalePrice = Number(body.wholesalePrice) || 0;
+    const wholesaleQty = Number(body.wholesaleQty) || 0;
+
     const product = await prisma.product.create({
       data: {
         title: body.title,
         slug: body.slug || body.title.toLowerCase().replace(/\s+/g, "-"),
         description: body.description || "",
-        price: Number(body.price) || 0,
-        salePrice: Number(body.salePrice) || 0,
-        productStock: Number(body.productStock) || 0,
-        qty: Number(body.qty) || 1,
+        price,
+        salePrice,
+        productStock,
+        qty,
         imageUrl: Array.isArray(body.productImages)
           ? body.productImages[0]
           : body.imageUrl || "",
@@ -73,22 +81,24 @@ export async function POST(req) {
         barcode: body.barcode || "",
         unit: body.unit || "",
         isWholesale: !!body.isWholesale,
-        wholesalePrice: Number(body.wholesalePrice) || 0,
-        wholesaleQty: Number(body.wholesaleQty) || 0,
+        wholesalePrice,
+        wholesaleQty,
         isActive: body.isActive ?? true,
         phoneNumber: body.phoneNumber || "",
         location: body.location || "",
 
         farmer: { connect: { id: body.farmerId } },
-
         category: body.categoryId
-          ? { connect: { id: body.categoryId } }
+          ? { connect: { id: Number(body.categoryId) } }
           : undefined,
-
-        // ✅ Attach to a market if provided
         market: body.marketId
-          ? { connect: { id: body.marketId } }
+          ? { connect: { id: Number(body.marketId) } }
           : undefined,
+      },
+      include: {
+        category: true,
+        market: true,
+        farmer: true,
       },
     });
 
