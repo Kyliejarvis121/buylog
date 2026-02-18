@@ -1,16 +1,12 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-/* =========================================================
-   CREATE PRODUCT
-========================================================= */
-export async function POST(request) {
+// 🚀 API to CREATE or UPDATE a product
+export async function POST(req) {
   try {
-    const body = await request.json();
+    const body = await req.json();
 
+    // Validate required fields
     if (!body.title || !body.farmerId) {
       return NextResponse.json(
         { success: false, message: "Title and farmerId are required" },
@@ -18,166 +14,129 @@ export async function POST(request) {
       );
     }
 
-    const product = await prisma.product.create({
-      data: {
-        title: body.title,
-        slug:
-          body.slug ||
-          body.title.toLowerCase().replace(/\s+/g, "-"),
+    // Safely parse numbers
+    const price = Number(body.price) || 0;
+    const salePrice = Number(body.salePrice) || 0;
+    const productStock = Number(body.productStock) || 0;
+    const qty = Number(body.qty) || 1;
+    const wholesalePrice = Number(body.wholesalePrice) || 0;
+    const wholesaleQty = Number(body.wholesaleQty) || 0;
 
-        description: body.description || "",
-        price: Number(body.price) || 0,
-        salePrice: Number(body.salePrice) || 0,
-        productStock: Number(body.productStock) || 0,
-        qty: Number(body.qty) || 1,
+    // Only include valid categoryId & marketId
+    const categoryConnect = body.categoryId && body.categoryId !== "String"
+      ? { connect: { id: body.categoryId } }
+      : undefined;
 
-        imageUrl: Array.isArray(body.productImages)
-          ? body.productImages[0]
-          : body.imageUrl || "",
+    const marketConnect = body.marketId && body.marketId !== "String"
+      ? { connect: { id: body.marketId } }
+      : undefined;
 
-        productImages: body.productImages || [],
-        tags: body.tags || [],
+    let product;
 
-        productCode: body.productCode || "",
-        sku: body.sku || "",
-        barcode: body.barcode || "",
-        unit: body.unit || "",
-
-        isWholesale: Boolean(body.isWholesale),
-        wholesalePrice: Number(body.wholesalePrice) || 0,
-        wholesaleQty: Number(body.wholesaleQty) || 0,
-
-        isActive: body.isActive ?? true,
-
-        phoneNumber: body.phoneNumber || "",
-        location: body.location || "",
-
-        // RELATIONS
-        farmer: {
-          connect: { id: body.farmerId },
+    if (body.id) {
+      // 🔄 Update existing product
+      product = await prisma.product.update({
+        where: { id: body.id },
+        data: {
+          title: body.title,
+          slug: body.slug || body.title.toLowerCase().replace(/\s+/g, "-"),
+          description: body.description || "",
+          price,
+          salePrice,
+          productStock,
+          qty,
+          imageUrl: Array.isArray(body.productImages)
+            ? body.productImages[0]
+            : body.imageUrl || "",
+          productImages: body.productImages || [],
+          tags: body.tags || [],
+          productCode: body.productCode || "",
+          sku: body.sku || "",
+          barcode: body.barcode || "",
+          unit: body.unit || "",
+          isWholesale: !!body.isWholesale,
+          wholesalePrice,
+          wholesaleQty,
+          isActive: body.isActive ?? true,
+          phoneNumber: body.phoneNumber || "",
+          location: body.location || "",
+          farmer: { connect: { id: body.farmerId } },
+          category: categoryConnect,
+          market: marketConnect,
         },
+        include: { category: true, market: true, farmer: true },
+      });
+    } else {
+      // ➕ Create new product
+      product = await prisma.product.create({
+        data: {
+          title: body.title,
+          slug: body.slug || body.title.toLowerCase().replace(/\s+/g, "-"),
+          description: body.description || "",
+          price,
+          salePrice,
+          productStock,
+          qty,
+          imageUrl: Array.isArray(body.productImages)
+            ? body.productImages[0]
+            : body.imageUrl || "",
+          productImages: body.productImages || [],
+          tags: body.tags || [],
+          productCode: body.productCode || "",
+          sku: body.sku || "",
+          barcode: body.barcode || "",
+          unit: body.unit || "",
+          isWholesale: !!body.isWholesale,
+          wholesalePrice,
+          wholesaleQty,
+          isActive: body.isActive ?? true,
+          phoneNumber: body.phoneNumber || "",
+          location: body.location || "",
+          farmer: { connect: { id: body.farmerId } },
+          category: categoryConnect,
+          market: marketConnect,
+        },
+        include: { category: true, market: true, farmer: true },
+      });
+    }
 
-        category: body.categoryId
-          ? { connect: { id: Number(body.categoryId) } }
-          : undefined,
-
-        market: body.marketId
-          ? { connect: { id: Number(body.marketId) } }
-          : undefined,
-      },
-      include: {
-        category: true,
-        farmer: true,
-        market: true,
-      },
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Product created successfully",
-        data: product,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
-    console.error("POST /api/products failed:", error);
+    console.error("❌ CREATE/UPDATE PRODUCT ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: error?.message || "Failed to create product",
-      },
+      { success: false, message: error?.message || "Failed to save product" },
       { status: 500 }
     );
   }
 }
 
-/* =========================================================
-   GET PRODUCTS (FILTER + SEARCH + PAGINATION)
-========================================================= */
-export async function GET(request) {
+// GET all products (optional pagination & filters)
+export async function GET(req) {
   try {
-    const { searchParams } = new URL(request.url);
+    const url = new URL(req.url);
+    const page = Number(url.searchParams.get("page") || 1);
+    const limit = Number(url.searchParams.get("limit") || 20);
+    const farmerId = url.searchParams.get("farmerId"); // optional filter
+    const categoryId = url.searchParams.get("categoryId"); // optional
 
-    const page = Number(searchParams.get("page") || 1);
-    const limit = Number(searchParams.get("limit") || 20);
-    const skip = (page - 1) * limit;
+    const whereClause = {};
+    if (farmerId) whereClause.farmerId = farmerId;
+    if (categoryId) whereClause.categoryId = categoryId;
 
-    const searchQuery = searchParams.get("q")?.trim() || "";
-    const categoryId = searchParams.get("categoryId");
-    const marketId = searchParams.get("marketId");
-    const sort = searchParams.get("sort") || "desc";
-    const min = Number(searchParams.get("min") || 0);
-    const max = searchParams.get("max");
-
-    const where = {};
-
-    // 🔍 Search by title
-    if (searchQuery) {
-      where.title = {
-        contains: searchQuery,
-        mode: "insensitive",
-      };
-    }
-
-    // 📂 Filter by category
-    if (categoryId) {
-      where.categoryId = Number(categoryId);
-    }
-
-    // 🏪 Filter by market
-    if (marketId) {
-      where.marketId = Number(marketId);
-    }
-
-    // 💰 Price filter
-    if (min || max) {
-      where.price = {
-        gte: min,
-        lte: max ? Number(max) : undefined,
-      };
-    }
-
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where: Object.keys(where).length ? where : undefined,
-        orderBy: {
-          createdAt: sort === "asc" ? "asc" : "desc",
-        },
-        skip,
-        take: limit,
-        include: {
-          category: true,
-          farmer: true,
-          market: true,
-        },
-      }),
-
-      prisma.product.count({
-        where: Object.keys(where).length ? where : undefined,
-      }),
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      data: products,
-      total,
-      page,
-      limit,
-      message: `Fetched ${products.length} products`,
+    const products = await prisma.product.findMany({
+      where: whereClause,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: { category: true, market: true, farmer: true },
     });
-  } catch (error) {
-    console.error("GET /api/products failed:", error);
 
+    return NextResponse.json({ success: true, data: products });
+  } catch (error) {
+    console.error("❌ GET PRODUCTS ERROR:", error);
     return NextResponse.json(
-      {
-        success: false,
-        data: [],
-        message: "Failed to fetch products",
-        error: error?.message || String(error),
-      },
+      { success: false, message: error?.message || "Failed to fetch products" },
       { status: 500 }
     );
   }
 }
-

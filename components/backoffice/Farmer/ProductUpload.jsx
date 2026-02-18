@@ -42,6 +42,10 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
       ? [...existingProduct.productImages, ...productImages.filter(img => !existingProduct.productImages.includes(img))]
       : productImages;
 
+    // ✅ Sanitize categoryId & marketId
+    const categoryId = data.categoryId && data.categoryId !== "String" ? data.categoryId : null;
+    const marketId = data.marketId && data.marketId !== "String" ? data.marketId : null;
+
     const payload = {
       id: existingProduct?.id,
       title: data.title,
@@ -50,7 +54,8 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
       price: parseFloat(data.productPrice),
       salePrice: data.salePrice ? parseFloat(data.salePrice) : 0,
       productStock: parseInt(data.productStock ?? 0),
-      categoryId: data.categoryId || null,
+      categoryId,          // only send valid categoryId
+      marketId,            // only send valid marketId if needed
       farmerId,
       imageUrl: allImages[0],
       productImages: allImages,
