@@ -29,7 +29,7 @@ export const columns = [
     header: "Stock",
   },
   {
-    accessorKey: "phoneNumber", // ✅ New column for seller phone
+    accessorKey: "phoneNumber",
     header: "Seller Phone",
     cell: ({ row }) => row.original.phoneNumber || "N/A",
   },
@@ -47,13 +47,13 @@ export const columns = [
     id: "actions",
     cell: ({ row }) => {
       const product = row.original;
-  
+
       return (
         <ActionColumn
           row={row}
           title="Product"
           editEndpoint={`/dashboard/farmers/products/${product.id}/edit`}
-          endpoint={`/api/farmers/products/${product.id}`}
+          endpoint={`/api/farmer/product/${product.id}`} // ✅ Corrected endpoint
         />
       );
     },
