@@ -1,5 +1,5 @@
 "use client";
-import ReplyBox from "./ReplyBox";
+import ReplyBox from "@/components/backoffice/inbox/replyBox";
 import { useEffect, useState } from "react";
 
 export default function ProductChatSection({ productId, farmerId, currentUserId }) {
