@@ -23,7 +23,7 @@ export default function CustomerInboxPreview() {
   }, []);
 
   if (chats.length === 0) {
-    return <p className="text-zinc-400">No customer messages yet.</p>;
+    return <p className="text-zinc-400">Click to View Inbox.</p>;
   }
 
   return (
