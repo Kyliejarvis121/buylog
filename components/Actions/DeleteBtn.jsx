@@ -26,18 +26,27 @@ export default function DeleteBtn({ endpoint, title }) {
     try {
       setLoading(true);
 
-      // ✅ FIXED: do NOT prefix with /api again
-      const res = await fetch(endpoint, {
+      // ✅ CORRECT: prefix with /api
+      const res = await fetch(`/api/${endpoint}`, {
         method: "DELETE",
       });
 
-      const data = await res.json();
+      const text = await res.text(); // safer than res.json()
+
+      let data = {};
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          console.error("Invalid JSON response");
+        }
+      }
 
       if (!res.ok) {
         throw new Error(data?.message || "Delete failed");
       }
 
-      toast.success(`${title} deleted successfully`);
+      toast.success(data?.message || `${title} deleted successfully`);
       router.refresh();
     } catch (error) {
       console.error("DELETE ERROR:", error);

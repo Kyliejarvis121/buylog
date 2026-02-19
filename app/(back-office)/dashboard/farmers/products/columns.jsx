@@ -14,7 +14,9 @@ export const columns = [
   },
   {
     accessorKey: "title",
-    header: ({ column }) => <SortableColumn column={column} title="Title" />,
+    header: ({ column }) => (
+      <SortableColumn column={column} title="Title" />
+    ),
   },
   {
     accessorKey: "slug",
@@ -48,14 +50,14 @@ export const columns = [
     cell: ({ row }) => {
       const product = row.original;
 
-      if (!product?.id) return null; // ❌ Prevent undefined ID
+      if (!product?.id) return null;
 
       return (
         <ActionColumn
           row={row}
           title="Product"
           editEndpoint={`/dashboard/farmers/products/${product.id}/edit`}
-          endpoint={`/api/farmer/product/${product.id}`} // ✅ Correct endpoint
+          endpoint={`farmer/product/${product.id}`}   // ✅ REMOVED /api
         />
       );
     },
