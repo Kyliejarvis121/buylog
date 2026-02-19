@@ -13,17 +13,23 @@ const toNumber = (v, d = null) =>
 export async function GET(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) return NextResponse.json({ success: false }, { status: 401 });
+    if (!session?.user)
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     const farmer = await prisma.farmer.findFirst({ where: { userId: session.user.id } });
-    if (!farmer) return NextResponse.json({ success: false }, { status: 403 });
+    if (!farmer)
+      return NextResponse.json({ success: false, message: "Farmer not found" }, { status: 403 });
+
+    const { id } = params;
+    if (!id) return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
 
     const product = await prisma.product.findFirst({
-      where: { id: params.id, farmerId: farmer.id },
+      where: { id, farmerId: farmer.id },
       include: { category: true },
     });
 
-    if (!product) return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 });
+    if (!product)
+      return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 });
 
     return NextResponse.json({ success: true, data: product });
   } catch (error) {
@@ -38,14 +44,18 @@ export async function GET(req, { params }) {
 export async function PUT(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) return NextResponse.json({ success: false }, { status: 401 });
+    if (!session?.user)
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     const farmer = await prisma.farmer.findFirst({ where: { userId: session.user.id } });
-    if (!farmer) return NextResponse.json({ success: false }, { status: 403 });
+    if (!farmer)
+      return NextResponse.json({ success: false, message: "Farmer not found" }, { status: 403 });
+
+    const { id } = params;
+    if (!id) return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
 
     const body = await req.json();
 
-    // Normalize productImages to always be an array
     const productImages = body.productImages
       ? Array.isArray(body.productImages)
         ? body.productImages
@@ -53,7 +63,7 @@ export async function PUT(req, { params }) {
       : [];
 
     const updated = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: String(body.title || ""),
         slug: body.slug || undefined,
@@ -70,7 +80,7 @@ export async function PUT(req, { params }) {
         wholesalePrice: toNumber(body.wholesalePrice),
         wholesaleQty: toNumber(body.wholesaleQty),
         isActive: body.isActive ?? true,
-        imageUrl: body.imageUrl || (productImages[0] ?? null), // default to first image if main not set
+        imageUrl: body.imageUrl || (productImages[0] ?? null),
         productImages,
         tags: Array.isArray(body.tags) ? body.tags : [],
         categoryId: body.categoryId || undefined,
@@ -90,7 +100,7 @@ export async function PUT(req, { params }) {
 export async function DELETE(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) 
+    if (!session?.user)
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     const farmer = await prisma.farmer.findFirst({ where: { userId: session.user.id } });
@@ -98,10 +108,8 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ success: false, message: "Farmer not found" }, { status: 403 });
 
     const { id } = params;
-    if (!id) 
-      return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
+    if (!id) return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
 
-    // Ensure the product belongs to this farmer
     const product = await prisma.product.findFirst({
       where: { id, farmerId: farmer.id },
     });
@@ -109,9 +117,7 @@ export async function DELETE(req, { params }) {
     if (!product)
       return NextResponse.json({ success: false, message: "Product not found or access denied" }, { status: 404 });
 
-    await prisma.product.delete({
-      where: { id },
-    });
+    await prisma.product.delete({ where: { id } });
 
     return NextResponse.json({ success: true, message: "Product deleted successfully" });
   } catch (error) {

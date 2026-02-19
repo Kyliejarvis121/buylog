@@ -6,11 +6,12 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
-export default function DeleteBtn({ endpoint, title }) {
+export default function DeleteBtn({ id, title }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function handleDelete() {
+    // Confirm deletion
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "This action cannot be undone!",
@@ -26,31 +27,23 @@ export default function DeleteBtn({ endpoint, title }) {
     try {
       setLoading(true);
 
-      // ✅ CORRECT: prefix with /api
-      const res = await fetch(`/api/${endpoint}`, {
+      // Call your DELETE API
+      const res = await fetch(`/api/farmer/product/${id}`, {
         method: "DELETE",
       });
 
-      const text = await res.text(); // safer than res.json()
+      // Parse response
+      const data = await res.json();
 
-      let data = {};
-      if (text) {
-        try {
-          data = JSON.parse(text);
-        } catch (err) {
-          console.error("Invalid JSON response");
-        }
-      }
+      if (!res.ok) throw new Error(data?.message || "Delete failed");
 
-      if (!res.ok) {
-        throw new Error(data?.message || "Delete failed");
-      }
-
-      toast.success(data?.message || `${title} deleted successfully`);
+      toast.success(`${title} deleted successfully`);
+      
+      // Refresh page or table
       router.refresh();
     } catch (error) {
       console.error("DELETE ERROR:", error);
-      toast.error(error.message || "Something went wrong");
+      toast.error(error?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
