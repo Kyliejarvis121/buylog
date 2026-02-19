@@ -15,7 +15,7 @@ export default function DeleteBtn({ id, title }) {
       toast.error("Product ID is missing");
       return;
     }
-
+  
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "This action cannot be undone!",
@@ -25,25 +25,20 @@ export default function DeleteBtn({ id, title }) {
       cancelButtonColor: "#6b7280",
       confirmButtonText: "Yes, delete it!",
     });
-
+  
     if (!result.isConfirmed) return;
-
+  
     try {
       setLoading(true);
-
+  
       const res = await fetch(`/api/farmer/product/${id}`, {
         method: "DELETE",
       });
-
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        data = { message: "Product deleted" }; // fallback if empty JSON
-      }
-
+  
+      const data = await res.json();
+  
       if (!res.ok) throw new Error(data?.message || "Delete failed");
-
+  
       toast.success(`${title} deleted successfully`);
       router.refresh();
     } catch (error) {
@@ -52,6 +47,7 @@ export default function DeleteBtn({ id, title }) {
     } finally {
       setLoading(false);
     }
+    
   }
 
   return (
