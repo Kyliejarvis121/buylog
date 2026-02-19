@@ -11,7 +11,11 @@ export default function DeleteBtn({ id, title }) {
   const router = useRouter();
 
   async function handleDelete() {
-    // Confirm deletion
+    if (!id) {
+      toast.error("Product ID is missing");
+      return;
+    }
+
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "This action cannot be undone!",
@@ -27,19 +31,20 @@ export default function DeleteBtn({ id, title }) {
     try {
       setLoading(true);
 
-      // Call your DELETE API
       const res = await fetch(`/api/farmer/product/${id}`, {
         method: "DELETE",
       });
 
-      // Parse response
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = { message: "Product deleted" }; // fallback if empty JSON
+      }
 
       if (!res.ok) throw new Error(data?.message || "Delete failed");
 
       toast.success(`${title} deleted successfully`);
-      
-      // Refresh page or table
       router.refresh();
     } catch (error) {
       console.error("DELETE ERROR:", error);

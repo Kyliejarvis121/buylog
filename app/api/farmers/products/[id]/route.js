@@ -4,8 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
 // Helper to safely convert to number
-const toNumber = (v, d = null) =>
-  v === undefined || v === null || v === "" ? d : Number(v);
+const toNumber = (v, d = null) => (v === undefined || v === null || v === "" ? d : Number(v));
 
 /* =====================================================
    GET PRODUCT
@@ -21,7 +20,8 @@ export async function GET(req, { params }) {
       return NextResponse.json({ success: false, message: "Farmer not found" }, { status: 403 });
 
     const { id } = params;
-    if (!id) return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
+    if (!id)
+      return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
 
     const product = await prisma.product.findFirst({
       where: { id, farmerId: farmer.id },
@@ -52,7 +52,8 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ success: false, message: "Farmer not found" }, { status: 403 });
 
     const { id } = params;
-    if (!id) return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
+    if (!id)
+      return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
 
     const body = await req.json();
 
@@ -80,7 +81,7 @@ export async function PUT(req, { params }) {
         wholesalePrice: toNumber(body.wholesalePrice),
         wholesaleQty: toNumber(body.wholesaleQty),
         isActive: body.isActive ?? true,
-        imageUrl: body.imageUrl || (productImages[0] ?? null),
+        imageUrl: body.imageUrl || productImages[0] || null,
         productImages,
         tags: Array.isArray(body.tags) ? body.tags : [],
         categoryId: body.categoryId || undefined,
@@ -108,7 +109,8 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ success: false, message: "Farmer not found" }, { status: 403 });
 
     const { id } = params;
-    if (!id) return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
+    if (!id)
+      return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
 
     const product = await prisma.product.findFirst({
       where: { id, farmerId: farmer.id },
