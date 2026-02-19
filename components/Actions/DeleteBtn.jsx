@@ -26,14 +26,15 @@ export default function DeleteBtn({ endpoint, title }) {
     try {
       setLoading(true);
 
-      const res = await fetch(`/api/${endpoint}`, {
+      // ✅ FIXED: do NOT prefix with /api again
+      const res = await fetch(endpoint, {
         method: "DELETE",
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Delete failed");
+        throw new Error(data?.message || "Delete failed");
       }
 
       toast.success(`${title} deleted successfully`);
