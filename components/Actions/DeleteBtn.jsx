@@ -1,18 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
+import { Trash2 } from "lucide-react";
 
-export default function DeleteBtn({ endpoint, title }) {
+export default function DeleteBtn({ id, title }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function handleDelete() {
-    if (!endpoint) {
-      toast.error("Product endpoint is missing");
+    if (!id) {
+      toast.error("Product ID is missing");
       return;
     }
 
@@ -31,15 +31,17 @@ export default function DeleteBtn({ endpoint, title }) {
     try {
       setLoading(true);
 
-      const res = await fetch(`/api/${endpoint}`, {
+      // ✅ Send DELETE to the global product route
+      const res = await fetch(`/api/product/${id}`, {
         method: "DELETE",
       });
 
+      // If the server returns no JSON, avoid parse error
       let data;
       try {
         data = await res.json();
-      } catch (e) {
-        data = { message: res.statusText };
+      } catch {
+        data = { message: "Delete request sent" };
       }
 
       if (!res.ok) throw new Error(data?.message || "Delete failed");
@@ -58,10 +60,10 @@ export default function DeleteBtn({ endpoint, title }) {
     <button
       onClick={handleDelete}
       disabled={loading}
-      className="flex items-center gap-2 text-red-600 dark:text-red-500 font-medium disabled:opacity-50"
+      className="font-medium text-red-600 dark:text-red-500 flex items-center gap-1 disabled:opacity-50"
     >
       <Trash2 className="w-4 h-4" />
-      {loading ? "Deleting..." : `Delete ${title}`}
+      <span>{loading ? "Deleting..." : `Delete ${title}`}</span>
     </button>
   );
 }
