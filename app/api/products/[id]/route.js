@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// This route is used by EditProductPage to fetch any product
 export async function GET(req, { params }) {
   try {
     const { id } = params;
@@ -14,8 +13,8 @@ export async function GET(req, { params }) {
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
-        category: true,
-        productImages: true, // if you store multiple images
+        category: true, // ok if null
+        productImages: true, // ok if empty or null
       },
     });
 
@@ -25,7 +24,17 @@ export async function GET(req, { params }) {
         { status: 404 }
       );
 
-    return NextResponse.json({ success: true, data: product });
+    // Convert any nulls to empty arrays/objects to prevent frontend crash
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...product,
+        category: product.category ?? null,
+        productImages: Array.isArray(product.productImages)
+          ? product.productImages
+          : [],
+      },
+    });
   } catch (err) {
     console.error("❌ GLOBAL PRODUCT GET ERROR:", err);
     return NextResponse.json(
