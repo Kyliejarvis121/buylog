@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import { Trash2 } from "lucide-react";
 
-export default function DeleteBtn({ id, title }) {
+export default function DeleteBtn({ id, title, isFarmer = false }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -31,12 +31,13 @@ export default function DeleteBtn({ id, title }) {
     try {
       setLoading(true);
 
-      // ✅ Send DELETE to the global product route
-      const res = await fetch(`/api/product/${id}`, {
-        method: "DELETE",
-      });
+      // ✅ Correct endpoints
+      const endpoint = isFarmer
+        ? `/api/farmers/products/${id}`  // Farmer route
+        : `/api/products/${id}`         // Admin route (plural)
 
-      // If the server returns no JSON, avoid parse error
+      const res = await fetch(endpoint, { method: "DELETE" });
+
       let data;
       try {
         data = await res.json();

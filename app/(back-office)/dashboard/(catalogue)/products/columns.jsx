@@ -32,7 +32,7 @@ export const columns = [
   {
     accessorKey: "category",
     header: "Category",
-    cell: ({ row }) => row.original.category?.title || "—", // ✅ show category title
+    cell: ({ row }) => row.original.category?.title || "—",
   },
   {
     accessorKey: "isActive",
@@ -48,12 +48,14 @@ export const columns = [
     id: "actions",
     cell: ({ row }) => {
       const product = row.original;
+      if (!product?.id) return null;
+
       return (
         <ActionColumn
           row={row}
           title="Product"
-          editEndpoint={`farmers/products/update/${product.id}`}
-          endpoint={`farmers/products/${product.id}`}
+          editEndpoint={`/dashboard/farmers/products/${product.id}/edit`} // admin can still edit
+          isFarmer={false} // ✅ hits /api/products/[id]
         />
       );
     },

@@ -13,9 +13,17 @@ import { MoreHorizontal } from "lucide-react";
 import DeleteBtn from "../Actions/DeleteBtn";
 import EditBtn from "../Actions/EditBtn";
 
-export default function ActionColumn({ row, title, editEndpoint }) {
+/**
+ * ActionColumn
+ * @param {object} row - Row object from the table
+ * @param {string} title - Title to show in Delete/Edit buttons
+ * @param {string} editEndpoint - Endpoint for editing the product
+ * @param {boolean} isFarmer - Whether this row belongs to a farmer (default: false)
+ */
+export default function ActionColumn({ row, title, editEndpoint, isFarmer = false }) {
   const product = row.original;
 
+  // If no product ID, hide the column
   if (!product?.id) return null;
 
   return (
@@ -31,12 +39,12 @@ export default function ActionColumn({ row, title, editEndpoint }) {
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* ✅ Use DeleteBtn with global product API */}
+        {/* Delete button */}
         <DropdownMenuItem>
-          <DeleteBtn title={title} id={product.id} />
+          <DeleteBtn id={product.id} title={title} isFarmer={isFarmer} />
         </DropdownMenuItem>
 
-        {/* Edit button remains unchanged */}
+        {/* Edit button */}
         <DropdownMenuItem>
           <EditBtn title={title} editEndpoint={editEndpoint} />
         </DropdownMenuItem>
