@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,8 +13,13 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import DeleteBtn from "../Actions/DeleteBtn";
 import EditBtn from "../Actions/EditBtn";
-export default function ActionColumn({ row, title, endpoint, editEndpoint }) {
-  const isActive = row.isActive;
+
+export default function ActionColumn({
+  row,
+  title,
+  endpoint,
+  editEndpoint,
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -21,14 +28,21 @@ export default function ActionColumn({ row, title, endpoint, editEndpoint }) {
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <DeleteBtn title={title} endpoint={endpoint} />
+
+        <DropdownMenuItem asChild>
+          <div>
+            <DeleteBtn title={title} endpoint={endpoint} />
+          </div>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <EditBtn title={title} editEndpoint={editEndpoint} />
+
+        <DropdownMenuItem asChild>
+          <div>
+            <EditBtn title={title} editEndpoint={editEndpoint} />
+          </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
