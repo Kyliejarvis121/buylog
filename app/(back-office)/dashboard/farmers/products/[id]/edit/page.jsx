@@ -45,7 +45,7 @@ export default function EditProductPage() {
     async function fetchData() {
       try {
         const [productRes, categoryRes] = await Promise.all([
-          fetch(`/api/products/${productId}`),
+          fetch(`/api/farmers/products/${productId}`),
           fetch("/api/categories"),
         ]);
 
@@ -197,7 +197,7 @@ export default function EditProductPage() {
         wholesaleQty: form.wholesaleQty !== "" ? Number(form.wholesaleQty) : 0,
       };
 
-      const res = await fetch(`/api/products/${productId}`, {
+      const res = await fetch(`/api/farmers/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -225,7 +225,7 @@ export default function EditProductPage() {
     if (!confirm("Are you sure you want to delete this product? This cannot be undone.")) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/products/${productId}`, { method: "DELETE" });
+      const res = await fetch(`/api/farmers/products/${productId}`, { method: "DELETE" });
       const j = await res.json();
       if (j.success) {
         alert("Product deleted");
