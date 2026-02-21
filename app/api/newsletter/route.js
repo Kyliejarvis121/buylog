@@ -32,17 +32,17 @@ export async function POST(request) {
 
     // Send notification email to you
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+        host: process.env.EMAIL_HOST, // smtp.titan.email
+        port: 465,
+        secure: true,
+        auth: {
+          user: process.env.EMAIL_USER, // noreply@buylogint.com
+          pass: process.env.EMAIL_PASS,
+        },
+      });
 
     await transporter.sendMail({
-      from: "no-reply@buylogint.com",
+      from: "noreply@buylogint.com",
       to: process.env.NEWSLETTER_ADMIN_EMAIL, // your email
       subject: "New Newsletter Subscriber",
       text: `New subscriber joined: ${email}`,
