@@ -351,3 +351,10 @@ model Message {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model NewsletterSubscriber {
+  id        String   @id @map("_id") @db.ObjectId
+  email     String   @unique
+  createdAt DateTime  @default(now())
+  isActive  Boolean   @default(true)
+}

@@ -1,5 +1,7 @@
 "use client";
 
+
+import NewsletterForm from "@/components/frontend/NewsletterForm";
 import Link from "next/link";
 
 const Footer = () => {
@@ -97,24 +99,10 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter (UNCHANGED) */}
           <div className="col-span-2 md:col-span-2 lg:col-span-1">
-            <p className="text-sm font-semibold tracking-widest uppercase mb-4">Subscribe to newsletter</p>
-            <form action="#" method="POST" className="mt-2">
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:border-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-              />
-              <button
-                type="submit"
-                className="mt-2 w-full py-3 bg-blue-600 rounded-md text-white font-semibold hover:bg-blue-700 transition-colors"
-              >
-                Subscribe
-              </button>
-            </form>
+            <NewsletterForm />
           </div>
+
 
         </div>
 
