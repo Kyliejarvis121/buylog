@@ -4,10 +4,11 @@ import { prisma } from "@/lib/prismadb";
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("token");
+  const baseUrl = new URL(req.url).origin;
 
   if (!token) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email?error=invalid`
+      `${baseUrl}/verify-email?error=invalid`
     );
   }
 
@@ -17,7 +18,7 @@ export async function GET(req) {
 
   if (!user) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email?error=expired`
+      `${baseUrl}/verify-email?error=expired`
     );
   }
 
@@ -29,10 +30,7 @@ export async function GET(req) {
     },
   });
 
-  // ✅ Redirect to verify-success page
   return NextResponse.redirect(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/verify-success?email=${encodeURIComponent(
-      user.email
-    )}`
+    `${baseUrl}/verify-success?email=${encodeURIComponent(user.email)}`
   );
 }

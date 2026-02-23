@@ -1,21 +1,27 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-/* ===============================
+/* ==================================
    GET SINGLE CUSTOMER
-=============================== */
-export async function GET(req, { params: { id } }) {
+================================== */
+export async function GET(req, { params }) {
+  const { id } = params;
+
   try {
+    if (!id) {
+      return NextResponse.json(
+        { message: "Missing user ID" },
+        { status: 400 }
+      );
+    }
+
     const user = await prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        farmers: true, // include if needed
-        orders: true,  // include if needed
+      include: {
+        farmers: true,
+        orders: true,
+        accounts: true,   // for NextAuth safety
+        sessions: true,   // for NextAuth safety
       },
     });
 
@@ -27,26 +33,33 @@ export async function GET(req, { params: { id } }) {
     }
 
     return NextResponse.json(user);
+
   } catch (error) {
-    console.error("Failed to fetch user:", error);
+    console.error("GET USER ERROR:", error);
     return NextResponse.json(
-      { message: "Failed to fetch user", error: error.message },
+      { message: "Failed to fetch customer", error: error.message },
       { status: 500 }
     );
   }
 }
 
-/* ===============================
+
+/* ==================================
    DELETE CUSTOMER
-=============================== */
-export async function DELETE(req, { params: { id } }) {
+================================== */
+export async function DELETE(req, { params }) {
+  const { id } = params;
+
   try {
+    if (!id) {
+      return NextResponse.json(
+        { message: "Missing user ID" },
+        { status: 400 }
+      );
+    }
+
     const user = await prisma.user.findUnique({
       where: { id },
-      include: {
-        orders: true,
-        farmers: true,
-      },
     });
 
     if (!user) {
@@ -56,7 +69,7 @@ export async function DELETE(req, { params: { id } }) {
       );
     }
 
-    // Prevent deleting admin accounts
+    // 🚫 Prevent deleting admin
     if (user.role === "ADMIN") {
       return NextResponse.json(
         { message: "Admin accounts cannot be deleted" },
@@ -64,26 +77,46 @@ export async function DELETE(req, { params: { id } }) {
       );
     }
 
-    // Delete related orders and farmers first
-    if (user.orders.length > 0) {
-      await prisma.order.deleteMany({ where: { userId: id } });
-    }
+    /* =============================
+       DELETE ALL RELATED DATA FIRST
+    ============================== */
 
-    if (user.farmers.length > 0) {
-      await prisma.farmer.deleteMany({ where: { userId: id } });
-    }
+    // If using NextAuth
+    await prisma.session.deleteMany({
+      where: { userId: id },
+    });
 
-    // Delete the user
-    await prisma.user.delete({ where: { id } });
+    await prisma.account.deleteMany({
+      where: { userId: id },
+    });
+
+    // Your relations
+    await prisma.order.deleteMany({
+      where: { userId: id },
+    });
+
+    await prisma.farmer.deleteMany({
+      where: { userId: id },
+    });
+
+    // Finally delete user
+    await prisma.user.delete({
+      where: { id },
+    });
 
     return NextResponse.json(
       { message: "Customer deleted successfully" },
       { status: 200 }
     );
+
   } catch (error) {
     console.error("DELETE USER ERROR:", error);
+
     return NextResponse.json(
-      { message: "Failed to delete customer", error: error.message },
+      {
+        message: "Failed to delete customer",
+        error: error.message,
+      },
       { status: 500 }
     );
   }
