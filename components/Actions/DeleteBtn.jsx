@@ -8,8 +8,8 @@ import { Trash2 } from "lucide-react";
 
 export default function DeleteBtn({
   id,
-  title,
-  type = "product", // product | farmerProduct | customer
+  title = "Item",
+  type = "product", // "product" | "farmerProduct" | "customer"
 }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -35,20 +35,37 @@ export default function DeleteBtn({
     try {
       setLoading(true);
 
+      // ✅ Determine endpoint safely
       let endpoint = "";
 
-      // ✅ Determine correct endpoint
-      if (type === "farmerProduct") {
-        endpoint = `/api/farmers/products/${id}`;
-      } else if (type === "customer") {
-        endpoint = `/api/admin/customers/${id}`;
-      } else {
-        endpoint = `/api/products/${id}`;
+      switch (type) {
+        case "farmerProduct":
+          endpoint = `/api/farmers/products/${id}`;
+          break;
+
+        case "customer":
+          endpoint = `/api/admin/customers/${id}`;
+          break;
+
+        default:
+          endpoint = `/api/products/${id}`;
       }
 
-      const res = await fetch(endpoint, { method: "DELETE" });
+      const res = await fetch(endpoint, {
+        method: "DELETE",
+      });
 
-      const data = await res.json();
+      // ✅ SAFE JSON parsing (prevents JSON.parse crash)
+      let data = {};
+      const contentType = res.headers.get("content-type");
+
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch {
+          data = {};
+        }
+      }
 
       if (!res.ok) {
         throw new Error(data?.message || "Delete failed");
@@ -56,7 +73,9 @@ export default function DeleteBtn({
 
       toast.success(`${title} deleted successfully`);
 
+      // Refresh page properly
       router.refresh();
+
     } catch (error) {
       console.error("DELETE ERROR:", error);
       toast.error(error?.message || "Something went wrong");
