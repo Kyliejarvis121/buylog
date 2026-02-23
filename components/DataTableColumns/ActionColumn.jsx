@@ -20,6 +20,7 @@ export default function ActionColumn({
   type = "product", // product | farmerProduct | customer
 }) {
   const item = row.original;
+
   if (!item?.id) return null;
 
   return (
@@ -34,14 +35,16 @@ export default function ActionColumn({
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
+        {/* DELETE */}
         <DropdownMenuItem>
           <DeleteBtn
             id={item.id}
             title={title}
-            type={type}   // 👈 VERY IMPORTANT
+            type={type}  // 👈 VERY IMPORTANT
           />
         </DropdownMenuItem>
 
+        {/* EDIT */}
         <DropdownMenuItem>
           <EditBtn title={title} editEndpoint={editEndpoint} />
         </DropdownMenuItem>
