@@ -43,7 +43,7 @@ export default function DeleteBtn({
           break;
 
         case "customer":
-          endpoint = `/api/customers/${id}`; // 👈 FIXED (no /admin)
+          endpoint = `/api/users/${id}`; // 👈 FIXED (matches GET update route)
           break;
 
         default:
