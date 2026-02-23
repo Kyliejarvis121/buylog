@@ -35,7 +35,6 @@ export default function DeleteBtn({
     try {
       setLoading(true);
 
-      // ✅ Determine endpoint safely
       let endpoint = "";
 
       switch (type) {
@@ -44,7 +43,7 @@ export default function DeleteBtn({
           break;
 
         case "customer":
-          endpoint = `/api/admin/customers/${id}`;
+          endpoint = `/api/customers/${id}`; // 👈 FIXED (no /admin)
           break;
 
         default:
@@ -55,7 +54,6 @@ export default function DeleteBtn({
         method: "DELETE",
       });
 
-      // ✅ SAFE JSON parsing (prevents JSON.parse crash)
       let data = {};
       const contentType = res.headers.get("content-type");
 
@@ -73,9 +71,7 @@ export default function DeleteBtn({
 
       toast.success(`${title} deleted successfully`);
 
-      // Refresh page properly
       router.refresh();
-
     } catch (error) {
       console.error("DELETE ERROR:", error);
       toast.error(error?.message || "Something went wrong");
