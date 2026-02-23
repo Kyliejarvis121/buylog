@@ -6,13 +6,17 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import { Trash2 } from "lucide-react";
 
-export default function DeleteBtn({ id, title, isFarmer = false }) {
+export default function DeleteBtn({
+  id,
+  title,
+  type = "product", // product | farmerProduct | customer
+}) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function handleDelete() {
     if (!id) {
-      toast.error("Product ID is missing");
+      toast.error("ID is missing");
       return;
     }
 
@@ -31,23 +35,27 @@ export default function DeleteBtn({ id, title, isFarmer = false }) {
     try {
       setLoading(true);
 
-      // ✅ Correct endpoints
-      const endpoint = isFarmer
-        ? `/api/farmers/products/${id}`  // Farmer route
-        : `/api/products/${id}`         // Admin route (plural)
+      let endpoint = "";
+
+      // ✅ Determine correct endpoint
+      if (type === "farmerProduct") {
+        endpoint = `/api/farmers/products/${id}`;
+      } else if (type === "customer") {
+        endpoint = `/api/admin/customers/${id}`;
+      } else {
+        endpoint = `/api/products/${id}`;
+      }
 
       const res = await fetch(endpoint, { method: "DELETE" });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        data = { message: "Delete request sent" };
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Delete failed");
       }
 
-      if (!res.ok) throw new Error(data?.message || "Delete failed");
-
       toast.success(`${title} deleted successfully`);
+
       router.refresh();
     } catch (error) {
       console.error("DELETE ERROR:", error);
