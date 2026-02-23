@@ -17,7 +17,7 @@ export default function ActionColumn({
   row,
   title,
   editEndpoint,
-  type = "product", // product | farmerProduct | customer
+  type = "customers", // product | farmerProduct | customer
 }) {
   const item = row.original;
 
