@@ -20,8 +20,9 @@ export async function GET(req, { params }) {
       include: {
         farmers: true,
         orders: true,
-        accounts: true,   // for NextAuth safety
-        sessions: true,   // for NextAuth safety
+        accounts: true,
+        sessions: true,
+        profile: true,
       },
     });
 
@@ -33,7 +34,6 @@ export async function GET(req, { params }) {
     }
 
     return NextResponse.json(user);
-
   } catch (error) {
     console.error("GET USER ERROR:", error);
     return NextResponse.json(
@@ -43,9 +43,8 @@ export async function GET(req, { params }) {
   }
 }
 
-
 /* ==================================
-   DELETE CUSTOMER
+   DELETE CUSTOMER (MongoDB SAFE)
 ================================== */
 export async function DELETE(req, { params }) {
   const { id } = params;
@@ -77,32 +76,31 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    /* =============================
-       DELETE ALL RELATED DATA FIRST
-    ============================== */
+    /* ==================================
+       FULL CLEANUP (MongoDB requires this)
+    ================================== */
 
-    // If using NextAuth
-    await prisma.session.deleteMany({
-      where: { userId: id },
-    });
+    // NextAuth
+    await prisma.session.deleteMany({ where: { userId: id } });
+    await prisma.account.deleteMany({ where: { userId: id } });
 
-    await prisma.account.deleteMany({
-      where: { userId: id },
-    });
+    // Profile
+    await prisma.profile.deleteMany({ where: { userId: id } });
 
-    // Your relations
-    await prisma.order.deleteMany({
-      where: { userId: id },
-    });
+    // Orders
+    await prisma.order.deleteMany({ where: { userId: id } });
 
-    await prisma.farmer.deleteMany({
-      where: { userId: id },
-    });
+    // Farmers
+    await prisma.farmer.deleteMany({ where: { userId: id } });
+
+    // Chats where user is buyer
+    await prisma.chat.deleteMany({ where: { buyerId: id } });
+
+    // Messages sent by user
+    await prisma.message.deleteMany({ where: { senderUserId: id } });
 
     // Finally delete user
-    await prisma.user.delete({
-      where: { id },
-    });
+    await prisma.user.delete({ where: { id } });
 
     return NextResponse.json(
       { message: "Customer deleted successfully" },
