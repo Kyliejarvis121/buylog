@@ -13,23 +13,19 @@ import { MoreHorizontal } from "lucide-react";
 import DeleteBtn from "../Actions/DeleteBtn";
 import EditBtn from "../Actions/EditBtn";
 
-/**
- * ActionColumn
- * @param {object} row - Row object from the table
- * @param {string} title - Title to show in Delete/Edit buttons
- * @param {string} editEndpoint - Endpoint for editing
- * @param {string} type - Type for DeleteBtn (product | farmerProduct | customer)
- */
-export default function ActionColumn({ row, title, editEndpoint, type = "product" }) {
+export default function ActionColumn({
+  row,
+  title,
+  editEndpoint,
+  type = "product", // product | farmerProduct | customer
+}) {
   const item = row.original;
-
   if (!item?.id) return null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -38,16 +34,14 @@ export default function ActionColumn({ row, title, editEndpoint, type = "product
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* Delete */}
         <DropdownMenuItem>
           <DeleteBtn
             id={item.id}
             title={title}
-            type={type}  // 👈 FIXED
+            type={type}   // 👈 VERY IMPORTANT
           />
         </DropdownMenuItem>
 
-        {/* Edit */}
         <DropdownMenuItem>
           <EditBtn title={title} editEndpoint={editEndpoint} />
         </DropdownMenuItem>
