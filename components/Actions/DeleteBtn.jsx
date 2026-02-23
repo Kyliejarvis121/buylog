@@ -37,18 +37,18 @@ export default function DeleteBtn({
 
       let endpoint = "";
 
-      switch (type) {
-        case "farmerProduct":
-          endpoint = `/api/farmers/products/${id}`;
-          break;
+     switch (type) {
+     case "farmerProduct":
+    endpoint = `/api/farmers/products/${id}`;
+    break;
 
-        case "customer":
-          endpoint = `/api/users/${id}`; // 👈 FIXED (matches GET update route)
-          break;
+    case "customer":
+    endpoint = `/api/users/${id}`; // matches API route
+    break;
 
-        default:
-          endpoint = `/api/products/${id}`;
-      }
+    default:
+    endpoint = `/api/products/${id}`;
+}
 
       const res = await fetch(endpoint, {
         method: "DELETE",
