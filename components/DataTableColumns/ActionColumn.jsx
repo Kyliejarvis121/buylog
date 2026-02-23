@@ -17,14 +17,13 @@ import EditBtn from "../Actions/EditBtn";
  * ActionColumn
  * @param {object} row - Row object from the table
  * @param {string} title - Title to show in Delete/Edit buttons
- * @param {string} editEndpoint - Endpoint for editing the product
- * @param {boolean} isFarmer - Whether this row belongs to a farmer (default: false)
+ * @param {string} editEndpoint - Endpoint for editing
+ * @param {string} type - Type for DeleteBtn (product | farmerProduct | customer)
  */
-export default function ActionColumn({ row, title, editEndpoint, isFarmer = false }) {
-  const product = row.original;
+export default function ActionColumn({ row, title, editEndpoint, type = "product" }) {
+  const item = row.original;
 
-  // If no product ID, hide the column
-  if (!product?.id) return null;
+  if (!item?.id) return null;
 
   return (
     <DropdownMenu>
@@ -39,12 +38,16 @@ export default function ActionColumn({ row, title, editEndpoint, isFarmer = fals
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* Delete button */}
+        {/* Delete */}
         <DropdownMenuItem>
-          <DeleteBtn id={product.id} title={title} isFarmer={isFarmer} />
+          <DeleteBtn
+            id={item.id}
+            title={title}
+            type={type}  // 👈 FIXED
+          />
         </DropdownMenuItem>
 
-        {/* Edit button */}
+        {/* Edit */}
         <DropdownMenuItem>
           <EditBtn title={title} editEndpoint={editEndpoint} />
         </DropdownMenuItem>
