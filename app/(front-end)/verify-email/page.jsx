@@ -8,22 +8,19 @@ export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
-  const id = searchParams.get("id");
 
   const [status, setStatus] = useState("Verifying...");
 
   useEffect(() => {
-    if (!token || !id) {
+    if (!token) {
       setStatus("Invalid verification link");
       return;
     }
 
     async function verifyUser() {
       try {
-        const res = await fetch("/api/users/verify", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, id }),
+        const res = await fetch(`/api/verify-email?token=${token}`, {
+          method: "GET",
         });
 
         const data = await res.json();
@@ -35,27 +32,25 @@ export default function VerifyEmailPage() {
         }
 
         setStatus("Your account has been successfully verified!");
-        toast.success("Account verified successfully!");
+        toast.success("Account verified!");
 
-        // Optionally redirect to login or dashboard after 3 seconds
         setTimeout(() => {
-          router.push("/login"); // or "/farmer/dashboard"
-        }, 3000);
+          router.push("/verify-success?email=" + encodeURIComponent(data.email));
+        }, 2000);
       } catch (error) {
-        console.error("Verification Error:", error);
-        setStatus("Network error, please try again.");
-        toast.error("Network error, please try again.");
+        setStatus("Network error");
+        toast.error("Network error");
       }
     }
 
     verifyUser();
-  }, [token, id, router]);
+  }, [token, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white shadow-lg p-6 rounded-lg text-center">
-        <h1 className="text-2xl font-semibold mb-4">Email Verification</h1>
-        <p className="text-gray-700">{status}</p>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="bg-white shadow p-6 rounded text-center">
+        <h1 className="text-xl font-bold">Email Verification</h1>
+        <p>{status}</p>
       </div>
     </div>
   );
