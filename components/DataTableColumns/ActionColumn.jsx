@@ -10,18 +10,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
 import DeleteBtn from "../Actions/DeleteBtn";
-import EditBtn from "../Actions/EditBtn";
 
 export default function ActionColumn({
   row,
   title,
-  editEndpoint,
-  type = "customers", // product | farmerProduct | customer
+  editBasePath, // example: "/dashboard/farmers/products"
+  type = "farmerProduct",
 }) {
+  const router = useRouter();
   const item = row.original;
 
   if (!item?.id) return null;
+
+  const handleEdit = () => {
+    router.push(`${editBasePath}/${item.id}`);
+  };
 
   return (
     <DropdownMenu>
@@ -35,18 +40,18 @@ export default function ActionColumn({
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
+        {/* EDIT */}
+        <DropdownMenuItem onClick={handleEdit}>
+          Edit
+        </DropdownMenuItem>
+
         {/* DELETE */}
-        <DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <DeleteBtn
             id={item.id}
             title={title}
-            type={type}  // 👈 VERY IMPORTANT
+            type={type}
           />
-        </DropdownMenuItem>
-
-        {/* EDIT */}
-        <DropdownMenuItem>
-          <EditBtn title={title} editEndpoint={editEndpoint} />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
