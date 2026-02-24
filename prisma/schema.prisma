@@ -41,7 +41,7 @@ model User {
 
   // 👥 Relations
   profile Profile?
-  farmers Farmer[]
+  farmer Farmer?
   orders  Order[]
 
   // 💬 Chat relations
@@ -76,7 +76,7 @@ model Profile {
 model Farmer {
   id       String   @id @default(auto()) @map("_id") @db.ObjectId
   name     String
-  userId   String   @db.ObjectId
+  userId   String   @unique @db.ObjectId   // 👈 VERY IMPORTANT
   isActive Boolean? @default(false)
 
   products Product[]
