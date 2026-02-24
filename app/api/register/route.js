@@ -35,7 +35,7 @@ export async function POST(req) {
     const verificationToken = crypto.randomUUID();
 
     // Create user with verification token
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         name,
         email,
@@ -55,7 +55,7 @@ export async function POST(req) {
         <h2>Welcome ${name}!</h2>
         <p>Please verify your email address to activate your account.</p>
         <p>Click the link below to verify:</p>
-        <a href="https://yourdomain.com/api/verify-email?token=${verificationToken}">
+        <a href="https://buylogint.com/api/verify-email?token=${verificationToken}">
           Verify Email
         </a>
       `,
