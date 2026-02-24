@@ -30,7 +30,7 @@ export async function POST(req) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         name,
         email,
@@ -40,20 +40,27 @@ export async function POST(req) {
       },
     });
 
-    // ✅ SEND EMAIL HERE
-    const { error } = await resend.emails.send({
-      from: "onboarding@resend.dev", // use this first
+    // SEND EMAIL
+    const { data, error } = await resend.emails.send({
+      from: "noreply@buylogint.com",
       to: email,
-      subject: "Welcome to Buylog 🎉",
+      subject: "Buylog Registration Successful 🎉",
       html: `
         <h2>Welcome ${name}!</h2>
         <p>Your account has been created successfully.</p>
-        <p>You can now login and start using Buylog.</p>
+        <p>You can now log in and start using Buylog.</p>
       `,
     });
 
+    console.log("RESEND DATA:", data);
+    console.log("RESEND ERROR:", error);
+
     if (error) {
       console.error("Resend error:", error);
+      return NextResponse.json(
+        { message: "Email sending failed", error },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(
@@ -63,7 +70,7 @@ export async function POST(req) {
   } catch (err) {
     console.error("Registration error:", err);
     return NextResponse.json(
-      { message: "Registration failed" },
+      { message: "Registration failed", error: err.message },
       { status: 500 }
     );
   }
