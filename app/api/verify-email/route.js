@@ -7,26 +7,22 @@ export async function GET(req) {
   const baseUrl = new URL(req.url).origin;
 
   if (!token) {
-    return NextResponse.redirect(
-      `${baseUrl}/verify-email?error=invalid`
-    );
+    return NextResponse.redirect(`${baseUrl}/verify-email?error=invalid`);
   }
 
   const user = await prisma.user.findFirst({
-    where: { verificationToken: token },
+    where: { emailVerificationToken: token },
   });
 
   if (!user) {
-    return NextResponse.redirect(
-      `${baseUrl}/verify-email?error=expired`
-    );
+    return NextResponse.redirect(`${baseUrl}/verify-email?error=expired`);
   }
 
   await prisma.user.update({
     where: { id: user.id },
     data: {
       emailVerified: true,
-      verificationToken: null,
+      emailVerificationToken: null,
     },
   });
 

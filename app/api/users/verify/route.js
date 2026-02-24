@@ -1,52 +1,32 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 
-export async function PUT(request) {
-  try {
-    const { token, id } = await request.json();
+export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("token");
+  const baseUrl = new URL(req.url).origin;
 
-    if (!id || !token) {
-      return NextResponse.json(
-        { data: null, message: "User ID and token are required" },
-        { status: 400 }
-      );
-    }
-
-    // ✅ Fetch user by id
-    const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      return NextResponse.json(
-        { data: null, message: "No user found with this ID" },
-        { status: 404 }
-      );
-    }
-
-    // ✅ Check if token matches
-    if (user.emailVerificationToken !== token) {
-      return NextResponse.json(
-        { data: null, message: "Invalid verification token" },
-        { status: 401 }
-      );
-    }
-
-    // ✅ Update verification status
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: {
-        emailVerified: true,
-        emailVerificationToken: null, // clear token after use
-      },
-    });
-
-    return NextResponse.json({
-      data: { id: updatedUser.id, emailVerified: updatedUser.emailVerified },
-      message: "User verified successfully",
-    });
-  } catch (error) {
-    console.error("PUT /api/users verification failed:", error);
-    return NextResponse.json(
-      { data: null, message: "Failed to verify user", error: error.message },
-      { status: 500 }
-    );
+  if (!token) {
+    return NextResponse.redirect(`${baseUrl}/verify-email?error=invalid`);
   }
+
+  const user = await prisma.user.findFirst({
+    where: { emailVerificationToken: token },
+  });
+
+  if (!user) {
+    return NextResponse.redirect(`${baseUrl}/verify-email?error=expired`);
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerified: true,
+      emailVerificationToken: null,
+    },
+  });
+
+  return NextResponse.redirect(
+    `${baseUrl}/verify-success?email=${encodeURIComponent(user.email)}`
+  );
 }

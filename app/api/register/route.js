@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
+import crypto from "crypto";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -30,25 +31,33 @@ export async function POST(req) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await prisma.user.create({
+    // Generate verification token
+    const verificationToken = crypto.randomUUID();
+
+    // Create user with verification token
+    const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role,
         emailVerified: false,
+        emailVerificationToken: verificationToken,
       },
     });
 
-    // SEND EMAIL
+    // SEND VERIFICATION EMAIL
     const { data, error } = await resend.emails.send({
       from: "noreply@buylogint.com",
       to: email,
-      subject: "Buylog Registration Successful 🎉",
+      subject: "Verify Your Email Address",
       html: `
         <h2>Welcome ${name}!</h2>
-        <p>Your account has been created successfully.</p>
-        <p>You can now log in and start using Buylog.</p>
+        <p>Please verify your email address to activate your account.</p>
+        <p>Click the link below to verify:</p>
+        <a href="https://yourdomain.com/api/verify-email?token=${verificationToken}">
+          Verify Email
+        </a>
       `,
     });
 
@@ -56,7 +65,6 @@ export async function POST(req) {
     console.log("RESEND ERROR:", error);
 
     if (error) {
-      console.error("Resend error:", error);
       return NextResponse.json(
         { message: "Email sending failed", error },
         { status: 500 }
@@ -64,7 +72,7 @@ export async function POST(req) {
     }
 
     return NextResponse.json(
-      { message: "Registration successful" },
+      { message: "Registration successful. Please verify your email." },
       { status: 201 }
     );
   } catch (err) {
