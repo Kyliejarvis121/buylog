@@ -6,19 +6,31 @@ import { redirect } from "next/navigation";
 
 export default async function NewProductPage() {
   const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
 
-  // Get the farmer linked to the logged-in user
-  const farmer = await prisma.farmer.findFirst({
+  if (!session) {
+    redirect("/login");
+  }
+
+  // Find farmer linked to this user (unique relation)
+  const farmer = await prisma.farmer.findUnique({
     where: { userId: session.user.id },
   });
 
+  // If farmer not found, show message (no redirect)
   if (!farmer) {
-    console.error("Farmer record not found for user", session.user.id);
-    redirect("/dashboard"); // Or show a message
+    return (
+      <div className="container mx-auto py-8 text-white">
+        <h2 className="text-xl font-semibold mb-2">
+          Farmer profile not found
+        </h2>
+        <p>
+          Please contact support to activate your farmer account before uploading products.
+        </p>
+      </div>
+    );
   }
 
-  // Fetch categories
+  // Fetch categories safely
   let categories = [];
   try {
     categories = await prisma.category.findMany({
@@ -35,11 +47,10 @@ export default async function NewProductPage() {
         Upload New Product
       </h1>
 
-      {/* Pass empty existingProduct for new uploads */}
       <ProductUpload
         farmerId={farmer.id}
         categories={categories}
-        existingProduct={null} // ensures multiple image merge logic works in future
+        existingProduct={null}
       />
     </div>
   );

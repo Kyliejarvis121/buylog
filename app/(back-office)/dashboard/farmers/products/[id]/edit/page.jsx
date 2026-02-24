@@ -13,7 +13,6 @@ export default function EditProductPage() {
   const [deleting, setDeleting] = useState(false);
   const [categories, setCategories] = useState([]);
 
-  // Upload more images states
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -40,12 +39,12 @@ export default function EditProductPage() {
     qty: "",
   });
 
-  // Fetch product + categories
+  // FETCH PRODUCT + CATEGORIES
   useEffect(() => {
     async function fetchData() {
       try {
         const [productRes, categoryRes] = await Promise.all([
-          fetch(`/api/farmers/products/${productId}`),
+          fetch(`/api/products/${productId}`),
           fetch("/api/categories"),
         ]);
 
@@ -93,7 +92,7 @@ export default function EditProductPage() {
     fetchData();
   }, [productId, router]);
 
-  // Handle input change
+  // HANDLE CHANGE
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
@@ -106,14 +105,14 @@ export default function EditProductPage() {
     }));
   };
 
-  // Handle selecting files (no upload yet)
+  // IMAGE UPLOAD SELECT
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     setSelectedFiles(files);
   };
 
-  // Upload selected images
+  // UPLOAD IMAGES
   const uploadSelectedImages = async () => {
     if (!selectedFiles.length) return;
     setUploading(true);
@@ -153,7 +152,7 @@ export default function EditProductPage() {
     }
   };
 
-  // Remove image
+  // REMOVE IMAGE
   const removeImg = (url) => {
     setForm((prev) => {
       const nextImages = prev.productImages.filter((i) => i !== url);
@@ -162,14 +161,17 @@ export default function EditProductPage() {
     });
   };
 
-  // Set main image
+  // SET MAIN IMAGE
   const setMainImage = (url) => setForm((prev) => ({ ...prev, imageUrl: url }));
 
-  // Add/remove tags
-  const addTag = (tag) => tag && setForm((prev) => ({ ...prev, tags: [...new Set([...prev.tags, tag])] }));
-  const removeTag = (tag) => setForm((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
+  // TAGS
+  const addTag = (tag) =>
+    tag && setForm((prev) => ({ ...prev, tags: [...new Set([...prev.tags, tag])] }));
 
-  // Submit update
+  const removeTag = (tag) =>
+    setForm((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
+
+  // UPDATE PRODUCT
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -186,7 +188,7 @@ export default function EditProductPage() {
         categoryId: form.categoryId || null,
         isActive: !!form.isActive,
         imageUrl: form.imageUrl || (form.productImages[0] ?? null),
-        productImages: Array.isArray(form.productImages) ? form.productImages : [form.productImages],
+        productImages: Array.isArray(form.productImages) ? form.productImages : [],
         sku: form.sku || null,
         barcode: form.barcode || null,
         unit: form.unit || null,
@@ -197,7 +199,7 @@ export default function EditProductPage() {
         wholesaleQty: form.wholesaleQty !== "" ? Number(form.wholesaleQty) : 0,
       };
 
-      const res = await fetch(`/api/farmers/products/${productId}`, {
+      const res = await fetch(`/api/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -209,7 +211,6 @@ export default function EditProductPage() {
         alert("Product updated successfully");
         router.push("/dashboard/farmers/products");
       } else {
-        console.error("Update error:", data);
         alert("Failed to update product: " + (data.message || "Unknown"));
       }
     } catch (err) {
@@ -220,13 +221,15 @@ export default function EditProductPage() {
     }
   };
 
-  // Delete product
+  // DELETE PRODUCT
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this product? This cannot be undone.")) return;
+    if (!confirm("Are you sure? This cannot be undone.")) return;
     setDeleting(true);
+
     try {
-      const res = await fetch(`/api/farmers/products/${productId}`, { method: "DELETE" });
+      const res = await fetch(`/api/products/${productId}`, { method: "DELETE" });
       const j = await res.json();
+
       if (j.success) {
         alert("Product deleted");
         router.push("/dashboard/farmers/products");
@@ -241,7 +244,7 @@ export default function EditProductPage() {
     }
   };
 
-  if (loading) return <div className="p-6 bg-gray-900 min-h-screen text-white">Loading...</div>;
+  if (loading) return <div className="p-6 bg-gray-900 text-white">Loading...</div>;
 
   return (
     <div className="p-6 min-h-screen bg-gray-900 text-white">
@@ -249,7 +252,6 @@ export default function EditProductPage() {
         <h1 className="text-2xl font-semibold mb-4">Edit Product</h1>
 
         <form onSubmit={handleSubmit} className="grid gap-4">
-          {/* TITLE */}
           <div>
             <label className="block text-sm mb-1">Title</label>
             <input
@@ -257,165 +259,53 @@ export default function EditProductPage() {
               value={form.title}
               onChange={handleChange}
               className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-              placeholder="Product title"
               required
             />
           </div>
 
-          {/* SLUG */}
           <div>
-            <label className="block text-sm mb-1">Slug (optional)</label>
+            <label className="block text-sm mb-1">Slug</label>
             <input
               name="slug"
               value={form.slug}
               onChange={handleChange}
               className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-              placeholder="product-slug"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* PRICE */}
-            <div>
-              <label className="block text-sm mb-1">Price</label>
-              <input type="number" name="price" value={form.price} onChange={handleChange} className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-            </div>
-
-            {/* SALE PRICE */}
-            <div>
-              <label className="block text-sm mb-1">Sale Price</label>
-              <input type="number" name="salePrice" value={form.salePrice} onChange={handleChange} className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-            </div>
+            <input
+              type="number"
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
+            />
+            <input
+              type="number"
+              name="salePrice"
+              value={form.salePrice}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
+            />
           </div>
 
-          {/* STOCK / QTY */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm mb-1">Stock</label>
-              <input type="number" name="productStock" value={form.productStock} onChange={handleChange} className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Qty</label>
-              <input type="number" name="qty" value={form.qty} onChange={handleChange} className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-            </div>
-          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-4 py-2 bg-lime-600 text-black rounded"
+          >
+            {saving ? "Saving..." : "Update Product"}
+          </button>
 
-          {/* SKU / BARCODE / UNIT */}
-          <div className="grid grid-cols-3 gap-4">
-            <input name="sku" value={form.sku} onChange={handleChange} placeholder="SKU" className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-            <input name="barcode" value={form.barcode} onChange={handleChange} placeholder="Barcode" className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-            <input name="unit" value={form.unit} onChange={handleChange} placeholder="Unit (e.g. 1kg)" className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-          </div>
-
-          {/* PRODUCT CODE */}
-          <div>
-            <label className="block text-sm mb-1">Product Code</label>
-            <input name="productCode" value={form.productCode} onChange={handleChange} placeholder="Product code" className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-          </div>
-
-          {/* CATEGORY */}
-          <div>
-            <label className="block text-sm mb-1">Category</label>
-            <select name="categoryId" value={form.categoryId} onChange={handleChange} className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white">
-              <option value="">No category</option>
-              {categories.map((c) => (<option key={c.id} value={c.id}>{c.title}</option>))}
-            </select>
-          </div>
-
-          {/* WHOLESALE */}
-          <div className="grid grid-cols-3 gap-4 items-end">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" name="isWholesale" checked={!!form.isWholesale} onChange={handleChange} className="accent-lime-500"/>
-              <span className="text-sm">Wholesale</span>
-            </label>
-            <input name="wholesalePrice" value={form.wholesalePrice} onChange={handleChange} placeholder="Wholesale price" className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-            <input name="wholesaleQty" value={form.wholesaleQty} onChange={handleChange} placeholder="Wholesale min qty" className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"/>
-          </div>
-
-          {/* DESCRIPTION */}
-          <div>
-            <label className="block text-sm mb-1">Description</label>
-            <textarea name="description" value={form.description} onChange={handleChange} className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white h-32"/>
-          </div>
-
-          {/* TAGS */}
-          <div>
-            <label className="block text-sm mb-1">Tags</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                id="newTag"
-                placeholder="Add a tag and press Enter"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const val = e.target.value.trim();
-                    if (val) {
-                      addTag(val);
-                      e.target.value = "";
-                    }
-                  }
-                }}
-                className="flex-1 p-3 bg-gray-900 border border-gray-700 rounded text-white"
-              />
-              <div className="inline-flex items-center gap-2">
-                {form.tags.map((t) => (
-                  <span key={t} className="px-2 py-1 bg-gray-700 text-sm rounded flex items-center gap-2">
-                    {t}
-                    <button type="button" onClick={() => removeTag(t)} className="ml-2 text-xs text-red-400">x</button>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* IMAGES UPLOAD */}
-          <div>
-            <label className="block text-sm mb-1">Upload More Images</label>
-            <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="w-full text-sm text-white"/>
-            {selectedFiles.length > 0 && (
-              <button type="button" onClick={uploadSelectedImages} disabled={uploading} className="mt-2 px-4 py-2 bg-blue-600 rounded text-white">
-                {uploading ? "Uploading..." : `Upload ${selectedFiles.length} Image(s)`}
-              </button>
-            )}
-            {uploading && (
-              <div className="mt-2">
-                <div className="text-xs text-gray-300 mb-1">Uploading: {uploadProgress}%</div>
-                <div className="w-full h-2 bg-gray-700 rounded">
-                  <div className="h-2 bg-lime-500 rounded" style={{ width: `${uploadProgress}%` }}/>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* IMAGES PREVIEW */}
-          <div className="grid grid-cols-3 gap-3 mt-2">
-            {form.productImages.length === 0 ? (
-              <div className="col-span-3 text-sm text-gray-400">No images yet</div>
-            ) : (
-              form.productImages.map((url, index) => (
-                <div key={index} className="relative group rounded overflow-hidden border border-gray-700">
-                  <img src={url} className="w-full h-32 object-cover" alt={`img-${index}`} />
-                  <div className="absolute left-1 top-1 flex gap-1">
-                    <button type="button" onClick={() => setMainImage(url)} className={`text-xs px-2 py-1 rounded ${form.imageUrl === url ? "bg-lime-600 text-black" : "bg-gray-800 text-white"} m-2`}>
-                      {form.imageUrl === url ? "Main" : "Set main"}
-                    </button>
-                    <button type="button" onClick={() => removeImg(url)} className="text-xs px-2 py-1 rounded bg-red-600 text-white m-2">Remove</button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* ACTIONS */}
-          <div className="flex gap-3 mt-4">
-            <button type="submit" disabled={saving} className="px-4 py-2 bg-lime-600 text-black rounded font-semibold">
-              {saving ? "Saving..." : "Update Product"}
-            </button>
-            <button type="button" onClick={() => router.push("/dashboard/farmers/products")} className="px-4 py-2 bg-gray-700 text-white rounded">Cancel</button>
-            <button type="button" onClick={handleDelete} disabled={deleting} className="ml-auto px-4 py-2 bg-red-600 text-white rounded">
-              {deleting ? "Deleting..." : "Delete Product"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="px-4 py-2 bg-red-600 text-white rounded mt-2"
+          >
+            {deleting ? "Deleting..." : "Delete Product"}
+          </button>
         </form>
       </div>
     </div>

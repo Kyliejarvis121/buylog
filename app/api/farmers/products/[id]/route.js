@@ -4,6 +4,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
 // ==============================
+// OPTIONS (Preflight)
+// ==============================
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200 });
+}
+
+// ==============================
 // GET SINGLE PRODUCT (FOR EDIT)
 // ==============================
 export async function GET(req, { params }) {
@@ -17,7 +24,7 @@ export async function GET(req, { params }) {
       );
     }
 
-    const farmer = await prisma.farmer.findFirst({
+    const farmer = await prisma.farmer.findUnique({
       where: { userId: session.user.id },
     });
 
@@ -56,7 +63,7 @@ export async function GET(req, { params }) {
       data: product,
     });
   } catch (error) {
-    console.error("❌ FARMER PRODUCT GET ERROR:", error);
+    console.error("FARMER PRODUCT GET ERROR:", error);
 
     return NextResponse.json(
       { success: false, message: "Failed to fetch product" },
@@ -79,7 +86,7 @@ export async function PUT(req, { params }) {
       );
     }
 
-    const farmer = await prisma.farmer.findFirst({
+    const farmer = await prisma.farmer.findUnique({
       where: { userId: session.user.id },
     });
 
@@ -126,7 +133,7 @@ export async function PUT(req, { params }) {
       data: updatedProduct,
     });
   } catch (error) {
-    console.error("❌ FARMER PRODUCT UPDATE ERROR:", error);
+    console.error("FARMER PRODUCT UPDATE ERROR:", error);
 
     return NextResponse.json(
       { success: false, message: "Failed to update product" },
@@ -149,7 +156,7 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    const farmer = await prisma.farmer.findFirst({
+    const farmer = await prisma.farmer.findUnique({
       where: { userId: session.user.id },
     });
 
@@ -197,7 +204,7 @@ export async function DELETE(req, { params }) {
       message: "Product deleted successfully",
     });
   } catch (error) {
-    console.error("❌ FARMER PRODUCT DELETE ERROR:", error);
+    console.error("FARMER PRODUCT DELETE ERROR:", error);
 
     return NextResponse.json(
       { success: false, message: "Failed to delete product" },
@@ -205,4 +212,3 @@ export async function DELETE(req, { params }) {
     );
   }
 }
-
