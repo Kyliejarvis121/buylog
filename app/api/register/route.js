@@ -34,14 +34,14 @@ export async function POST(req) {
     // Generate verification token
     const verificationToken = crypto.randomUUID();
 
-    // Create user with verification token
+    // Create user (emailVerified is NULL until verification)
     await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role,
-        emailVerified: false,
+        emailVerified: null,
         emailVerificationToken: verificationToken,
       },
     });
@@ -53,16 +53,12 @@ export async function POST(req) {
       subject: "Verify Your Email Address",
       html: `
         <h2>Welcome ${name}!</h2>
-        <p>Please verify your email address to activate your account.</p>
-        <p>Click the link below to verify:</p>
-        <a href="https://buylogint.com/api/verify-email?token=${verificationToken}">
+        <p>Please verify your email to activate your account.</p>
+        <a href="https://www.buylogint.com/api/verify-email?token=${verificationToken}">
           Verify Email
         </a>
       `,
     });
-
-    console.log("RESEND DATA:", data);
-    console.log("RESEND ERROR:", error);
 
     if (error) {
       return NextResponse.json(
