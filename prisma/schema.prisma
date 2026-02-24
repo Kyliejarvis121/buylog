@@ -18,8 +18,8 @@ model User {
   password String?
   role     String  @default("FARMER")
 
-  // ✅ Email verification
-  emailVerified          Boolean @default(false)
+  // ✅ MUST BE DateTime
+  emailVerified          DateTime?
   emailVerificationToken String?
 
   image String?
