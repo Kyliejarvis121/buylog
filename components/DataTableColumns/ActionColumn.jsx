@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
-import DeleteBtn from "../Actions/DeleteBtn";
+import DeleteBtn from "@/components/Actions/DeleteBtn";
 
 export default function ActionColumn({
   row,
   title,
-  editBasePath, // example: "/dashboard/farmers/products"
+  editBasePath, // e.g. "/dashboard/farmers/products"
   type = "farmerProduct",
 }) {
   const router = useRouter();
@@ -25,6 +25,10 @@ export default function ActionColumn({
   if (!item?.id) return null;
 
   const handleEdit = () => {
+    if (!editBasePath) {
+      console.error("editBasePath is missing");
+      return;
+    }
     router.push(`${editBasePath}/${item.id}`);
   };
 
