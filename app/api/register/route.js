@@ -34,20 +34,20 @@ export async function POST(req) {
     // Generate verification token
     const verificationToken = crypto.randomUUID();
 
-    // Create user (emailVerified is NULL until verification)
+    // Create user (not verified yet)
     await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role,
-        emailVerified: null,
+        emailVerified: false, // 👈 Boolean (matches schema)
         emailVerificationToken: verificationToken,
       },
     });
 
     // SEND VERIFICATION EMAIL
-    const { data, error } = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: "noreply@buylogint.com",
       to: email,
       subject: "Verify Your Email Address",

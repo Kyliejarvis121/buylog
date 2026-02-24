@@ -19,7 +19,7 @@ model User {
   role     String  @default("FARMER")
 
   // ✅ MUST BE DateTime
-  emailVerified          DateTime?
+  emailVerified Boolean @default(false)
   emailVerificationToken String?
 
   image String?

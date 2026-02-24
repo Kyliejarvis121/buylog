@@ -21,7 +21,7 @@ export async function GET(req) {
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      emailVerified: new Date(),
+      emailVerified: true, // 👈 Boolean now
       emailVerificationToken: null,
     },
   });
