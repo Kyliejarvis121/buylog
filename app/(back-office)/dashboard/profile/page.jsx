@@ -9,8 +9,10 @@ export default async function ProfilePage() {
   if (!session) return null;
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: { profile: true, farmers: true },
+    include: {
+      profile: true,
+      farmer: true,
+    }
   });
 
   return (

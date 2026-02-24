@@ -45,9 +45,12 @@ export default async function DashboardPage() {
 
   // FARMER dashboard
   if (role === "FARMER") {
-    const farmerSales = sales.filter((s) => s.farmerId === userId);
-    const farmerProducts = products.filter((p) => p.farmerId === userId);
-    const farmerSupport = supports.filter((s) => s.farmerId === userId);
+    // ❌ BUG FIX: product.farmerId is FARMER ID, NOT userId
+    const farmer = farmers.find((f) => f.userId === userId);
+
+    const farmerSales = sales.filter((s) => s.farmerId === farmer?.id);
+    const farmerProducts = products.filter((p) => p.farmerId === farmer?.id);
+    const farmerSupport = supports.filter((s) => s.farmerId === farmer?.id);
 
     return (
       <FarmerDashboard
