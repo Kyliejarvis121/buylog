@@ -6,7 +6,7 @@ import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import TextInput from "@/components/FormInputs/TextInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import FormHeader from "@/components/backoffice/FormHeader";
-import { makePostRequest, makePutRequest } from "@/lib/apiRequest";
+import { makeRequest, makePutRequest } from "@/lib/apiRequest";
 import { generateSlug } from "@/lib/generateSlug";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -64,7 +64,7 @@ export default function NewTrainingForm({ categories, updateData = {} }) {
       );
       console.log("update Request: ", data);
     } else {
-      makePostRequest(
+      makeRequest(
         setLoading,
         "api/trainings",
         data,

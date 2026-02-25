@@ -9,7 +9,7 @@ import ImageInput from "@/components/FormInputs/ImageInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
-import { makePostRequest } from "@/lib/apiRequest";
+import { makeRequest } from "@/lib/apiRequest";
 
 export default function NewProductForm({ categories = [], farmers = [], updateData = null }) {
   const [loading, setLoading] = useState(false);
@@ -56,7 +56,7 @@ export default function NewProductForm({ categories = [], farmers = [], updateDa
 
     const endpoint = updateData ? `products/${updateData.id}` : "products";
 
-    await makePostRequest(
+    await makeRequest(
       setLoading,
       `/api/${endpoint}`,
       data,

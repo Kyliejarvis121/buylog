@@ -6,7 +6,7 @@ import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import TextInput from "@/components/FormInputs/TextInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import FormHeader from "@/components/backoffice/FormHeader";
-import { makePostRequest } from "@/lib/apiRequest";
+import { makeRequest } from "@/lib/apiRequest";
 import { generateSlug } from "@/lib/generateSlug";
 import { useRouter } from "next/navigation";
 
@@ -46,7 +46,7 @@ export default function NewMarketForm({ categories }) {
     data.slug = slug;
     data.logoUrl = imageUrl;
     console.log(data);
-    makePostRequest(setLoading, "api/markets", data, "Market", reset, redirect);
+    makeRequest(setLoading, "api/markets", data, "Market", reset, redirect);
     setImageUrl("");
   }
   return (

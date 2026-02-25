@@ -5,7 +5,7 @@ import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import TextInput from "@/components/FormInputs/TextInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import FormHeader from "@/components/backoffice/FormHeader";
-import { makePostRequest, makePutRequest } from "@/lib/apiRequest";
+import { makeRequest, makePutRequest } from "@/lib/apiRequest";
 import { generateCouponCode } from "@/lib/generateCouponCode";
 import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";

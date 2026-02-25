@@ -29,7 +29,7 @@ export default function Summary({ farmerId }) {
     data.code = code;
     data.userId = farmerId;
     console.log(data);
-    makePostRequest(
+    makeRequest(
       setLoading,
       "api/farmers",
       data,

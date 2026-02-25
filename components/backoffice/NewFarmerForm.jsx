@@ -9,7 +9,7 @@ import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import TextInput from "@/components/FormInputs/TextInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
-import { makePostRequest } from "@/lib/apiRequest";
+import { makeRequest } from "@/lib/apiRequest";
 import { generateUserCode } from "@/lib/generateUserCode";
 
 export default function NewFarmerForm({ user }) {
@@ -45,7 +45,7 @@ export default function NewFarmerForm({ user }) {
     data.products = products;
     data.profileImageUrl = imageUrl;
 
-    makePostRequest(
+    makeRequest(
       setLoading,
       "api/farmers",
       data,
