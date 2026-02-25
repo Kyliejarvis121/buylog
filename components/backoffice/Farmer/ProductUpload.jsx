@@ -13,15 +13,27 @@ import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
 
 import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
-import { makePostRequest } from "@/lib/apiRequest";
+import { makeRequest } from "@/lib/apiRequest";
 
-export default function ProductUpload({ farmerId, categories = [], existingProduct }) {
+export default function ProductUpload({
+  farmerId,
+  categories = [],
+  existingProduct,
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState(existingProduct?.tags || []);
-  const [productImages, setProductImages] = useState(existingProduct?.productImages || []);
+  const [productImages, setProductImages] = useState(
+    existingProduct?.productImages || []
+  );
 
-  const { register, watch, handleSubmit, reset, formState: { errors } } = useForm({
+  const {
+    register,
+    watch,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       isActive: existingProduct?.isActive ?? true,
       isWholesale: existingProduct?.isWholesale ?? false,
@@ -33,39 +45,48 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
   const isWholesale = watch("isWholesale");
 
   const onSubmit = async (data) => {
+    console.log("FORM SUBMITTED:", data);
+
     if (productImages.length < 1) {
       alert("Upload at least one product image");
       return;
     }
 
     const allImages = existingProduct?.productImages
-      ? [...existingProduct.productImages, ...productImages.filter(img => !existingProduct.productImages.includes(img))]
+      ? [
+          ...existingProduct.productImages,
+          ...productImages.filter(
+            (img) => !existingProduct.productImages.includes(img)
+          ),
+        ]
       : productImages;
 
-    // ✅ Sanitize categoryId & marketId
-    const categoryId = data.categoryId && data.categoryId !== "String" ? data.categoryId : null;
-    const marketId = data.marketId && data.marketId !== "String" ? data.marketId : null;
-
     const payload = {
-      id: existingProduct?.id,
+      id: existingProduct?.id || undefined,
       title: data.title,
-      description: data.description ?? "",
+      description: data.description || "",
       slug: generateSlug(data.title),
-      price: parseFloat(data.productPrice),
-      salePrice: data.salePrice ? parseFloat(data.salePrice) : 0,
-      productStock: parseInt(data.productStock ?? 0),
-      categoryId,          // only send valid categoryId
-      marketId,            // only send valid marketId if needed
+
+      price: Number(data.productPrice) || 0,
+      salePrice: Number(data.salePrice) || 0,
+      productStock: Number(data.productStock) || 0,
+
+      categoryId: data.categoryId || null,
       farmerId,
+
       imageUrl: allImages[0],
       productImages: allImages,
       tags,
+
       productCode: generateUserCode("LLP", data.title),
-      isWholesale: !!data.isWholesale,
-      wholesalePrice: data.wholesalePrice ? parseFloat(data.wholesalePrice) : 0,
-      wholesaleQty: data.wholesaleQty ? parseInt(data.wholesaleQty) : 0,
-      isActive: !!data.isActive,
+
+      isWholesale: Boolean(data.isWholesale),
+      wholesalePrice: Number(data.wholesalePrice) || 0,
+      wholesaleQty: Number(data.wholesaleQty) || 0,
+
+      isActive: Boolean(data.isActive),
       qty: 1,
+
       phoneNumber: data.phoneNumber || "",
       location: data.location || "",
     };
@@ -73,11 +94,13 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
     const method = existingProduct ? "PUT" : "POST";
     const endpoint = "/api/products";
 
-    makePostRequest(
+    await makeRequest(
       setLoading,
       endpoint,
       payload,
-      existingProduct ? "Product updated" : "Product uploaded",
+      existingProduct
+        ? "Product updated successfully"
+        : "Product uploaded successfully",
       () => {
         reset();
         setTags([]);
@@ -133,17 +156,18 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
           defaultValue={existingProduct?.productStock}
         />
 
-        {/* Category Select */}
+        {/* Category */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium">Category</label>
           <select
             {...register("categoryId")}
             className="border rounded-md px-3 py-2 text-sm bg-gray-800 text-white"
-            defaultValue={existingProduct?.categoryId || ""}
           >
-            <option value="" disabled>Select Category</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.title}</option>
+            <option value="">Select Category</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.title}
+              </option>
             ))}
           </select>
         </div>
@@ -164,7 +188,6 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
               type="number"
               register={register}
               errors={errors}
-              defaultValue={existingProduct?.wholesalePrice}
             />
 
             <TextInput
@@ -173,7 +196,6 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
               type="number"
               register={register}
               errors={errors}
-              defaultValue={existingProduct?.wholesaleQty}
             />
           </>
         )}
@@ -205,17 +227,14 @@ export default function ProductUpload({ farmerId, categories = [], existingProdu
           name="phoneNumber"
           register={register}
           errors={errors}
-          defaultValue={existingProduct?.phoneNumber}
         />
 
-        {/* Location Input */}
         <TextInput
           label="Location"
           name="location"
           placeholder="e.g. Benin City, Edo"
           register={register}
           errors={errors}
-          defaultValue={existingProduct?.location}
         />
 
         <ToggleInput
