@@ -3,7 +3,7 @@ import NewProductForm from "@/components/backoffice/NewProductForm";
 import { getData } from "@/lib/getData";
 
 export default async function UpdateProduct({ params: { id } }) {
-  const productRes = await getData(`products/${id}`);
+  const productRes = await getData(`farmers/products/${id}`); // ✅ FIXED
   const categoriesRes = await getData("categories");
 
   const product = productRes?.data || productRes;
