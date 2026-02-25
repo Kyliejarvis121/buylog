@@ -59,17 +59,9 @@ export default function ProductUpload({
       return;
     }
 
-    const allImages = existingProduct?.productImages
-      ? [
-          ...existingProduct.productImages,
-          ...productImages.filter(
-            (img) => !existingProduct.productImages.includes(img)
-          ),
-        ]
-      : productImages;
+    const allImages = productImages;
 
     const payload = {
-      id: existingProduct?.id,
       title: data.title,
       description: data.description || "",
       slug: generateSlug(data.title),
@@ -102,8 +94,6 @@ export default function ProductUpload({
       ? `/api/farmers/products/${existingProduct.id}`
       : "/api/products";
 
-    const method = existingProduct ? "PUT" : "POST";
-
     try {
       if (existingProduct) {
         await makePutRequest(
@@ -130,7 +120,7 @@ export default function ProductUpload({
             setProductImages([]);
           },
           () => router.push("/dashboard/farmers/products"),
-          method
+          "POST"
         );
       }
     } catch (err) {
