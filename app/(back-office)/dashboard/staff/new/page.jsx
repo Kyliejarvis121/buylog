@@ -6,7 +6,7 @@ import TextInput from "@/components/FormInputs/TextInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import FormHeader from "@/components/backoffice/FormHeader";
 
-import { makePostRequest } from "@/lib/apiRequest";
+import { makeRequest } from "@/lib/apiRequest";
 import { generateUserCode } from "@/lib/generateUserCode";
 
 import React, { useState } from "react";
@@ -18,7 +18,6 @@ export default function NewStaff() {
   const {
     register,
     reset,
-    watch,
     handleSubmit,
     formState: { errors },
   } = useForm({
@@ -34,7 +33,14 @@ export default function NewStaff() {
 
     console.log("SUBMITTING STAFF:", data);
 
-    makePostRequest(setLoading, "api/staffs", data, "Staff", reset);
+    makeRequest(
+      setLoading,
+      "api/staffs",
+      data,
+      "Staff created successfully",
+      () => reset(),
+      () => {}
+    );
   }
 
   return (
@@ -48,7 +54,6 @@ export default function NewStaff() {
                dark:bg-gray-800 dark:border-gray-700"
       >
         <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-          
           <TextInput
             label="Staff Full Name"
             name="name"

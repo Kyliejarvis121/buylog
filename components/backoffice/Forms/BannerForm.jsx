@@ -5,7 +5,7 @@ import TextareaInput from "@/components/FormInputs/TextAreaInput";
 import TextInput from "@/components/FormInputs/TextInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import FormHeader from "@/components/backoffice/FormHeader";
-import { makePostRequest, makePutRequest } from "@/lib/apiRequest";
+import { makeRequest, makePutRequest } from "@/lib/apiRequest";
 import { generateSlug } from "@/lib/generateSlug";
 import { useRouter } from "next/navigation";
 
@@ -17,6 +17,7 @@ export default function BannerForm({ updateData = {} }) {
   const id = updateData?.id ?? "";
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
   const [loading, setLoading] = useState(false);
+
   const {
     register,
     reset,
@@ -29,35 +30,49 @@ export default function BannerForm({ updateData = {} }) {
       ...updateData,
     },
   });
+
   const router = useRouter();
   function redirect() {
     router.push("/dashboard/banners");
   }
+
   const isActive = watch("isActive");
+
   async function onSubmit(data) {
     data.imageUrl = imageUrl;
-    console.log(data);
+    data.slug = generateSlug(data.title);
+
     if (id) {
-      //Make Put Request
-      makePutRequest(setLoading, `api/banners/${id}`, data, "Banner", redirect);
+      // UPDATE
+      makePutRequest(
+        setLoading,
+        `api/banners/${id}`,
+        data,
+        "Banner",
+        redirect,
+        reset
+      );
     } else {
-      //make post request
-      makePostRequest(
+      // CREATE
+      makeRequest(
         setLoading,
         "api/banners",
         data,
-        "Banner",
-        reset,
+        "Banner created successfully",
+        () => reset(),
         redirect
       );
       setImageUrl("");
     }
   }
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3 "
+      className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3"
     >
+      <FormHeader title={id ? "Edit Banner" : "New Banner"} />
+
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
         <TextInput
           label="Banner Title"
@@ -72,13 +87,14 @@ export default function BannerForm({ updateData = {} }) {
           register={register}
           errors={errors}
         />
-        {/* Configure this endpoint in the core js */}
+
         <ImageInput
           imageUrl={imageUrl}
           setImageUrl={setImageUrl}
           endpoint="bannerImageUploader"
           label="Banner Image"
         />
+
         <ToggleInput
           label="Publish your Banner"
           name="isActive"
@@ -91,9 +107,7 @@ export default function BannerForm({ updateData = {} }) {
       <SubmitButton
         isLoading={loading}
         buttonTitle={id ? "Update Banner" : "Create Banner"}
-        loadingButtonTitle={`${
-          id ? "Updating" : "Creating"
-        } Banner please wait...`}
+        loadingButtonTitle={`${id ? "Updating" : "Creating"} Banner please wait...`}
       />
     </form>
   );
