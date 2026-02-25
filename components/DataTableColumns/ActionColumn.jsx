@@ -16,7 +16,7 @@ import DeleteBtn from "@/components/Actions/DeleteBtn";
 export default function ActionColumn({
   row,
   title,
-  editBasePath, // e.g. "/dashboard/farmers/products"
+  editBasePath,
   type = "farmerProduct",
 }) {
   const router = useRouter();
@@ -51,7 +51,7 @@ export default function ActionColumn({
         </DropdownMenuItem>
 
         {/* DELETE */}
-        <DropdownMenuItem asChild className="cursor-pointer">
+        <DropdownMenuItem>
           <DeleteBtn id={item.id} title={title} type={type} />
         </DropdownMenuItem>
       </DropdownMenuContent>
