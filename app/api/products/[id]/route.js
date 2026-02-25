@@ -4,39 +4,39 @@ import { NextResponse } from "next/server";
 export async function GET(req, { params }) {
   try {
     const { id } = params;
-    if (!id)
+
+    if (!id) {
       return NextResponse.json(
         { success: false, message: "Product ID is required" },
         { status: 400 }
       );
+    }
 
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
-        category: true, // ok if null
-        productImages: true, // ok if empty or null
+        category: true,
+        farmer: true,
       },
     });
 
-    if (!product)
+    if (!product) {
       return NextResponse.json(
         { success: false, message: "Product not found" },
         { status: 404 }
       );
+    }
 
-    // Convert any nulls to empty arrays/objects to prevent frontend crash
     return NextResponse.json({
       success: true,
       data: {
         ...product,
-        category: product.category ?? null,
-        productImages: Array.isArray(product.productImages)
-          ? product.productImages
-          : [],
+        productImages: product.productImages || [],
       },
     });
-  } catch (err) {
-    console.error("❌ GLOBAL PRODUCT GET ERROR:", err);
+  } catch (error) {
+    console.error("PRODUCT GET ERROR:", error);
+
     return NextResponse.json(
       { success: false, message: "Failed to fetch product" },
       { status: 500 }

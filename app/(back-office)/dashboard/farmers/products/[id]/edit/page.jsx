@@ -39,7 +39,6 @@ export default function EditProductPage() {
     qty: "",
   });
 
-  // FETCH PRODUCT + CATEGORIES
   useEffect(() => {
     async function fetchData() {
       try {
@@ -67,7 +66,7 @@ export default function EditProductPage() {
           description: p.description || "",
           categoryId: p.categoryId || "",
           isActive: p.isActive ?? true,
-          imageUrl: p.imageUrl || (Array.isArray(p.productImages) ? p.productImages[0] : ""),
+          imageUrl: p.imageUrl || (p.productImages?.[0] || ""),
           productImages: Array.isArray(p.productImages) ? p.productImages : [],
           sku: p.sku || "",
           barcode: p.barcode || "",
@@ -93,7 +92,6 @@ export default function EditProductPage() {
     fetchData();
   }, [productId, router]);
 
-  // HANDLE CHANGE
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
@@ -106,14 +104,12 @@ export default function EditProductPage() {
     }));
   };
 
-  // IMAGE SELECT
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     setSelectedFiles(files);
   };
 
-  // UPLOAD IMAGES
   const uploadSelectedImages = async () => {
     if (!selectedFiles.length) return;
     setUploading(true);
@@ -139,7 +135,7 @@ export default function EditProductPage() {
       if (uploadedUrls.length) {
         setForm((prev) => ({
           ...prev,
-          productImages: [...prev.productImages, ...uploadedUrls],
+          productImages: [...(prev.productImages || []), ...uploadedUrls],
           imageUrl: prev.imageUrl || uploadedUrls[0],
         }));
       }
@@ -155,7 +151,7 @@ export default function EditProductPage() {
 
   const removeImg = (url) => {
     setForm((prev) => {
-      const nextImages = prev.productImages.filter((i) => i !== url);
+      const nextImages = (prev.productImages || []).filter((i) => i !== url);
       const nextMain = prev.imageUrl === url ? nextImages[0] || "" : prev.imageUrl;
       return { ...prev, productImages: nextImages, imageUrl: nextMain };
     });
@@ -164,12 +160,11 @@ export default function EditProductPage() {
   const setMainImage = (url) => setForm((prev) => ({ ...prev, imageUrl: url }));
 
   const addTag = (tag) =>
-    tag && setForm((prev) => ({ ...prev, tags: [...new Set([...prev.tags, tag])] }));
+    tag && setForm((prev) => ({ ...prev, tags: [...new Set([...(prev.tags || []), tag])] }));
 
   const removeTag = (tag) =>
-    setForm((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
+    setForm((prev) => ({ ...prev, tags: (prev.tags || []).filter((t) => t !== tag) }));
 
-  // UPDATE PRODUCT
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -185,7 +180,7 @@ export default function EditProductPage() {
         description: form.description || "",
         categoryId: form.categoryId || null,
         isActive: !!form.isActive,
-        imageUrl: form.imageUrl || (form.productImages[0] || null),
+        imageUrl: form.imageUrl || (form.productImages?.[0] || null),
         productImages: Array.isArray(form.productImages) ? form.productImages : [],
         sku: form.sku || null,
         barcode: form.barcode || null,
@@ -219,7 +214,6 @@ export default function EditProductPage() {
     }
   };
 
-  // DELETE PRODUCT
   const handleDelete = async () => {
     if (!confirm("Are you sure?")) return;
     setDeleting(true);

@@ -49,6 +49,9 @@ export async function GET(req, { params }) {
         id,
         farmerId: farmer.id,
       },
+      include: {
+        category: true, // optional but useful
+      },
     });
 
     if (!product) {
@@ -60,7 +63,12 @@ export async function GET(req, { params }) {
 
     return NextResponse.json({
       success: true,
-      data: product,
+      data: {
+        ...product,
+        productImages: Array.isArray(product.productImages)
+          ? product.productImages
+          : [],
+      },
     });
   } catch (error) {
     console.error("FARMER PRODUCT GET ERROR:", error);
