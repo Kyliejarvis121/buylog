@@ -9,7 +9,7 @@ import { Trash2 } from "lucide-react";
 export default function DeleteBtn({
   id,
   title = "Item",
-  type = "product", // "product" | "farmerProduct" | "customer"
+  type = "farmerProduct",
 }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -37,22 +37,15 @@ export default function DeleteBtn({
 
       let endpoint = "";
 
-     switch (type) {
-     case "farmerProduct":
-    endpoint = `/api/farmers/products/${id}`;
-    break;
+      if (type === "farmerProduct") {
+        endpoint = `/api/farmers/products/${id}`;
+      } else if (type === "customer") {
+        endpoint = `/api/users/${id}`;
+      } else {
+        endpoint = `/api/products/${id}`;
+      }
 
-    case "customer":
-    endpoint = `/api/users/${id}`; // matches API route
-    break;
-
-    default:
-    endpoint = `/api/products/${id}`;
-}
-
-      const res = await fetch(endpoint, {
-        method: "DELETE",
-      });
+      const res = await fetch(endpoint, { method: "DELETE" });
 
       let data = {};
       const contentType = res.headers.get("content-type");
@@ -84,7 +77,7 @@ export default function DeleteBtn({
     <button
       onClick={handleDelete}
       disabled={loading}
-      className="font-medium text-red-600 dark:text-red-500 flex items-center gap-1 disabled:opacity-50"
+      className="font-medium text-red-600 flex items-center gap-1 disabled:opacity-50"
     >
       <Trash2 className="w-4 h-4" />
       <span>{loading ? "Deleting..." : `Delete ${title}`}</span>

@@ -45,12 +45,10 @@ export default function ActionColumn({
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* EDIT */}
         <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
           Edit
         </DropdownMenuItem>
 
-        {/* DELETE */}
         <DropdownMenuItem>
           <DeleteBtn id={item.id} title={title} type={type} />
         </DropdownMenuItem>
