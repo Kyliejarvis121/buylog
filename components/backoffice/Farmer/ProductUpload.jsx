@@ -54,12 +54,12 @@ export default function ProductUpload({
 
   const onSubmit = async (data) => {
     console.log("FORM SUBMITTED:", data);
-
+  
     if (productImages.length < 1) {
       alert("Upload at least one product image");
       return;
     }
-
+  
     const allImages = existingProduct?.productImages
       ? [
           ...existingProduct.productImages,
@@ -68,58 +68,74 @@ export default function ProductUpload({
           ),
         ]
       : productImages;
-
+  
     const payload = {
+      id: existingProduct?.id,
       title: data.title,
       description: data.description || "",
       slug: generateSlug(data.title),
-
+  
       price: Number(data.productPrice) || 0,
       salePrice: Number(data.salePrice) || 0,
       productStock: Number(data.productStock) || 0,
-
+  
       categoryId: data.categoryId || null,
       farmerId,
-
+  
       imageUrl: allImages[0],
       productImages: allImages,
       tags,
-
+  
       productCode: generateUserCode("LLP", data.title),
-
+  
       isWholesale: Boolean(data.isWholesale),
       wholesalePrice: Number(data.wholesalePrice) || 0,
       wholesaleQty: Number(data.wholesaleQty) || 0,
-
+  
       isActive: Boolean(data.isActive),
       qty: 1,
-
+  
       phoneNumber: data.phoneNumber || "",
       location: data.location || "",
     };
-
-    const method = existingProduct ? "PUT" : "POST";
+  
     const endpoint = existingProduct
       ? `/api/farmers/products/${existingProduct.id}`
       : "/api/products";
-
-    await makeRequest(
-      setLoading,
-      endpoint,
-      payload,
-      existingProduct
-        ? "Product updated successfully"
-        : "Product uploaded successfully",
-      () => {
-        reset();
-        setTags([]);
-        setProductImages([]);
-      },
-      () => router.push("/dashboard/farmers/products"),
-      method
-    );
+  
+    try {
+      if (existingProduct) {
+        await makePutRequest(
+          setLoading,
+          endpoint,
+          payload,
+          "Product",
+          () => router.push("/dashboard/farmers/products"),
+          () => {
+            reset();
+            setTags([]);
+            setProductImages([]);
+          }
+        );
+      } else {
+        await makeRequest(
+          setLoading,
+          endpoint,
+          payload,
+          "Product uploaded successfully",
+          () => {
+            reset();
+            setTags([]);
+            setProductImages([]);
+          },
+          () => router.push("/dashboard/farmers/products")
+        );
+      }
+    } catch (err) {
+      console.error("SUBMIT ERROR:", err);
+      alert("Something went wrong");
+    }
   };
-
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
