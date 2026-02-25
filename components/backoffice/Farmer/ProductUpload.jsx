@@ -14,12 +14,12 @@ import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
 
 import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
-import { makeRequest } from "@/lib/apiRequest";
+import { makeRequest, makePutRequest } from "@/lib/apiRequest";
 
 export default function ProductUpload({
   farmerId,
   categories = [],
-  existingProduct,
+  existingProduct = null,
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -54,8 +54,6 @@ export default function ProductUpload({
   const isWholesale = watch("isWholesale");
 
   const onSubmit = async (data) => {
-    console.log("FORM SUBMITTED:", data);
-
     if (productImages.length < 1) {
       toast.error("Upload at least one product image");
       return;
@@ -104,22 +102,22 @@ export default function ProductUpload({
       ? `/api/farmers/products/${existingProduct.id}`
       : "/api/products";
 
+    const method = existingProduct ? "PUT" : "POST";
+
     try {
       if (existingProduct) {
-        const res = await fetch(endpoint, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          toast.success("Product updated successfully");
-          router.push("/dashboard/farmers/products");
-        } else {
-          toast.error(data.message || "Update failed");
-        }
+        await makePutRequest(
+          setLoading,
+          endpoint,
+          payload,
+          "Product",
+          () => router.push("/dashboard/farmers/products"),
+          () => {
+            reset();
+            setTags([]);
+            setProductImages([]);
+          }
+        );
       } else {
         await makeRequest(
           setLoading,
@@ -131,7 +129,8 @@ export default function ProductUpload({
             setTags([]);
             setProductImages([]);
           },
-          () => router.push("/dashboard/farmers/products")
+          () => router.push("/dashboard/farmers/products"),
+          method
         );
       }
     } catch (err) {
