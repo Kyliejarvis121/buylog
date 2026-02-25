@@ -35,10 +35,18 @@ export default function ProductUpload({
     formState: { errors },
   } = useForm({
     defaultValues: {
+      title: existingProduct?.title || "",
+      description: existingProduct?.description || "",
+      productPrice: existingProduct?.price || 0,
+      salePrice: existingProduct?.salePrice || 0,
+      productStock: existingProduct?.productStock || 0,
+      categoryId: existingProduct?.categoryId || "",
       isActive: existingProduct?.isActive ?? true,
       isWholesale: existingProduct?.isWholesale ?? false,
-      categoryId: existingProduct?.categoryId ?? "",
-      location: existingProduct?.location ?? "",
+      wholesalePrice: existingProduct?.wholesalePrice || 0,
+      wholesaleQty: existingProduct?.wholesaleQty || 0,
+      phoneNumber: existingProduct?.phoneNumber || "",
+      location: existingProduct?.location || "",
     },
   });
 
@@ -62,7 +70,6 @@ export default function ProductUpload({
       : productImages;
 
     const payload = {
-      id: existingProduct?.id || undefined,
       title: data.title,
       description: data.description || "",
       slug: generateSlug(data.title),
@@ -92,7 +99,9 @@ export default function ProductUpload({
     };
 
     const method = existingProduct ? "PUT" : "POST";
-    const endpoint = "/api/products";
+    const endpoint = existingProduct
+      ? `/api/farmers/products/${existingProduct.id}`
+      : "/api/products";
 
     await makeRequest(
       setLoading,
@@ -208,11 +217,7 @@ export default function ProductUpload({
           existingImages={existingProduct?.productImages || []}
         />
 
-        <ArrayItemsInput
-          items={tags}
-          setItems={setTags}
-          itemTitle="Tag"
-        />
+        <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
 
         <TextareaInput
           label="Product Description"
@@ -232,7 +237,7 @@ export default function ProductUpload({
         <TextInput
           label="Location"
           name="location"
-          placeholder="e.g. Benin City, Edo"
+          placeholder="e.g. Benin City"
           register={register}
           errors={errors}
         />
