@@ -29,6 +29,7 @@ export default function ActionColumn({
       console.error("editBasePath is missing");
       return;
     }
+
     router.push(`${editBasePath}/${item.id}`);
   };
 
@@ -45,17 +46,13 @@ export default function ActionColumn({
         <DropdownMenuSeparator />
 
         {/* EDIT */}
-        <DropdownMenuItem onClick={handleEdit}>
+        <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
           Edit
         </DropdownMenuItem>
 
         {/* DELETE */}
-        <DropdownMenuItem asChild>
-          <DeleteBtn
-            id={item.id}
-            title={title}
-            type={type}
-          />
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <DeleteBtn id={item.id} title={title} type={type} />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
