@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
-  const productId = params.id;
+  const productId = params?.id;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,7 +44,7 @@ export default function EditProductPage() {
     async function fetchData() {
       try {
         const [productRes, categoryRes] = await Promise.all([
-          fetch(`/api/products/${productId}`),
+          fetch(`/api/farmers/products/${productId}`),
           fetch("/api/categories"),
         ]);
 
@@ -59,33 +59,34 @@ export default function EditProductPage() {
         const p = prodJson.data;
 
         setForm({
-          title: p.title ?? "",
-          slug: p.slug ?? "",
-          price: p.price ?? "",
-          salePrice: p.salePrice ?? "",
+          title: p.title || "",
+          slug: p.slug || "",
+          price: p.price ?? 0,
+          salePrice: p.salePrice ?? 0,
           productStock: p.productStock ?? 0,
-          description: p.description ?? "",
-          categoryId: p.categoryId ?? "",
+          description: p.description || "",
+          categoryId: p.categoryId || "",
           isActive: p.isActive ?? true,
-          imageUrl: p.imageUrl ?? (Array.isArray(p.productImages) ? p.productImages[0] ?? "" : ""),
+          imageUrl: p.imageUrl || (Array.isArray(p.productImages) ? p.productImages[0] : ""),
           productImages: Array.isArray(p.productImages) ? p.productImages : [],
-          sku: p.sku ?? "",
-          barcode: p.barcode ?? "",
-          unit: p.unit ?? "",
+          sku: p.sku || "",
+          barcode: p.barcode || "",
+          unit: p.unit || "",
           tags: Array.isArray(p.tags) ? p.tags : [],
           isWholesale: !!p.isWholesale,
-          wholesalePrice: p.wholesalePrice ?? "",
-          wholesaleQty: p.wholesaleQty ?? "",
-          productCode: p.productCode ?? "",
+          wholesalePrice: p.wholesalePrice ?? 0,
+          wholesaleQty: p.wholesaleQty ?? 0,
+          productCode: p.productCode || "",
           qty: p.qty ?? 1,
         });
 
         setCategories(Array.isArray(catJson?.data) ? catJson.data : []);
-        setLoading(false);
       } catch (err) {
         console.error(err);
         alert("Failed to load product");
         router.push("/dashboard/farmers/products");
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -105,7 +106,7 @@ export default function EditProductPage() {
     }));
   };
 
-  // IMAGE UPLOAD SELECT
+  // IMAGE SELECT
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -129,7 +130,7 @@ export default function EditProductPage() {
         const res = await fetch("/api/uploadthing", { method: "POST", body: fd });
         const json = await res.json();
 
-        const url = json?.fileUrl || json?.url || json?.data?.fileUrl || json?.data?.url;
+        const url = json?.fileUrl || json?.url || json?.data?.fileUrl;
         if (url) uploadedUrls.push(url);
 
         setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
@@ -152,19 +153,16 @@ export default function EditProductPage() {
     }
   };
 
-  // REMOVE IMAGE
   const removeImg = (url) => {
     setForm((prev) => {
       const nextImages = prev.productImages.filter((i) => i !== url);
-      const nextMain = prev.imageUrl === url ? nextImages[0] ?? "" : prev.imageUrl;
+      const nextMain = prev.imageUrl === url ? nextImages[0] || "" : prev.imageUrl;
       return { ...prev, productImages: nextImages, imageUrl: nextMain };
     });
   };
 
-  // SET MAIN IMAGE
   const setMainImage = (url) => setForm((prev) => ({ ...prev, imageUrl: url }));
 
-  // TAGS
   const addTag = (tag) =>
     tag && setForm((prev) => ({ ...prev, tags: [...new Set([...prev.tags, tag])] }));
 
@@ -180,14 +178,14 @@ export default function EditProductPage() {
       const payload = {
         title: String(form.title || ""),
         slug: form.slug || undefined,
-        price: form.price !== "" ? Number(form.price) : 0,
-        salePrice: form.salePrice !== "" ? Number(form.salePrice) : null,
-        productStock: form.productStock !== "" ? Number(form.productStock) : 0,
-        qty: form.qty !== "" ? Number(form.qty) : 1,
-        description: form.description ?? "",
+        price: Number(form.price) || 0,
+        salePrice: Number(form.salePrice) || 0,
+        productStock: Number(form.productStock) || 0,
+        qty: Number(form.qty) || 1,
+        description: form.description || "",
         categoryId: form.categoryId || null,
         isActive: !!form.isActive,
-        imageUrl: form.imageUrl || (form.productImages[0] ?? null),
+        imageUrl: form.imageUrl || (form.productImages[0] || null),
         productImages: Array.isArray(form.productImages) ? form.productImages : [],
         sku: form.sku || null,
         barcode: form.barcode || null,
@@ -195,11 +193,11 @@ export default function EditProductPage() {
         productCode: form.productCode || null,
         tags: Array.isArray(form.tags) ? form.tags : [],
         isWholesale: !!form.isWholesale,
-        wholesalePrice: form.wholesalePrice !== "" ? Number(form.wholesalePrice) : 0,
-        wholesaleQty: form.wholesaleQty !== "" ? Number(form.wholesaleQty) : 0,
+        wholesalePrice: Number(form.wholesalePrice) || 0,
+        wholesaleQty: Number(form.wholesaleQty) || 0,
       };
 
-      const res = await fetch(`/api/products/${productId}`, {
+      const res = await fetch(`/api/farmers/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -211,7 +209,7 @@ export default function EditProductPage() {
         alert("Product updated successfully");
         router.push("/dashboard/farmers/products");
       } else {
-        alert("Failed to update product: " + (data.message || "Unknown"));
+        alert(data.message || "Failed to update product");
       }
     } catch (err) {
       console.error(err);
@@ -223,72 +221,50 @@ export default function EditProductPage() {
 
   // DELETE PRODUCT
   const handleDelete = async () => {
-    if (!confirm("Are you sure? This cannot be undone.")) return;
+    if (!confirm("Are you sure?")) return;
     setDeleting(true);
 
     try {
-      const res = await fetch(`/api/products/${productId}`, { method: "DELETE" });
+      const res = await fetch(`/api/farmers/products/${productId}`, { method: "DELETE" });
       const j = await res.json();
 
       if (j.success) {
         alert("Product deleted");
         router.push("/dashboard/farmers/products");
       } else {
-        alert("Delete failed: " + (j.message || "Unknown"));
+        alert(j.message || "Delete failed");
       }
     } catch (err) {
       console.error(err);
-      alert("Something went wrong while deleting");
+      alert("Delete error");
     } finally {
       setDeleting(false);
     }
   };
 
-  if (loading) return <div className="p-6 bg-gray-900 text-white">Loading...</div>;
+  if (loading) return <div className="p-6 text-white">Loading...</div>;
 
   return (
     <div className="p-6 min-h-screen bg-gray-900 text-white">
-      <div className="max-w-4xl mx-auto bg-gray-800 border border-gray-700 rounded-lg p-6 shadow">
-        <h1 className="text-2xl font-semibold mb-4">Edit Product</h1>
+      <div className="max-w-4xl mx-auto bg-gray-800 rounded-lg p-6">
+        <h1 className="text-2xl mb-4">Edit Product</h1>
 
         <form onSubmit={handleSubmit} className="grid gap-4">
-          <div>
-            <label className="block text-sm mb-1">Title</label>
-            <input
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-              required
-            />
-          </div>
+          <input
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            className="w-full p-3 bg-gray-900 border rounded"
+            required
+          />
 
-          <div>
-            <label className="block text-sm mb-1">Slug</label>
-            <input
-              name="slug"
-              value={form.slug}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="number"
-              name="price"
-              value={form.price}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-            />
-            <input
-              type="number"
-              name="salePrice"
-              value={form.salePrice}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white"
-            />
-          </div>
+          <input
+            type="number"
+            name="price"
+            value={form.price}
+            onChange={handleChange}
+            className="w-full p-3 bg-gray-900 border rounded"
+          />
 
           <button
             type="submit"
