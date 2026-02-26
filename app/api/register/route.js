@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
+import { welcomeEmailTemplate } from "@/lib/emails/welcomeEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -58,10 +59,7 @@ export async function POST(req) {
         from: "noreply@buylogint.com",
         to: email,
         subject: "Welcome to BuyLog",
-        html: `
-          <h2>Welcome ${name}!</h2>
-          <p>Your account is ready to use.</p>
-        `,
+        html: welcomeEmailTemplate(name),
       });
     } catch (error) {
       console.error("Welcome email failed (non-fatal):", error);
