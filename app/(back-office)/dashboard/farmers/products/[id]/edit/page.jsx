@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import ProductUpload from "@/components/ProductUpload";
+import ProductUpload from "@/components/Farmer/ProductUpload";
 
 export default function EditProductPage() {
   const router = useRouter();
