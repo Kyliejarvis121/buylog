@@ -11,26 +11,22 @@ export default async function NewProductPage() {
     redirect("/login");
   }
 
-  // Find farmer linked to this user (unique relation)
-  const farmer = await prisma.farmer.findUnique({
+  // ✅ GET OR CREATE FARMER PROFILE (NO BLOCKING)
+  let farmer = await prisma.farmer.findUnique({
     where: { userId: session.user.id },
   });
 
-  // If farmer not found, show message (no redirect)
   if (!farmer) {
-    return (
-      <div className="container mx-auto py-8 text-white">
-        <h2 className="text-xl font-semibold mb-2">
-          Farmer profile not found
-        </h2>
-        <p>
-          Please contact support to activate your farmer account before uploading products.
-        </p>
-      </div>
-    );
+    farmer = await prisma.farmer.create({
+      data: {
+        userId: session.user.id,
+        name: session.user.name || "Farmer",
+        isActive: true,
+      },
+    });
   }
 
-  // Fetch categories safely
+  // ✅ FETCH CATEGORIES (SAFE)
   let categories = [];
   try {
     categories = await prisma.category.findMany({

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
-import crypto from "crypto";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -30,45 +29,42 @@ export async function POST(req) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationToken = crypto.randomUUID();
 
-    // CREATE USER (NOT BLOCKING ACCESS)
+    // CREATE USER (no verification required)
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role,
-        emailVerified: false,
-        emailVerificationToken: verificationToken,
+        emailVerified: true, // treat as ready to use
       },
     });
 
-    // ✅ CREATE FARMER PROFILE IMMEDIATELY IF ROLE IS FARMER
+    // CREATE FARMER PROFILE IF ROLE IS FARMER
     if (role === "FARMER") {
       await prisma.farmer.create({
         data: {
           userId: user.id,
+          name: user.name,
+          isActive: true,
         },
       });
     }
 
-    // SEND VERIFICATION EMAIL (optional but not required)
+    // SEND WELCOME EMAIL (non-fatal)
     try {
       await resend.emails.send({
         from: "noreply@buylogint.com",
         to: email,
-        subject: "Verify Your Email Address",
+        subject: "Welcome to BuyLog",
         html: `
           <h2>Welcome ${name}!</h2>
-          <p>Please verify your email (optional).</p>
-          <a href="https://www.buylogint.com/api/verify-email?token=${verificationToken}">
-            Verify Email
-          </a>
+          <p>Your account is ready to use.</p>
         `,
       });
     } catch (error) {
-      console.error("Email send error:", error);
+      console.error("Welcome email failed (non-fatal):", error);
     }
 
     return NextResponse.json(
@@ -78,7 +74,7 @@ export async function POST(req) {
   } catch (err) {
     console.error("Registration error:", err);
     return NextResponse.json(
-      { message: "Registration failed", error: err.message },
+      { message: "Registration failed" },
       { status: 500 }
     );
   }
