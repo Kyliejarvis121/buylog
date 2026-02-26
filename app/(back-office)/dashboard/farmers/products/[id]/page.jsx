@@ -1,54 +1,49 @@
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prismadb";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
 import FormHeader from "@/components/backoffice/FormHeader";
 import ProductUpload from "@/components/backoffice/Farmer/ProductUpload";
-import { getData } from "@/lib/getData";
 
 export default async function UpdateProduct({ params: { id } }) {
-  const productRes = await getData(`farmers/products/${id}`);
-  const categoriesRes = await getData("categories");
+  const session = await getServerSession(authOptions);
 
-  // Map product data to shape ProductUpload expects
-  const product = productRes?.data
-    ? {
-        id: productRes.data._id || productRes.data.id,
-        title: productRes.data.title,
-        description: productRes.data.description,
-        price: productRes.data.price,
-        salePrice: productRes.data.salePrice,
-        productStock: productRes.data.productStock,
-        productImages: productRes.data.productImages,
-        imageUrl: productRes.data.imageUrl,
-        categoryId: productRes.data.categoryId,
-        farmerId: productRes.data.farmerId,
-        isActive: productRes.data.isActive,
-        isWholesale: productRes.data.isWholesale,
-        wholesalePrice: productRes.data.wholesalePrice,
-        wholesaleQty: productRes.data.wholesaleQty,
-        tags: productRes.data.tags,
-        phoneNumber: productRes.data.phoneNumber,
-        location: productRes.data.location,
-      }
-    : null;
+  if (!session?.user) {
+    return notFound();
+  }
+
+  const farmer = await prisma.farmer.findUnique({
+    where: { userId: session.user.id },
+  });
+
+  if (!farmer) {
+    return notFound();
+  }
+
+  const product = await prisma.product.findFirst({
+    where: {
+      id,
+      farmerId: farmer.id,
+    },
+  });
 
   if (!product) {
     return notFound();
   }
 
-  const categoriesArray = categoriesRes?.data || categoriesRes || [];
-
-  const categories = Array.isArray(categoriesArray)
-    ? categoriesArray.map((cat) => ({
-        id: cat.id,
-        title: cat.title,
-      }))
-    : [];
+  const categories = await prisma.category.findMany({
+    select: {
+      id: true,
+      title: true,
+    },
+  });
 
   return (
     <div>
       <FormHeader title="Update Product" />
 
       <ProductUpload
-        farmerId={product.farmerId}
+        farmerId={farmer.id}
         categories={categories}
         existingProduct={product}
       />
