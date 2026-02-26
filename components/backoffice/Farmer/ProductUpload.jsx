@@ -14,7 +14,6 @@ import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
 
 import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
-import { makeRequest } from "@/lib/apiRequest";
 
 export default function ProductUpload({
   farmerId,
