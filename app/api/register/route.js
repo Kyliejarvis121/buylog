@@ -30,45 +30,49 @@ export async function POST(req) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Generate verification token
     const verificationToken = crypto.randomUUID();
 
-    // Create user (not verified yet)
-    await prisma.user.create({
+    // CREATE USER (NOT BLOCKING ACCESS)
+    const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role,
-        emailVerified: false, // 👈 Boolean (matches schema)
+        emailVerified: false,
         emailVerificationToken: verificationToken,
       },
     });
 
-    // SEND VERIFICATION EMAIL
-    const { error } = await resend.emails.send({
-      from: "noreply@buylogint.com",
-      to: email,
-      subject: "Verify Your Email Address",
-      html: `
-        <h2>Welcome ${name}!</h2>
-        <p>Please verify your email to activate your account.</p>
-        <a href="https://www.buylogint.com/api/verify-email?token=${verificationToken}">
-          Verify Email
-        </a>
-      `,
-    });
+    // ✅ CREATE FARMER PROFILE IMMEDIATELY IF ROLE IS FARMER
+    if (role === "FARMER") {
+      await prisma.farmer.create({
+        data: {
+          userId: user.id,
+        },
+      });
+    }
 
-    if (error) {
-      return NextResponse.json(
-        { message: "Email sending failed", error },
-        { status: 500 }
-      );
+    // SEND VERIFICATION EMAIL (optional but not required)
+    try {
+      await resend.emails.send({
+        from: "noreply@buylogint.com",
+        to: email,
+        subject: "Verify Your Email Address",
+        html: `
+          <h2>Welcome ${name}!</h2>
+          <p>Please verify your email (optional).</p>
+          <a href="https://www.buylogint.com/api/verify-email?token=${verificationToken}">
+            Verify Email
+          </a>
+        `,
+      });
+    } catch (error) {
+      console.error("Email send error:", error);
     }
 
     return NextResponse.json(
-      { message: "Registration successful. Please verify your email." },
+      { message: "Registration successful." },
       { status: 201 }
     );
   } catch (err) {
