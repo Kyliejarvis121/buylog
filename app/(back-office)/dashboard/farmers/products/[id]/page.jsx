@@ -1,9 +1,9 @@
 import FormHeader from "@/components/backoffice/FormHeader";
-import NewProductForm from "@/components/backoffice/NewProductForm";
+import ProductUpload from "@/components/ProductUpload";
 import { getData } from "@/lib/getData";
 
 export default async function UpdateProduct({ params: { id } }) {
-  const productRes = await getData(`farmers/products/${id}`); // ✅ FIXED
+  const productRes = await getData(`farmers/products/${id}`);
   const categoriesRes = await getData("categories");
 
   const product = productRes?.data || productRes;
@@ -19,7 +19,11 @@ export default async function UpdateProduct({ params: { id } }) {
   return (
     <div>
       <FormHeader title="Update Product" />
-      <NewProductForm updateData={product} categories={categories} />
+      <ProductUpload
+        farmerId={product?.farmerId}
+        categories={categories}
+        existingProduct={product}
+      />
     </div>
   );
 }

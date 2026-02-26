@@ -1,3 +1,42 @@
-export default function EditProductPage() {
-  return <div style={{color: "white"}}>THIS IS EDIT PAGE</div>;
+import { notFound } from "next/navigation";
+import FormHeader from "@/components/backoffice/FormHeader";
+import ProductUpload from "@/components/ProductUpload";
+import { getData } from "@/lib/getData";
+
+export default async function EditFarmerProduct({ params }) {
+  const { id } = params;
+
+  // Fetch product + categories in parallel
+  const [productRes, categoriesRes] = await Promise.all([
+    getData(`farmers/products/${id}`),
+    getData("categories"),
+  ]);
+
+  const product = productRes?.data || productRes;
+  const categoriesArray = categoriesRes?.data || categoriesRes || [];
+
+  // If product not found → show 404
+  if (!product || !product.id) {
+    return notFound();
+  }
+
+  // Normalize categories
+  const categories = Array.isArray(categoriesArray)
+    ? categoriesArray.map((cat) => ({
+        id: cat.id,
+        title: cat.title,
+      }))
+    : [];
+
+  return (
+    <div className="p-6">
+      <FormHeader title="Update Product" />
+
+      <ProductUpload
+        farmerId={product.farmerId}
+        categories={categories}
+        existingProduct={product}
+      />
+    </div>
+  );
 }
