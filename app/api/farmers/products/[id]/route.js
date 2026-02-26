@@ -130,9 +130,20 @@ export async function PUT(req, { params }) {
 
     const body = await req.json();
 
+    // ❌ Remove fields that must NOT be updated
+    const {
+      id: _removedId,
+      createdAt,
+      updatedAt,
+      ...updateData
+    } = body;
+
     const updatedProduct = await prisma.product.update({
       where: { id },
-      data: body,
+      data: {
+        ...updateData,
+        updatedAt: new Date(), // optional but good practice
+      },
     });
 
     return NextResponse.json({
