@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import FormHeader from "@/components/backoffice/FormHeader";
-import ProductUpload from "@/components/backoffice/FarmerProductUpload";
+import ProductUpload from "@/components/backoffice/Farmer/ProductUpload";
 import { getData } from "@/lib/getData";
 
 export default async function EditFarmerProduct({ params }) {
