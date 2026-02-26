@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prismadb";
 
@@ -26,13 +25,29 @@ export async function GET(req) {
       );
     }
 
-    await prisma.user.update({
+    // ✅ Update user to verified
+    const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         emailVerified: true,
         emailVerificationToken: null,
       },
     });
+
+    // ✅ CREATE FARMER PROFILE IF ROLE IS FARMER
+    if (updatedUser.role === "FARMER") {
+      const existingFarmer = await prisma.farmer.findUnique({
+        where: { userId: updatedUser.id },
+      });
+
+      if (!existingFarmer) {
+        await prisma.farmer.create({
+          data: {
+            userId: updatedUser.id,
+          },
+        });
+      }
+    }
 
     return NextResponse.redirect(
       `${baseUrl}/verify-success?email=${encodeURIComponent(user.email)}`
