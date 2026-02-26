@@ -1,5 +1,5 @@
 import FormHeader from "@/components/backoffice/FormHeader";
-import ProductUpload from "@/components/ProductUpload";
+import ProductUpload from "@/components/backoffice/Farmer/ProductUpload";
 import { getData } from "@/lib/getData";
 
 export default async function UpdateProduct({ params: { id } }) {
