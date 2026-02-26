@@ -66,8 +66,10 @@ export default function ProductUpload({
       ? [...new Set([...productImages])]
       : productImages;
 
+    const productId = existingProduct?.id || existingProduct?._id;
+
     const payload = {
-      id: existingProduct?.id,
+      id: productId,
       title: formData.title,
       description: formData.description,
       slug: generateSlug(formData.title),
@@ -96,11 +98,11 @@ export default function ProductUpload({
       location: formData.location,
     };
 
-    const endpoint = existingProduct
-      ? `/api/farmers/products/${existingProduct.id}`
+    const endpoint = productId
+      ? `/api/farmers/products/${productId}`
       : "/api/products";
 
-    const method = existingProduct ? "PUT" : "POST";
+    const method = productId ? "PUT" : "POST";
 
     try {
       setLoading(true);
@@ -152,7 +154,6 @@ export default function ProductUpload({
       </h2>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-
         <TextInput
           label="Product Title"
           name="title"
@@ -238,11 +239,7 @@ export default function ProductUpload({
         />
 
         {/* TAGS */}
-        <ArrayItemsInput
-          items={tags}
-          setItems={setTags}
-          itemTitle="Tag"
-        />
+        <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
 
         <TextareaInput
           label="Product Description"
@@ -279,9 +276,7 @@ export default function ProductUpload({
         isLoading={loading}
         buttonTitle={existingProduct ? "Update Product" : "Add Product"}
         loadingButtonTitle={
-          existingProduct
-            ? "Updating Product..."
-            : "Uploading Product..."
+          existingProduct ? "Updating Product..." : "Uploading Product..."
         }
       />
     </form>
