@@ -14,7 +14,7 @@ import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
 
 import { generateSlug } from "@/lib/generateSlug";
 import { generateUserCode } from "@/lib/generateUserCode";
-import { makeRequest, makePutRequest } from "@/lib/apiRequest";
+import { makeRequest } from "@/lib/apiRequest";
 
 export default function ProductUpload({
   farmerId,
@@ -36,115 +36,128 @@ export default function ProductUpload({
     formState: { errors },
   } = useForm({
     defaultValues: {
-      title: existingProduct?.title || "",
-      description: existingProduct?.description || "",
-      productPrice: existingProduct?.price || 0,
-      salePrice: existingProduct?.salePrice || 0,
-      productStock: existingProduct?.productStock || 0,
-      categoryId: existingProduct?.categoryId || "",
+      title: existingProduct?.title ?? "",
+      description: existingProduct?.description ?? "",
+      productPrice: existingProduct?.price ?? 0,
+      salePrice: existingProduct?.salePrice ?? 0,
+      productStock: existingProduct?.productStock ?? 0,
+      categoryId: existingProduct?.categoryId ?? "",
       isActive: existingProduct?.isActive ?? true,
       isWholesale: existingProduct?.isWholesale ?? false,
-      wholesalePrice: existingProduct?.wholesalePrice || 0,
-      wholesaleQty: existingProduct?.wholesaleQty || 0,
-      phoneNumber: existingProduct?.phoneNumber || "",
-      location: existingProduct?.location || "",
+      wholesalePrice: existingProduct?.wholesalePrice ?? 0,
+      wholesaleQty: existingProduct?.wholesaleQty ?? 0,
+      phoneNumber: existingProduct?.phoneNumber ?? "",
+      location: existingProduct?.location ?? "",
     },
   });
 
   const isWholesale = watch("isWholesale");
 
-  const onSubmit = async (data) => {
-    if (productImages.length < 1) {
+  /* =============================
+     SUBMIT HANDLER
+  ============================== */
+  const onSubmit = async (formData) => {
+    if (!productImages.length) {
       toast.error("Upload at least one product image");
       return;
     }
 
-    const allImages = productImages;
+    const mergedImages = existingProduct
+      ? [...new Set([...productImages])]
+      : productImages;
 
     const payload = {
-      title: data.title,
-      description: data.description || "",
-      slug: generateSlug(data.title),
+      id: existingProduct?.id,
+      title: formData.title,
+      description: formData.description,
+      slug: generateSlug(formData.title),
 
-      price: Number(data.productPrice) || 0,
-      salePrice: Number(data.salePrice) || 0,
-      productStock: Number(data.productStock) || 0,
+      price: Number(formData.productPrice),
+      salePrice: Number(formData.salePrice),
+      productStock: Number(formData.productStock),
 
-      categoryId: data.categoryId || null,
+      categoryId: formData.categoryId || null,
       farmerId,
 
-      imageUrl: allImages[0],
-      productImages: allImages,
+      imageUrl: mergedImages[0],
+      productImages: mergedImages,
       tags,
 
-      productCode: generateUserCode("LLP", data.title),
+      productCode: generateUserCode("LLP", formData.title),
 
-      isWholesale: Boolean(data.isWholesale),
-      wholesalePrice: Number(data.wholesalePrice) || 0,
-      wholesaleQty: Number(data.wholesaleQty) || 0,
+      isWholesale: Boolean(formData.isWholesale),
+      wholesalePrice: Number(formData.wholesalePrice) || 0,
+      wholesaleQty: Number(formData.wholesaleQty) || 0,
 
-      isActive: Boolean(data.isActive),
+      isActive: Boolean(formData.isActive),
       qty: 1,
 
-      phoneNumber: data.phoneNumber || "",
-      location: data.location || "",
+      phoneNumber: formData.phoneNumber,
+      location: formData.location,
     };
 
     const endpoint = existingProduct
       ? `/api/farmers/products/${existingProduct.id}`
       : "/api/products";
 
+    const method = existingProduct ? "PUT" : "POST";
+
     try {
-      if (existingProduct) {
-        await makePutRequest(
-          setLoading,
-          endpoint,
-          payload,
-          "Product",
-          () => router.push("/dashboard/farmers/products"),
-          () => {
-            reset();
-            setTags([]);
-            setProductImages([]);
-          }
-        );
-      } else {
-        await makeRequest(
-          setLoading,
-          endpoint,
-          payload,
-          "Product uploaded successfully",
-          () => {
-            reset();
-            setTags([]);
-            setProductImages([]);
-          },
-          () => router.push("/dashboard/farmers/products"),
-          "POST"
-        );
+      setLoading(true);
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        toast.error(result.message || "Something went wrong");
+        return;
       }
-    } catch (err) {
-      console.error("SUBMIT ERROR:", err);
+
+      toast.success(
+        existingProduct
+          ? "Product updated successfully"
+          : "Product uploaded successfully"
+      );
+
+      if (!existingProduct) {
+        reset();
+        setTags([]);
+        setProductImages([]);
+      }
+
+      router.push("/dashboard/farmers/products");
+    } catch (error) {
+      console.error("PRODUCT SUBMIT ERROR:", error);
       toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* =============================
+     UI
+  ============================== */
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-4xl p-4 bg-gray-900 border border-gray-700 rounded-lg shadow sm:p-6 md:p-8 mx-auto my-4 text-white"
+      className="w-full max-w-4xl p-6 mx-auto my-6 bg-gray-900 border border-gray-700 rounded-lg shadow text-white"
     >
-      <h2 className="text-xl font-semibold mb-4">
+      <h2 className="text-xl font-semibold mb-6">
         {existingProduct ? "Edit Product" : "Upload New Product"}
       </h2>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 sm:gap-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+
         <TextInput
           label="Product Title"
           name="title"
           register={register}
           errors={errors}
-          defaultValue={existingProduct?.title}
         />
 
         <TextInput
@@ -153,7 +166,6 @@ export default function ProductUpload({
           type="number"
           register={register}
           errors={errors}
-          defaultValue={existingProduct?.price}
         />
 
         <TextInput
@@ -162,7 +174,6 @@ export default function ProductUpload({
           type="number"
           register={register}
           errors={errors}
-          defaultValue={existingProduct?.salePrice}
         />
 
         <TextInput
@@ -171,9 +182,9 @@ export default function ProductUpload({
           type="number"
           register={register}
           errors={errors}
-          defaultValue={existingProduct?.productStock}
         />
 
+        {/* CATEGORY */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium">Category</label>
           <select
@@ -189,6 +200,7 @@ export default function ProductUpload({
           </select>
         </div>
 
+        {/* WHOLESALE TOGGLE */}
         <ToggleInput
           label="Supports Wholesale"
           name="isWholesale"
@@ -217,22 +229,26 @@ export default function ProductUpload({
           </>
         )}
 
+        {/* IMAGES */}
         <MultipleImageInput
           imageUrls={productImages}
           setImageUrls={setProductImages}
           endpoint="multipleProductsUploader"
           label="Upload Product Images"
-          existingImages={existingProduct?.productImages || []}
         />
 
-        <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
+        {/* TAGS */}
+        <ArrayItemsInput
+          items={tags}
+          setItems={setTags}
+          itemTitle="Tag"
+        />
 
         <TextareaInput
           label="Product Description"
           name="description"
           register={register}
           errors={errors}
-          defaultValue={existingProduct?.description}
         />
 
         <TextInput
@@ -263,7 +279,9 @@ export default function ProductUpload({
         isLoading={loading}
         buttonTitle={existingProduct ? "Update Product" : "Add Product"}
         loadingButtonTitle={
-          existingProduct ? "Updating Product..." : "Uploading Product..."
+          existingProduct
+            ? "Updating Product..."
+            : "Uploading Product..."
         }
       />
     </form>
