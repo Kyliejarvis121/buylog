@@ -110,6 +110,7 @@ export default function ProductUpload({
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        credentials: "include", // 👈 important for auth
       });
 
       const result = await res.json();
