@@ -30,8 +30,8 @@ export default function ActionColumn({
       return;
     }
 
-    // Redirect to edit page
-    router.push(`${editBasePath}/${item.id}/edit`);
+    // Redirect to edit page (no /edit)
+    router.push(`${editBasePath}/${item.id}`);
   };
 
   return (

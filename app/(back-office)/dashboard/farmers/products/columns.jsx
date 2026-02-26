@@ -54,7 +54,6 @@ export const columns = [
           row={row}
           title="Product"
           editBasePath="/dashboard/farmers/products"
-          editRoute="/edit"
           type="farmerProduct"
         />
       );
