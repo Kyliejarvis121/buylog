@@ -3,119 +3,179 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+
 import TextInput from "@/components/FormInputs/TextInput";
 import TextareaInput from "@/components/FormInputs/TextAreaInput";
-import ImageInput from "@/components/FormInputs/ImageInput";
 import ToggleInput from "@/components/FormInputs/ToggleInput";
 import ArrayItemsInput from "@/components/FormInputs/ArrayItemsInput";
 import SubmitButton from "@/components/FormInputs/SubmitButton";
+import MultipleImageInput from "@/components/FormInputs/MultipleImageInput";
+
+import { generateSlug } from "@/lib/generateSlug";
+import { generateUserCode } from "@/lib/generateUserCode";
 import { makeRequest } from "@/lib/apiRequest";
-import toast from "react-hot-toast";
 
-export default function NewProductForm({
+export default function ProductUpload({
+  farmerId,
   categories = [],
-  farmers = [],
-  updateData = null,
+  existingProduct = null,
 }) {
-  const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState(updateData?.imageUrl || "");
-  const [productImages, setProductImages] = useState(
-    updateData?.productImages || []
-  );
-  const [tags, setTags] = useState(updateData?.tags || []);
-
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [tags, setTags] = useState(existingProduct?.tags || []);
+  const [productImages, setProductImages] = useState(
+    existingProduct?.productImages || []
+  );
 
   const {
     register,
+    watch,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm({
     defaultValues: {
-      title: updateData?.title || "",
-      slug: updateData?.slug || "",
-      description: updateData?.description || "",
-      price: updateData?.price || "",
-      salePrice: updateData?.salePrice || "",
-      isActive: updateData?.isActive ?? true,
-      isWholesale: updateData?.isWholesale ?? false,
-      wholesalePrice: updateData?.wholesalePrice || "",
-      wholesaleQty: updateData?.wholesaleQty || "",
-      productStock: updateData?.productStock || 0,
-      qty: updateData?.qty || 0,
-      productCode: updateData?.productCode || "",
-      categoryId: updateData?.categoryId || (categories[0]?.id || ""),
-      farmerId: updateData?.farmerId || (farmers[0]?.id || ""),
+      title: existingProduct?.title ?? "",
+      description: existingProduct?.description ?? "",
+      productPrice: existingProduct?.price ?? 0,
+      salePrice: existingProduct?.salePrice ?? 0,
+      productStock: existingProduct?.productStock ?? 0,
+      categoryId: existingProduct?.categoryId ?? "",
+      isActive: existingProduct?.isActive ?? true,
+      isWholesale: existingProduct?.isWholesale ?? false,
+      wholesalePrice: existingProduct?.wholesalePrice ?? 0,
+      wholesaleQty: existingProduct?.wholesaleQty ?? 0,
+      phoneNumber: existingProduct?.phoneNumber ?? "",
+      location: existingProduct?.location ?? "",
     },
   });
 
-  const isActive = watch("isActive");
   const isWholesale = watch("isWholesale");
 
-  const onSubmit = async (data) => {
+  /* =============================
+     SUBMIT HANDLER
+  ============================== */
+  const onSubmit = async (formData) => {
+    if (!productImages.length) {
+      toast.error("Upload at least one product image");
+      return;
+    }
+
+    const mergedImages = existingProduct
+      ? [...new Set([...productImages])]
+      : productImages;
+
+    const payload = {
+      id: existingProduct?.id,
+      title: formData.title,
+      description: formData.description,
+      slug: generateSlug(formData.title),
+
+      price: Number(formData.productPrice),
+      salePrice: Number(formData.salePrice),
+      productStock: Number(formData.productStock),
+
+      categoryId: formData.categoryId || null,
+      farmerId,
+
+      imageUrl: mergedImages[0],
+      productImages: mergedImages,
+      tags,
+
+      productCode: generateUserCode("LLP", formData.title),
+
+      isWholesale: Boolean(formData.isWholesale),
+      wholesalePrice: Number(formData.wholesalePrice) || 0,
+      wholesaleQty: Number(formData.wholesaleQty) || 0,
+
+      isActive: Boolean(formData.isActive),
+      qty: 1,
+
+      phoneNumber: formData.phoneNumber,
+      location: formData.location,
+    };
+
+    const endpoint = existingProduct
+      ? `/api/farmers/products/${existingProduct.id}`
+      : "/api/products";
+
+    const method = existingProduct ? "PUT" : "POST";
+
     try {
-      data.price = parseFloat(data.price) || 0;
-      data.salePrice = data.salePrice ? parseFloat(data.salePrice) : 0;
+      setLoading(true);
 
-      data.imageUrl = imageUrl;
-      data.productImages = productImages;
-      data.tags = tags;
+      const res = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-      const endpoint = updateData
-        ? `/api/farmers/products/${updateData.id}`
-        : "/api/products";
+      const result = await res.json();
 
-      const method = updateData ? "PUT" : "POST";
+      if (!res.ok) {
+        toast.error(result.message || "Something went wrong");
+        return;
+      }
 
-      await makeRequest(
-        setLoading,
-        endpoint,
-        data,
-        updateData ? "Product Updated" : "Product Created",
-        reset,
-        () => router.push("/dashboard/farmers/products"),
-        method
+      toast.success(
+        existingProduct
+          ? "Product updated successfully"
+          : "Product uploaded successfully"
       );
-    } catch (err) {
-      console.error("SUBMIT ERROR:", err);
+
+      if (!existingProduct) {
+        reset();
+        setTags([]);
+        setProductImages([]);
+      }
+
+      router.push("/dashboard/farmers/products");
+    } catch (error) {
+      console.error("PRODUCT SUBMIT ERROR:", error);
       toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* =============================
+     UI
+  ============================== */
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-2xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3"
+      className="w-full max-w-4xl p-6 mx-auto my-6 bg-gray-900 border border-gray-700 rounded-lg shadow text-white"
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <h2 className="text-xl font-semibold mb-6">
+        {existingProduct ? "Edit Product" : "Upload New Product"}
+      </h2>
+
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+
         <TextInput
           label="Product Title"
           name="title"
           register={register}
           errors={errors}
         />
+
         <TextInput
-          label="Slug"
-          name="slug"
-          register={register}
-          errors={errors}
-        />
-        <TextInput
-          label="Price"
-          name="price"
+          label="Product Price"
+          name="productPrice"
           type="number"
           register={register}
           errors={errors}
         />
+
         <TextInput
-          label="Sale Price"
+          label="Discount Price"
           name="salePrice"
           type="number"
           register={register}
           errors={errors}
         />
+
         <TextInput
           label="Product Stock"
           name="productStock"
@@ -123,67 +183,30 @@ export default function NewProductForm({
           register={register}
           errors={errors}
         />
-        <TextInput
-          label="Quantity"
-          name="qty"
-          type="number"
-          register={register}
-          errors={errors}
-        />
-        <TextInput
-          label="Product Code"
-          name="productCode"
-          register={register}
-          errors={errors}
-        />
 
-        {/* Category */}
-        <select
-          {...register("categoryId")}
-          className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-        >
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.title}
-            </option>
-          ))}
-        </select>
-
-        {/* Farmer */}
-        <select
-          {...register("farmerId")}
-          className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-        >
-          {farmers.map((farmer) => (
-            <option key={farmer.id} value={farmer.id}>
-              {farmer.title}
-            </option>
-          ))}
-        </select>
-
-        <div className="col-span-1 sm:col-span-2">
-          <TextareaInput
-            label="Description"
-            name="description"
-            register={register}
-            errors={errors}
-          />
+        {/* CATEGORY */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Category</label>
+          <select
+            {...register("categoryId")}
+            className="border rounded-md px-3 py-2 text-sm bg-gray-800 text-white"
+          >
+            <option value="">Select Category</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.title}
+              </option>
+            ))}
+          </select>
         </div>
 
+        {/* WHOLESALE TOGGLE */}
         <ToggleInput
-          label="Active"
-          name="isActive"
-          register={register}
-          trueTitle="Active"
-          falseTitle="Inactive"
-        />
-
-        <ToggleInput
-          label="Is Wholesale"
+          label="Supports Wholesale"
           name="isWholesale"
+          trueTitle="Enabled"
+          falseTitle="Disabled"
           register={register}
-          trueTitle="Yes"
-          falseTitle="No"
         />
 
         {isWholesale && (
@@ -195,8 +218,9 @@ export default function NewProductForm({
               register={register}
               errors={errors}
             />
+
             <TextInput
-              label="Wholesale Quantity"
+              label="Minimum Wholesale Qty"
               name="wholesaleQty"
               type="number"
               register={register}
@@ -205,33 +229,59 @@ export default function NewProductForm({
           </>
         )}
 
-        <div className="col-span-1 sm:col-span-2">
-          <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
-        </div>
+        {/* IMAGES */}
+        <MultipleImageInput
+          imageUrls={productImages}
+          setImageUrls={setProductImages}
+          endpoint="multipleProductsUploader"
+          label="Upload Product Images"
+        />
 
-        <div className="col-span-1 sm:col-span-2">
-          <ArrayItemsInput
-            items={productImages}
-            setItems={setProductImages}
-            itemTitle="Product Image URL"
-          />
-        </div>
+        {/* TAGS */}
+        <ArrayItemsInput
+          items={tags}
+          setItems={setTags}
+          itemTitle="Tag"
+        />
 
-        <div className="col-span-1 sm:col-span-2">
-          <ImageInput
-            imageUrl={imageUrl}
-            setImageUrl={setImageUrl}
-            endpoint="productUploader"
-            label="Main Product Image"
-          />
-        </div>
+        <TextareaInput
+          label="Product Description"
+          name="description"
+          register={register}
+          errors={errors}
+        />
+
+        <TextInput
+          label="Contact Number"
+          name="phoneNumber"
+          register={register}
+          errors={errors}
+        />
+
+        <TextInput
+          label="Location"
+          name="location"
+          placeholder="e.g. Benin City"
+          register={register}
+          errors={errors}
+        />
+
+        <ToggleInput
+          label="Publish Product"
+          name="isActive"
+          trueTitle="Active"
+          falseTitle="Draft"
+          register={register}
+        />
       </div>
 
       <SubmitButton
         isLoading={loading}
-        buttonTitle={updateData ? "Update Product" : "Add Product"}
+        buttonTitle={existingProduct ? "Update Product" : "Add Product"}
         loadingButtonTitle={
-          updateData ? "Updating Product..." : "Creating Product..."
+          existingProduct
+            ? "Updating Product..."
+            : "Uploading Product..."
         }
       />
     </form>
