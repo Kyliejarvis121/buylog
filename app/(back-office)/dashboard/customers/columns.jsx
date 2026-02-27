@@ -5,6 +5,7 @@ import DateColumn from "@/components/DataTableColumns/DateColumn";
 import ImageColumn from "@/components/DataTableColumns/ImageColumn";
 import SortableColumn from "@/components/DataTableColumns/SortableColumn";
 import ActionColumn from "@/components/DataTableColumns/ActionColumn";
+
 export const columns = [
   {
     id: "select",
@@ -28,44 +29,37 @@ export const columns = [
     enableSorting: false,
     enableHiding: false,
   },
+
   {
     accessorKey: "name",
     header: ({ column }) => <SortableColumn column={column} title="Name" />,
   },
-  // {
-  //   accessorKey: "profileImageUrl",
-  //   header: "Profile Image",
-  //   cell: ({ row }) => <ImageColumn row={row} accessorKey="profileImageUrl" />,
-  // },
+
   {
     accessorKey: "email",
     header: "Email",
   },
+
   {
     accessorKey: "role",
     header: "Role",
   },
-  // {
-  //   accessorKey: "isActive",
-  //   header: "Active",
-  // },
+
   {
     accessorKey: "createdAt",
     header: "Date Created",
     cell: ({ row }) => <DateColumn row={row} accessorKey="createdAt" />,
   },
+
   {
     id: "actions",
-    cell: ({ row }) => {
-      const customer = row.original;
-      return (
-        <ActionColumn
-          row={row}
-          title="Customer"
-          editEndpoint={`customers/update/${customer.id}`}
-          endpoint={`customers/${customer.id}`}
-        />
-      );
-    },
+    cell: ({ row }) => (
+      <ActionColumn
+        row={row}
+        title="Customer"
+        editBasePath="/dashboard/customers"
+        type="customer"
+      />
+    ),
   },
 ];
