@@ -94,6 +94,20 @@ export default async function ProductDetailPage({ params }) {
         farmerId={product.farmerId}
         currentUserId={currentUser?.id ?? null}
       />
+
+      {/* SAFETY TIP SECTION */}
+<div className="mt-6 p-4 bg-[#fff7f5] border-l-4 border-[#f97316]">
+  <strong>Safety Tip:</strong>
+  <p className="text-sm text-gray-700 mt-1">
+    BuyLog does not handle payments or financial transactions. Buyers and sellers
+    should agree on a convenient and safe meeting location. If either party insists
+    on an unsafe or uncomfortable location, the other party should politely withdraw.
+    For added safety, do not meet alone—bring a companion or meet in public places.
+    Before leaving the location, buyers should confirm receipt of payment in their
+    mobile app. BuyLog is not responsible for transactions, disputes, or any loss
+    that may occur. Trade safely and responsibly.
+  </p>
+</div>
     </div>
   );
 }
