@@ -33,6 +33,10 @@ export default function ActionColumn({
     router.push(`${editBasePath}/${item.id}`);
   };
 
+  // ✅ only allow valid delete types
+  const validDeleteTypes = ["customer", "farmerProduct", "product"];
+  const deleteType = validDeleteTypes.includes(type) ? type : null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -45,15 +49,17 @@ export default function ActionColumn({
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
+        {/* EDIT (dropdown item) */}
         <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
           Edit
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          onSelect={(e) => e.preventDefault()} // prevents dropdown auto-close issues
-        >
-          <DeleteBtn id={item.id} title={title} type={type} />
-        </DropdownMenuItem>
+        {/* DELETE (only if valid type) */}
+        {deleteType && (
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <DeleteBtn id={item.id} title={title} type={deleteType} />
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
