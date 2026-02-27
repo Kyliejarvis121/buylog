@@ -50,7 +50,7 @@ export async function GET(req, { params }) {
         farmerId: farmer.id,
       },
       include: {
-        category: true, // optional but useful
+        category: true,
       },
     });
 
@@ -130,7 +130,6 @@ export async function PUT(req, { params }) {
 
     const body = await req.json();
 
-    // ❌ Remove fields that must NOT be updated
     const {
       id: _removedId,
       createdAt,
@@ -142,7 +141,7 @@ export async function PUT(req, { params }) {
       where: { id },
       data: {
         ...updateData,
-        updatedAt: new Date(), // optional but good practice
+        updatedAt: new Date(),
       },
     });
 
@@ -162,7 +161,7 @@ export async function PUT(req, { params }) {
 }
 
 // ==============================
-// DELETE PRODUCT
+// DELETE PRODUCT (FIXED)
 // ==============================
 export async function DELETE(req, { params }) {
   try {
@@ -209,10 +208,20 @@ export async function DELETE(req, { params }) {
       );
     }
 
+    // ✅ Safe delete order: messages → chats → product
     await prisma.$transaction([
+      prisma.message.deleteMany({
+        where: {
+          chat: {
+            productId: id,
+          },
+        },
+      }),
+
       prisma.chat.deleteMany({
         where: { productId: id },
       }),
+
       prisma.product.delete({
         where: { id },
       }),
