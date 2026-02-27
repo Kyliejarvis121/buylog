@@ -17,7 +17,7 @@ export default function ActionColumn({
   row,
   title = "Item",
   editBasePath,
-  type,
+  type, // ❌ removed default value
 }) {
   const router = useRouter();
   const item = row?.original;
@@ -25,7 +25,11 @@ export default function ActionColumn({
   if (!item?.id) return null;
 
   const handleEdit = () => {
-    if (!editBasePath) return;
+    if (!editBasePath) {
+      console.warn("editBasePath is missing");
+      return;
+    }
+
     router.push(`${editBasePath}/${item.id}`);
   };
 
@@ -43,7 +47,7 @@ export default function ActionColumn({
 
         {/* EDIT */}
         {editBasePath && (
-          <DropdownMenuItem onClick={handleEdit}>
+          <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
             Edit
           </DropdownMenuItem>
         )}
@@ -51,7 +55,7 @@ export default function ActionColumn({
         {/* DELETE */}
         {type && (
           <DropdownMenuItem
-            onSelect={(e) => e.preventDefault()} // prevent dropdown auto close issue
+            onSelect={(e) => e.preventDefault()} // keeps dropdown stable
           >
             <DeleteBtn
               id={item.id}
