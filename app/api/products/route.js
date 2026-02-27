@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-// ✅ Preflight (CORS)
+// ============================
+// OPTIONS (CORS)
+// ============================
 export async function OPTIONS() {
   return new Response(null, {
     status: 204,
@@ -13,23 +15,33 @@ export async function OPTIONS() {
   });
 }
 
-// ✅ GET products (optional filters)
+// ============================
+// GET PRODUCTS (GLOBAL + FILTER)
+// ============================
 export async function GET(req) {
   try {
     const url = new URL(req.url);
     const farmerId = url.searchParams.get("farmerId");
+    const categoryId = url.searchParams.get("categoryId");
 
-    if (!farmerId) {
-      return NextResponse.json(
-        { success: false, message: "farmerId is required" },
-        { status: 400 }
-      );
+    const where = {};
+
+    if (farmerId) {
+      where.farmerId = farmerId;
+    }
+
+    if (categoryId) {
+      where.categoryId = categoryId;
     }
 
     const products = await prisma.product.findMany({
-      where: { farmerId },
+      where,
       orderBy: { createdAt: "desc" },
-      include: { category: true, market: true, farmer: true },
+      include: {
+        category: true,
+        market: true,
+        farmer: true,
+      },
     });
 
     return NextResponse.json({ success: true, data: products });
@@ -42,7 +54,9 @@ export async function GET(req) {
   }
 }
 
-// ✅ CREATE product
+// ============================
+// CREATE PRODUCT
+// ============================
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -103,7 +117,9 @@ export async function POST(req) {
   }
 }
 
-// ✅ DELETE product (by query id)
+// ============================
+// DELETE PRODUCT
+// ============================
 export async function DELETE(req) {
   try {
     const url = new URL(req.url);
