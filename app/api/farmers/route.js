@@ -1,18 +1,19 @@
-// app/api/farmers/route.js
 import { prisma } from "@/lib/prismadb";
 
 // GET /api/farmers
 export async function GET(request) {
   try {
-    // Fetch all farmers with related user info and products
     const farmers = await prisma.farmer.findMany({
+      where: {
+        userId: { not: null }, // skip orphan rows
+      },
       include: {
         user: {
           include: {
-            orders: true, // orders are on the User model
+            orders: true,
           },
         },
-        products: true, // include products for each farmer
+        products: true,
       },
     });
 
@@ -25,5 +26,3 @@ export async function GET(request) {
     );
   }
 }
-
-// You can still add POST, PUT, DELETE here if needed later
