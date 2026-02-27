@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-/* GET SINGLE CUSTOMER */
+/* ==================================
+   GET SINGLE CUSTOMER
+================================== */
 export async function GET(req, { params }) {
   const { id } = params;
 
@@ -33,7 +35,9 @@ export async function GET(req, { params }) {
   }
 }
 
-/* DELETE CUSTOMER */
+/* ==================================
+   DELETE CUSTOMER (SAFE ORDER)
+================================== */
 export async function DELETE(req, { params }) {
   const { id } = params;
 
@@ -57,16 +61,26 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    // 🔥 CLEAN UP RELATED DATA (MongoDB safe)
+    // 🔥 CLEAN UP RELATED DATA (relation-safe order)
+
+    // 1. Delete messages first (messages depend on chat)
+    await prisma.message.deleteMany({
+      where: { senderUserId: id },
+    });
+
+    // 2. Now delete chats
+    await prisma.chat.deleteMany({
+      where: { buyerId: id },
+    });
+
+    // 3. Other related data
     await prisma.session.deleteMany({ where: { userId: id } });
     await prisma.account.deleteMany({ where: { userId: id } });
     await prisma.profile.deleteMany({ where: { userId: id } });
     await prisma.order.deleteMany({ where: { userId: id } });
     await prisma.farmer.deleteMany({ where: { userId: id } });
-    await prisma.chat.deleteMany({ where: { buyerId: id } });
-    await prisma.message.deleteMany({ where: { senderUserId: id } });
 
-    // Finally delete user
+    // 4. Finally delete user
     await prisma.user.delete({ where: { id } });
 
     return NextResponse.json(
