@@ -25,21 +25,14 @@ export default function ActionColumn({
   if (!item?.id) return null;
 
   const handleEdit = () => {
-    if (!editBasePath) {
-      console.warn("editBasePath is missing");
-      return;
-    }
-
+    if (!editBasePath) return;
     router.push(`${editBasePath}/${item.id}`);
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="h-8 w-8 p-0"
-        >
+        <Button variant="ghost" className="h-8 w-8 p-0">
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -48,26 +41,23 @@ export default function ActionColumn({
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* Edit Button */}
+        {/* EDIT */}
         {editBasePath && (
-          <DropdownMenuItem
-            onClick={handleEdit}
-            className="cursor-pointer"
-          >
+          <DropdownMenuItem onClick={handleEdit}>
             Edit
           </DropdownMenuItem>
         )}
 
-        {/* Delete Button */}
+        {/* DELETE */}
         {type && (
-          <DropdownMenuItem asChild>
-            <div>
-              <DeleteBtn
-                id={item.id}
-                title={title}
-                type={type}
-              />
-            </div>
+          <DropdownMenuItem
+            onSelect={(e) => e.preventDefault()} // prevent dropdown auto close issue
+          >
+            <DeleteBtn
+              id={item.id}
+              title={title}
+              type={type}
+            />
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
