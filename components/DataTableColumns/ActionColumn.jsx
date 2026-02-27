@@ -15,9 +15,9 @@ import DeleteBtn from "@/components/Actions/DeleteBtn";
 
 export default function ActionColumn({
   row,
-  title,
+  title = "Item",
   editBasePath,
-  type, // ❌ no default value (must pass explicitly)
+  type,
 }) {
   const router = useRouter();
   const item = row.original;
@@ -26,7 +26,7 @@ export default function ActionColumn({
 
   const handleEdit = () => {
     if (!editBasePath) {
-      console.error("editBasePath is missing");
+      console.warn("editBasePath is missing");
       return;
     }
 
@@ -45,15 +45,25 @@ export default function ActionColumn({
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
-          Edit
-        </DropdownMenuItem>
+        {/* EDIT */}
+        {editBasePath && (
+          <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
+            Edit
+          </DropdownMenuItem>
+        )}
 
-        <DropdownMenuItem
-          onSelect={(e) => e.preventDefault()} // prevents dropdown auto-close issues
-        >
-          <DeleteBtn id={item.id} title={title} type={type} />
-        </DropdownMenuItem>
+        {/* DELETE */}
+        {type && (
+          <DropdownMenuItem
+            onSelect={(e) => e.preventDefault()}
+          >
+            <DeleteBtn
+              id={item.id}
+              title={title}
+              type={type}
+            />
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
