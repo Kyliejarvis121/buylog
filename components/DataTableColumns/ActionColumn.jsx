@@ -45,25 +45,15 @@ export default function ActionColumn({
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* EDIT */}
-        {editBasePath && (
-          <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
-            Edit
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
+          Edit
+        </DropdownMenuItem>
 
-        {/* DELETE */}
-        {type && (
-          <DropdownMenuItem
-            onSelect={(e) => e.preventDefault()}
-          >
-            <DeleteBtn
-              id={item.id}
-              title={title}
-              type={type}
-            />
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem
+          onSelect={(e) => e.preventDefault()} // prevents dropdown auto-close issues
+        >
+          <DeleteBtn id={item.id} title={title} type={type} />
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
