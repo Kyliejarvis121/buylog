@@ -53,7 +53,6 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    // ❌ Prevent deleting admin
     if (user.role === "ADMIN") {
       return NextResponse.json(
         { message: "Admin accounts cannot be deleted" },
@@ -61,27 +60,39 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    // 🔥 CLEAN UP RELATED DATA (relation-safe order)
+    // ✅ SAFE ORDER (messages → chats → others → user)
 
-    // 1. Delete messages first (messages depend on chat)
-    await prisma.message.deleteMany({
-      where: { senderUserId: id },
-    });
+    await prisma.$transaction([
+      // 1. messages linked to chats
+      prisma.message.deleteMany({
+        where: {
+          chat: {
+            buyerId: id,
+          },
+        },
+      }),
 
-    // 2. Now delete chats
-    await prisma.chat.deleteMany({
-      where: { buyerId: id },
-    });
+      // 2. chats
+      prisma.chat.deleteMany({
+        where: { buyerId: id },
+      }),
 
-    // 3. Other related data
-    await prisma.session.deleteMany({ where: { userId: id } });
-    await prisma.account.deleteMany({ where: { userId: id } });
-    await prisma.profile.deleteMany({ where: { userId: id } });
-    await prisma.order.deleteMany({ where: { userId: id } });
-    await prisma.farmer.deleteMany({ where: { userId: id } });
+      // 3. orders
+      prisma.order.deleteMany({ where: { userId: id } }),
 
-    // 4. Finally delete user
-    await prisma.user.delete({ where: { id } });
+      // 4. farmer profile (if exists)
+      prisma.farmer.deleteMany({ where: { userId: id } }),
+
+      // 5. profile
+      prisma.profile.deleteMany({ where: { userId: id } }),
+
+      // 6. sessions & accounts
+      prisma.session.deleteMany({ where: { userId: id } }),
+      prisma.account.deleteMany({ where: { userId: id } }),
+
+      // 7. finally user
+      prisma.user.delete({ where: { id } }),
+    ]);
 
     return NextResponse.json(
       { message: "Customer deleted successfully" },
