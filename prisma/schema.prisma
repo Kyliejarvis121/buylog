@@ -76,15 +76,14 @@ model Profile {
 model Farmer {
   id       String   @id @default(auto()) @map("_id") @db.ObjectId
   name     String
-  userId   String   @unique @db.ObjectId   // 👈 VERY IMPORTANT
+  userId   String   @unique @db.ObjectId
   isActive Boolean? @default(false)
 
   products Product[]
-
   chats    Chat[]    @relation("SellerChats", fields: [], references: [])
   Messages Message[]
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 //
