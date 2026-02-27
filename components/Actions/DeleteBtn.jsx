@@ -9,7 +9,7 @@ import { Trash2 } from "lucide-react";
 export default function DeleteBtn({
   id,
   title = "Item",
-  type = "farmerProduct",
+  type,
 }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -35,35 +35,28 @@ export default function DeleteBtn({
     try {
       setLoading(true);
 
-      let endpoint = "";
+      // ✅ Clean endpoint mapping
+      const endpoints = {
+        customer: `/api/customers/${id}`,
+        farmerProduct: `/api/farmers/products/${id}`,
+        product: `/api/products/${id}`,
+      };
 
-      if (type === "farmerProduct") {
-        endpoint = `/api/farmers/products/${id}`;
-      } else if (type === "customer") {
-        endpoint = `/api/users/${id}`;
-      } else {
-        endpoint = `/api/products/${id}`;
+      const endpoint = endpoints[type];
+
+      if (!endpoint) {
+        throw new Error("Invalid delete type");
       }
 
       const res = await fetch(endpoint, { method: "DELETE" });
 
-      let data = {};
-      const contentType = res.headers.get("content-type");
-
-      if (contentType && contentType.includes("application/json")) {
-        try {
-          data = await res.json();
-        } catch {
-          data = {};
-        }
-      }
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         throw new Error(data?.message || "Delete failed");
       }
 
       toast.success(`${title} deleted successfully`);
-
       router.refresh();
     } catch (error) {
       console.error("DELETE ERROR:", error);

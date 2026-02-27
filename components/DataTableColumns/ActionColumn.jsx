@@ -15,29 +15,31 @@ import DeleteBtn from "@/components/Actions/DeleteBtn";
 
 export default function ActionColumn({
   row,
-  title,
+  title = "Item",
   editBasePath,
-  type = "farmerProduct",
+  type,
 }) {
   const router = useRouter();
-  const item = row.original;
+  const item = row?.original;
 
   if (!item?.id) return null;
 
   const handleEdit = () => {
     if (!editBasePath) {
-      console.error("editBasePath is missing");
+      console.warn("editBasePath is missing");
       return;
     }
 
-    // Redirect to edit page (no /edit)
     router.push(`${editBasePath}/${item.id}`);
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
+        <Button
+          variant="ghost"
+          className="h-8 w-8 p-0"
+        >
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -46,13 +48,28 @@ export default function ActionColumn({
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
-          Edit
-        </DropdownMenuItem>
+        {/* Edit Button */}
+        {editBasePath && (
+          <DropdownMenuItem
+            onClick={handleEdit}
+            className="cursor-pointer"
+          >
+            Edit
+          </DropdownMenuItem>
+        )}
 
-        <DropdownMenuItem>
-          <DeleteBtn id={item.id} title={title} type={type} />
-        </DropdownMenuItem>
+        {/* Delete Button */}
+        {type && (
+          <DropdownMenuItem asChild>
+            <div>
+              <DeleteBtn
+                id={item.id}
+                title={title}
+                type={type}
+              />
+            </div>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
