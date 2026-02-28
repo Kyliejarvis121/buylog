@@ -191,8 +191,8 @@ export default function TermsPage() {
           If you have any questions about these Terms, please contact us at:
         </p>
         <p className="mt-2">
-          <strong>Email:</strong> support@buylog.com <br />
-          <strong>Website:</strong> https://buylog.com
+          <strong>Email:</strong> support@buylogint.com <br />
+          <strong>Website:</strong> https://buylogint.com
         </p>
       </section>
     );
