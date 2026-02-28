@@ -5,7 +5,7 @@ import React from "react";
 
 export default function Layout({ children }) {
   return (
-    <html>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta
           name="google-adsense-account"
@@ -23,11 +23,9 @@ export default function Layout({ children }) {
       <body>
         <div className="w-full overflow-x-hidden">
           <Navbar />
-
           <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-0 py-6">
             {children}
           </main>
-
           <Footer />
         </div>
       </body>
