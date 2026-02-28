@@ -3,16 +3,15 @@ import { prisma } from "@/lib/prismadb";
 export async function GET() {
   try {
     const farmers = await prisma.farmer.findMany({
+      where: {
+        userId: { not: null }, // only rows with userId
+      },
       include: {
-        user: true, // but handle missing user
         products: true,
       },
     });
 
-    // filter out broken records (user is null)
-    const safeFarmers = farmers.filter((f) => f.user !== null);
-
-    return new Response(JSON.stringify(safeFarmers), { status: 200 });
+    return new Response(JSON.stringify(farmers), { status: 200 });
   } catch (error) {
     console.error("Error fetching farmers:", error);
 
@@ -22,3 +21,6 @@ export async function GET() {
     );
   }
 }
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;

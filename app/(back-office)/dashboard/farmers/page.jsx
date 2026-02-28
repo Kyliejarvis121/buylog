@@ -1,6 +1,3 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 import { prisma } from "@/lib/prismadb";
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
@@ -25,15 +22,19 @@ export default async function FarmerProductsPage() {
   }
 
   let products = [];
+
   try {
-    // Fetch all products for this farmer
+    // Fetch products for this farmer (no include of broken relations)
     products = await prisma.product.findMany({
       where: { farmerId: farmer.id },
       orderBy: { createdAt: "desc" },
-      include: { category: true, farmer: true },
+      include: {
+        category: true,
+      },
     });
   } catch (error) {
     console.error("Failed to fetch products:", error);
+
     return (
       <div className="p-4 text-red-600">
         Failed to fetch products: {error.message}
