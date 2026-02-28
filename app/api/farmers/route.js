@@ -1,12 +1,9 @@
 import { prisma } from "@/lib/prismadb";
 
 // GET /api/farmers
-export async function GET(request) {
+export async function GET() {
   try {
     const farmers = await prisma.farmer.findMany({
-      where: {
-        userId: { not: null }, // skip orphan rows
-      },
       include: {
         user: {
           include: {
@@ -20,6 +17,7 @@ export async function GET(request) {
     return new Response(JSON.stringify(farmers), { status: 200 });
   } catch (error) {
     console.error("Error fetching farmers:", error);
+
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500 }

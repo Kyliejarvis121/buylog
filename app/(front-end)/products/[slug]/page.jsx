@@ -99,6 +99,9 @@ export default async function ProductDetailPage({ params }) {
 <div className="mt-6 p-4 bg-[#fff7f5] border-l-4 border-[#f97316]">
   <strong>Safety Tip:</strong>
   <p className="text-sm text-gray-700 mt-1">
+     <TIPS>
+      SAFTY TIPS
+    </TIPS>
     BuyLog does not handle payments or financial transactions. Buyers and sellers
     should agree on a convenient and safe meeting location. If either party insists
     on an unsafe or uncomfortable location, the other party should politely withdraw.
