@@ -3,9 +3,6 @@ import { prisma } from "@/lib/prismadb";
 export async function GET() {
   try {
     const farmers = await prisma.farmer.findMany({
-      where: {
-        userId: { not: null }, // only rows with userId
-      },
       include: {
         products: true,
       },

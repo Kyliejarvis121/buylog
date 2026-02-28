@@ -64,19 +64,19 @@ export default function FarmerDashboard({
   };
 
   if (status === "loading") {
-    return <div className="p-6 text-zinc-300">Loading...</div>;
+    return <div className="p-6 text-zinc-600">Loading...</div>;
   }
 
   if (!session?.user) {
     return (
-      <div className="p-6 text-red-400">
+      <div className="p-6 text-red-500">
         Please login to view your dashboard
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-8 bg-zinc-950 min-h-screen text-zinc-100">
+    <div className="p-6 space-y-8 min-h-screen text-zinc-900 dark:text-zinc-100">
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
         <Heading title="Farmer Dashboard" />
@@ -92,7 +92,7 @@ export default function FarmerDashboard({
       <DashboardCharts sales={safeSales} />
 
       {/* CUSTOMER MESSAGES */}
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
         <div className="flex justify-between items-center mb-4">
           <Heading title="Customer Messages" />
           <Link
@@ -128,14 +128,14 @@ export default function FarmerDashboard({
       </div>
 
       {/* PRODUCTS TABLE */}
-      <div className="overflow-x-auto bg-zinc-900 rounded-xl border border-zinc-800">
+      <div className="overflow-x-auto bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
         {productList.length === 0 ? (
-          <p className="p-6 text-zinc-400">
+          <p className="p-6 text-zinc-500">
             Click to View Your Product.
           </p>
         ) : (
           <table className="min-w-full text-sm">
-            <thead className="bg-zinc-800 text-zinc-300">
+            <thead className="bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
               <tr>
                 <th className="p-3 text-left">Title</th>
                 <th className="p-3 text-left">Category</th>
@@ -149,7 +149,7 @@ export default function FarmerDashboard({
               {productList.map((product) => (
                 <tr
                   key={product.id}
-                  className="border-t border-zinc-800 hover:bg-zinc-800/50 transition"
+                  className="border-t border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition"
                 >
                   <td className="p-3">{product.title}</td>
                   <td className="p-3">
