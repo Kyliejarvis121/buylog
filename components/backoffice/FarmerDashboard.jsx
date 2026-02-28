@@ -10,7 +10,7 @@ import { useSession } from "next-auth/react";
 import ProfileCard from "@/components/backoffice/profile/ProfileCard";
 import SupportWidget from "@/components/Support/SupportWidget";
 
-/* ✅ NEW: Customer Inbox Preview */
+/* Customer Inbox Preview */
 import CustomerInboxPreview from "@/components/backoffice/chat/CustomerInboxPreview";
 
 export default function FarmerDashboard({
@@ -20,7 +20,6 @@ export default function FarmerDashboard({
 }) {
   const { data: session, status } = useSession();
 
-  // ✅ Normalize props
   const safeSales = Array.isArray(sales) ? sales : [];
   const safeSupports = Array.isArray(supports) ? supports : [];
   const safeProducts = Array.isArray(products) ? products : [];
@@ -92,7 +91,7 @@ export default function FarmerDashboard({
       <SmallCards orders={[]} supports={safeSupports} />
       <DashboardCharts sales={safeSales} />
 
-      {/* 🟢 CUSTOMER MESSAGES SECTION (NEW) */}
+      {/* CUSTOMER MESSAGES */}
       <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6">
         <div className="flex justify-between items-center mb-4">
           <Heading title="Customer Messages" />
@@ -190,7 +189,7 @@ export default function FarmerDashboard({
         )}
       </div>
 
-      {/* 🔥 FLOATING SUPPORT CHAT (UNCHANGED) */}
+      {/* SUPPORT CHAT */}
       <SupportWidget />
     </div>
   );

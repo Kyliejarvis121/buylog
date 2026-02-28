@@ -6,14 +6,24 @@ import AvatarUploader from "@/components/backoffice/profile/AvatarUploader";
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
-  if (!session) return null;
+
+  if (!session?.user?.id) {
+    return <div className="p-6">Unauthorized</div>;
+  }
 
   const user = await prisma.user.findUnique({
+    where: {
+      id: session.user.id,
+    },
     include: {
       profile: true,
       farmer: true,
-    }
+    },
   });
+
+  if (!user) {
+    return <div className="p-6">User not found</div>;
+  }
 
   return (
     <div className="max-w-3xl mx-auto mt-6 bg-zinc-900 text-white rounded-xl p-6">
@@ -30,8 +40,12 @@ export default async function ProfilePage() {
         </div>
 
         <div className="text-center sm:text-left">
-          <p className="text-lg font-semibold">{user.name}</p>
-          <p className="text-sm text-zinc-400">{user.email}</p>
+          <p className="text-lg font-semibold">
+            {user.name ?? "No Name"}
+          </p>
+          <p className="text-sm text-zinc-400">
+            {user.email}
+          </p>
           <AvatarUploader />
         </div>
       </div>
