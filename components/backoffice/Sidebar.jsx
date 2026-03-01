@@ -125,42 +125,32 @@ export default function Sidebar({ showSidebar, setShowSidebar }) {
   ];
   if (role === "FARMER") {
     sidebarLinks = [
+      
       {
-        title: "Sales",
-        icon: Truck,
-        href: "/dashboard/sales",
+        title: "Inbox",
+        icon: SendToBack,
+        href: "/dashboard/inbox",
       },
-      {
-        title: "Wallet",
-        icon: CircleDollarSign,
-        href: "/dashboard/wallet",
-      },
-      {
-        title: "Farmer Support",
-        icon: HeartHandshake,
-        href: "/dashboard/farmer-support",
-      },
+      
+      
       {
         title: "Settings",
         icon: LayoutGrid,
         href: "/dashboard/settings",
       },
-      {
-        title: "Online Store",
-        icon: ExternalLink,
-        href: "/",
-      },
+      
     ];
+  
     catalogueLinks = [
       {
-        title: "Products",
+        title: "All Products",
         icon: Boxes,
-        href: "/dashboard/products",
+        href: "/dashboard/farmers/products",
       },
       {
-        title: "Coupons",
-        icon: ScanSearch,
-        href: "/dashboard/coupons",
+        title: "Add Product",
+        icon: Boxes,
+        href: "/dashboard/farmers/products/new",
       },
     ];
   }

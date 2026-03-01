@@ -47,16 +47,10 @@ export default function Product({ product }) {
 
         <div className="mt-2 flex items-center justify-between">
           <p className="text-sm font-semibold text-green-700 dark:text-green-400">
-            UGX {product.salePrice ?? product.price}
+            NGN {product.salePrice ?? product.price}
           </p>
 
-          <button
-            onClick={handleAddToCart}
-            className="flex items-center gap-1 bg-lime-600 hover:bg-lime-700 px-3 py-1.5 rounded-md text-white text-sm"
-          >
-            <BaggageClaim size={16} />
-            <span>Add</span>
-          </button>
+          
         </div>
 
         {/* ✅ Seller Phone Number */}

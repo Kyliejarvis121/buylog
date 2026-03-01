@@ -33,7 +33,7 @@ export default function AISupportChat() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: updatedMessages, // 👈 SEND FULL CONTEXT
+          messages: updatedMessages,
         }),
       });
 
@@ -60,12 +60,12 @@ export default function AISupportChat() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6">
+    <div className="min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 p-6">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-4">AI Customer Support</h1>
 
         {/* CHAT BOX */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 h-[400px] overflow-y-auto space-y-4">
+        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 h-[400px] overflow-y-auto space-y-4 shadow-sm">
           {messages
             .filter((m) => m.role !== "system")
             .map((msg, i) => (
@@ -74,7 +74,7 @@ export default function AISupportChat() {
                 className={`p-3 rounded-lg max-w-[85%] ${
                   msg.role === "user"
                     ? "ml-auto bg-emerald-600 text-white"
-                    : "mr-auto bg-zinc-800 text-zinc-200"
+                    : "mr-auto bg-gray-200 dark:bg-zinc-800 text-gray-900 dark:text-zinc-200"
                 }`}
               >
                 {msg.content}
@@ -82,7 +82,7 @@ export default function AISupportChat() {
             ))}
 
           {loading && (
-            <div className="mr-auto bg-zinc-800 p-3 rounded-lg text-zinc-400">
+            <div className="mr-auto bg-gray-200 dark:bg-zinc-800 p-3 rounded-lg text-gray-500 dark:text-zinc-400">
               Buylog AI is typing…
             </div>
           )}
@@ -95,7 +95,7 @@ export default function AISupportChat() {
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && askAI()}
             placeholder="Ask Buylog AI anything…"
-            className="flex-1 p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            className="flex-1 p-3 rounded-lg bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-600"
           />
           <button
             disabled={loading}
@@ -107,11 +107,11 @@ export default function AISupportChat() {
         </div>
 
         {/* FALLBACK */}
-        <p className="text-sm text-zinc-400 mt-4">
+        <p className="text-sm text-gray-500 dark:text-zinc-400 mt-4">
           Need a human?
           <a
             href="/customer-support/chat"
-            className="ml-1 text-emerald-500 underline"
+            className="ml-1 text-emerald-600 dark:text-emerald-400 underline"
           >
             Chat with customer care
           </a>
