@@ -110,7 +110,7 @@ export default function ProductUpload({
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        credentials: "include", // 👈 important for auth
+        credentials: "include",
       });
 
       const result = await res.json();
@@ -142,12 +142,12 @@ export default function ProductUpload({
   };
 
   /* =============================
-     UI
+     UI (THEME SAFE)
   ============================== */
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-4xl p-6 mx-auto my-6 bg-gray-900 border border-gray-700 rounded-lg shadow text-white"
+      className="w-full max-w-4xl p-6 mx-auto my-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow text-gray-900 dark:text-white"
     >
       <h2 className="text-xl font-semibold mb-6">
         {existingProduct ? "Edit Product" : "Upload New Product"}
@@ -190,7 +190,7 @@ export default function ProductUpload({
           <label className="text-sm font-medium">Category</label>
           <select
             {...register("categoryId")}
-            className="border rounded-md px-3 py-2 text-sm bg-gray-800 text-white"
+            className="border rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           >
             <option value="">Select Category</option>
             {categories.map((cat) => (
