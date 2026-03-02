@@ -3,6 +3,7 @@ import { getData } from "@/lib/getData";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { updateLastSeen } from "@/lib/updateLastSeen";
+import Link from "next/link";
 
 const ProductImageCarousel = dynamic(
   () => import("@/components/frontend/ProductImageCarousel"),
@@ -31,6 +32,14 @@ export default async function ProductDetailPage({ params }) {
     await updateLastSeen(currentUser.id);
   }
 
+  const isOwner = currentUser?.id === product?.userId;
+  const seller = product?.farmer;
+
+  // ONLINE CHECK (5 mins threshold)
+  const isOnline =
+    seller?.lastSeen &&
+    new Date() - new Date(seller.lastSeen) < 5 * 60 * 1000;
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <ProductImageCarousel
@@ -54,7 +63,7 @@ export default async function ProductDetailPage({ params }) {
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-blue-600 underline hover:text-blue-800"
+            className="font-medium text-blue-600 underline"
           >
             {product.location}
           </a>
@@ -64,19 +73,12 @@ export default async function ProductDetailPage({ params }) {
       )}
 
       {/* PHONE */}
-      {product.phoneNumber ? (
+      {product.phoneNumber && (
         <p className="text-blue-600 mt-1">
           Seller Phone:{" "}
-          <a
-            href={`tel:${product.phoneNumber}`}
-            className="underline hover:text-blue-800"
-          >
+          <a href={`tel:${product.phoneNumber}`} className="underline">
             {product.phoneNumber}
           </a>
-        </p>
-      ) : (
-        <p className="text-gray-800 mt-1">
-          Seller Phone: Not provided
         </p>
       )}
 
@@ -88,30 +90,80 @@ export default async function ProductDetailPage({ params }) {
         {product.description || "No description available."}
       </p>
 
-      {/* ✅ CONTACT SELLER BUTTON + CHAT */}
-      <ProductChatSection
-        productId={product.id}
-        farmerId={product.farmerId}
-        currentUserId={currentUser?.id ?? null}
-      />
+      {/* ================= SELLER CARD ================= */}
+      {seller && !isOwner && (
+        <div className="mt-8 border rounded-xl p-5 bg-white dark:bg-slate-800 shadow-sm">
 
-      {/* SAFETY TIP SECTION */}
-      <div className="mt-6 p-4 bg-[#fff7f5] border-l-4 border-[#f97316] rounded">
-  <strong>Safety Tip:</strong>
+          {/* Seller Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">
+                {seller.name}
+              </h3>
 
-  <p className="text-sm text-gray-700 mt-2">
-    <span className="font-semibold block mb-1">
-      SAFETY TIPS
-    </span>
-    BuyLog does not handle payments or financial transactions. Buyers and sellers
-    should agree on a convenient and safe meeting location. If either party insists
-    on an unsafe or uncomfortable location, the other party should politely withdraw.
-    For added safety, do not meet alone—bring a companion or meet in public places.
-    Before leaving the location, buyers should confirm receipt of payment in their
-    mobile app. BuyLog is not responsible for transactions, disputes, or any loss
-    that may occur. Trade safely and responsibly.
-  </p>
-</div>
+              {/* Online Status */}
+              <p className="text-sm mt-1">
+                {isOnline ? (
+                  <span className="text-green-600 font-medium">
+                    ● Online now
+                  </span>
+                ) : (
+                  <span className="text-gray-500">
+                    Last seen{" "}
+                    {seller.lastSeen
+                      ? new Date(seller.lastSeen).toLocaleString()
+                      : "Recently"}
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {/* View Profile */}
+            <Link
+              href={`/seller/${seller.id}`}
+              className="text-sm text-blue-600 underline"
+            >
+              View Profile
+            </Link>
+          </div>
+
+          {/* ACTION BUTTONS */}
+          <div className="mt-5 space-y-3">
+
+            {/* CONTACT SELLER CHAT */}
+            <ProductChatSection
+              productId={product.id}
+              farmerId={product.farmerId}
+              currentUserId={currentUser?.id ?? null}
+            />
+
+            {/* WHATSAPP BUTTON */}
+            {seller.phoneNumber && (
+              <a
+                href={`https://wa.me/${seller.phoneNumber.replace(
+                  /^0/,
+                  "234"
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
+              >
+                Chat on WhatsApp
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================= SAFETY TIP ================= */}
+      <div className="mt-8 p-4 bg-[#fff7f5] border-l-4 border-[#f97316] rounded">
+        <strong>Safety Tip:</strong>
+        <p className="text-sm text-gray-700 mt-2">
+          BuyLog does not handle payments or financial transactions. Buyers and sellers
+          should agree on a safe meeting location. Meet in public places and confirm
+          payments before leaving.
+        </p>
+      </div>
     </div>
   );
 }
