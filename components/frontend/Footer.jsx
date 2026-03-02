@@ -26,7 +26,7 @@ const Footer = () => {
               {/* Twitter */}
               <li>
                 <a
-                  href="https://twitter.com/yourusername"
+                  href="https://twitter.com/buy_log"
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Twitter"
@@ -41,7 +41,7 @@ const Footer = () => {
               {/* Facebook */}
               <li>
                 <a
-                  href="https://facebook.com/yourpage"
+                  href="https://facebook.com/176qcjERN/?mibextid=wwXIfr"
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Facebook"
@@ -56,7 +56,7 @@ const Footer = () => {
               {/* Instagram */}
               <li>
                 <a
-                  href="https://instagram.com/yourusername"
+                  href="https://instagram.com/buylogint"
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Instagram"
