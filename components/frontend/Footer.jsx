@@ -22,9 +22,13 @@ const Footer = () => {
           <div>
             <p className="text-sm font-semibold tracking-widest uppercase mb-6 text-gray-900">Follow Us</p>
             <ul className="flex items-center space-x-3">
+              
+              {/* Twitter */}
               <li>
                 <a
-                  href="#"
+                  href="https://twitter.com/yourusername"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title="Twitter"
                   className="flex items-center justify-center text-white transition-all duration-200 bg-gray-800 rounded-full w-7 h-7 hover:bg-blue-500"
                 >
@@ -34,9 +38,12 @@ const Footer = () => {
                 </a>
               </li>
 
+              {/* Facebook */}
               <li>
                 <a
-                  href="#"
+                  href="https://facebook.com/yourpage"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title="Facebook"
                   className="flex items-center justify-center text-white transition-all duration-200 bg-gray-800 rounded-full w-7 h-7 hover:bg-blue-500"
                 >
@@ -46,9 +53,12 @@ const Footer = () => {
                 </a>
               </li>
 
+              {/* Instagram */}
               <li>
                 <a
-                  href="#"
+                  href="https://instagram.com/yourusername"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title="Instagram"
                   className="flex items-center justify-center text-white transition-all duration-200 bg-gray-800 rounded-full w-7 h-7 hover:bg-pink-500"
                 >
