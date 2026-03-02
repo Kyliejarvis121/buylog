@@ -125,18 +125,17 @@ export default async function ProductDetailPage({ params }) {
               </p>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* ACTION BUTTONS */}
-          <div className="mt-5 space-y-3">
-
-            {/* CONTACT SELLER CHAT */}
-            <ProductChatSection
-              productId={product.id}
-              farmerId={product.farmerId}
-              currentUserId={currentUser?.id ?? null}
-            />
-
-          </div>
+      {/* ================= CONTACT SELLER CHAT (ALWAYS SHOW IF NOT OWNER) ================= */}
+      {!isOwner && (
+        <div className="mt-6">
+          <ProductChatSection
+            productId={product.id}
+            farmerId={product.farmerId}
+            currentUserId={currentUser?.id ?? null}
+          />
         </div>
       )}
 
@@ -146,7 +145,7 @@ export default async function ProductDetailPage({ params }) {
         <p className="text-sm text-gray-700 mt-2">
           BuyLog does not handle payments or financial transactions. Buyers and sellers
           should agree on a safe meeting location. Meet in public places and confirm
-          payments before leaving, Buylog is not responsible for any loss.
+          payments before leaving. Buylog is not responsible for any loss.
         </p>
       </div>
     </div>
