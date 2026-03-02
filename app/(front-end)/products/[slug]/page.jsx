@@ -27,7 +27,7 @@ export default async function ProductDetailPage({ params }) {
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
 
-  // Update viewer lastSeen
+  // update viewer last seen
   if (currentUser?.id) {
     await updateLastSeen(currentUser.id);
   }
@@ -35,7 +35,7 @@ export default async function ProductDetailPage({ params }) {
   const isOwner = currentUser?.id === product?.userId;
   const seller = product?.farmer;
 
-  // ONLINE CHECK (5 minutes threshold)
+  // online status (5 minute threshold)
   const isOnline =
     seller?.lastSeen &&
     new Date() - new Date(seller.lastSeen) < 5 * 60 * 1000;
@@ -96,8 +96,6 @@ export default async function ProductDetailPage({ params }) {
 
           {/* Seller Header */}
           <div className="flex items-center gap-3">
-
-            {/* Green Dot Indicator */}
             <span
               className={`h-3 w-3 rounded-full ${
                 isOnline ? "bg-green-500" : "bg-gray-400"
@@ -105,9 +103,7 @@ export default async function ProductDetailPage({ params }) {
             />
 
             <div>
-              <h3 className="text-lg font-semibold">
-                {seller.name}
-              </h3>
+              <h3 className="text-lg font-semibold">{seller.name}</h3>
 
               <p className="text-sm mt-1">
                 {isOnline ? (
@@ -128,8 +124,8 @@ export default async function ProductDetailPage({ params }) {
         </div>
       )}
 
-      {/* ================= CONTACT SELLER CHAT (ALWAYS SHOW IF NOT OWNER) ================= */}
-      {!isOwner && (
+      {/* ================= CONTACT SELLER (ALWAYS SHOW) ================= */}
+      {!isOwner && seller && (
         <div className="mt-6">
           <ProductChatSection
             productId={product.id}
@@ -143,9 +139,10 @@ export default async function ProductDetailPage({ params }) {
       <div className="mt-8 p-4 bg-[#fff7f5] border-l-4 border-[#f97316] rounded">
         <strong>Safety Tip:</strong>
         <p className="text-sm text-gray-700 mt-2">
-          BuyLog does not handle payments or financial transactions. Buyers and sellers
-          should agree on a safe meeting location. Meet in public places and confirm
-          payments before leaving. Buylog is not responsible for any loss.
+          BuyLog does not handle payments or financial transactions. Buyers and
+          sellers should agree on a safe meeting location. Meet in public places
+          and confirm payments before leaving. BuyLog is not responsible for any
+          loss.
         </p>
       </div>
     </div>
