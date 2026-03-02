@@ -78,7 +78,6 @@ export default function Sidebar({ showSidebar, setShowSidebar }) {
     sidebarLinks = [
       { title: "Dashboard", icon: LayoutGrid, href: "/dashboard" },
       { title: "Inbox", icon: SendToBack, href: "/dashboard/inbox" },
-      { title: "Settings", icon: LayoutGrid, href: "/dashboard/settings" },
       { title: "Online Store", icon: ExternalLink, href: "/" },
     ];
 

@@ -1,11 +1,52 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import Navbar from "@/components/backoffice/Navbar";
 import Sidebar from "@/components/backoffice/Sidebar";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function Layout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
+
+  useEffect(() => {
+    // ✅ Set user online when dashboard loads
+    fetch("/api/presence", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: "online" }),
+    });
+
+    // ✅ Handle tab close / refresh
+    const handleOffline = () => {
+      navigator.sendBeacon(
+        "/api/presence",
+        JSON.stringify({ status: "offline" })
+      );
+    };
+
+    // ✅ Handle tab hidden (user switches tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        navigator.sendBeacon(
+          "/api/presence",
+          JSON.stringify({ status: "offline" })
+        );
+      }
+    };
+
+    window.addEventListener("beforeunload", handleOffline);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleOffline);
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+    };
+  }, []);
 
   return (
     <div className="w-full overflow-x-hidden">

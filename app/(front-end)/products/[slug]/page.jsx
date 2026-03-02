@@ -3,7 +3,6 @@ import { getData } from "@/lib/getData";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { updateLastSeen } from "@/lib/updateLastSeen";
-import Link from "next/link";
 
 const ProductImageCarousel = dynamic(
   () => import("@/components/frontend/ProductImageCarousel"),
@@ -28,6 +27,7 @@ export default async function ProductDetailPage({ params }) {
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
 
+  // Update viewer lastSeen
   if (currentUser?.id) {
     await updateLastSeen(currentUser.id);
   }
@@ -35,7 +35,7 @@ export default async function ProductDetailPage({ params }) {
   const isOwner = currentUser?.id === product?.userId;
   const seller = product?.farmer;
 
-  // ONLINE CHECK (5 mins threshold)
+  // ✅ ONLINE CHECK (5 minutes threshold)
   const isOnline =
     seller?.lastSeen &&
     new Date() - new Date(seller.lastSeen) < 5 * 60 * 1000;
@@ -95,17 +95,24 @@ export default async function ProductDetailPage({ params }) {
         <div className="mt-8 border rounded-xl p-5 bg-white dark:bg-slate-800 shadow-sm">
 
           {/* Seller Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+
+            {/* Green Dot Indicator */}
+            <span
+              className={`h-3 w-3 rounded-full ${
+                isOnline ? "bg-green-500" : "bg-gray-400"
+              }`}
+            />
+
             <div>
               <h3 className="text-lg font-semibold">
                 {seller.name}
               </h3>
 
-              {/* Online Status */}
               <p className="text-sm mt-1">
                 {isOnline ? (
                   <span className="text-green-600 font-medium">
-                    ● Online now
+                    Online now
                   </span>
                 ) : (
                   <span className="text-gray-500">
@@ -117,14 +124,6 @@ export default async function ProductDetailPage({ params }) {
                 )}
               </p>
             </div>
-
-            {/* View Profile */}
-            <Link
-              href={`/seller/${seller.id}`}
-              className="text-sm text-blue-600 underline"
-            >
-              View Profile
-            </Link>
           </div>
 
           {/* ACTION BUTTONS */}
@@ -161,7 +160,7 @@ export default async function ProductDetailPage({ params }) {
         <p className="text-sm text-gray-700 mt-2">
           BuyLog does not handle payments or financial transactions. Buyers and sellers
           should agree on a safe meeting location. Meet in public places and confirm
-          payments before leaving.
+          payments before leaving, Buylog is not responsible for any lose.
         </p>
       </div>
     </div>

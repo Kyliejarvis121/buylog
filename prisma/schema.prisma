@@ -74,14 +74,15 @@ model Profile {
 // FARMERS
 // ===============================
 model Farmer {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  name     String
-  userId   String   @unique @db.ObjectId
-  isActive Boolean? @default(false)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  userId    String   @unique @db.ObjectId
+  isActive  Boolean? @default(false)
+  lastSeen  DateTime?
 
-  products Product[]
-  chats    Chat[]    @relation("SellerChats")
-  Messages Message[]
+  products  Product[]
+  chats     Chat[]    @relation("SellerChats")
+  Messages  Message[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
