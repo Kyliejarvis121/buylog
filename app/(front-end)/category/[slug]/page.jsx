@@ -16,10 +16,7 @@ export default async function page({ params: { slug }, searchParams }) {
     `products?categoryId=${category.id}&page=${page}&sort=${sort}&min=${min}&max=${max}`
   );
 
-  // ✅ FIX: Ensure products is always an array
-  const products = Array.isArray(productsRes?.data)
-    ? productsRes.data
-    : [];
+  const products = Array.isArray(productsRes?.data) ? productsRes.data : [];
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-6">
@@ -41,7 +38,7 @@ export default async function page({ params: { slug }, searchParams }) {
         {/* Main Content */}
         <main className="w-full md:w-3/4">
 
-          {/* Mobile Filter Bar */}
+          {/* Mobile Filter (Only Once) */}
           <div className="md:hidden mb-4">
             <FilterComponent
               category={category}
@@ -50,7 +47,7 @@ export default async function page({ params: { slug }, searchParams }) {
             />
           </div>
 
-          {/* Product Grid */}
+          {/* Product Grid (No extra filter here) */}
           <FilterComponent
             category={category}
             products={products}
