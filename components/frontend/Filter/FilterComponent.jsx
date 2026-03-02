@@ -8,31 +8,41 @@ import FilteredProducts from "./FilteredProducts";
 
 export default function FilterComponent({ category, products }) {
   const { title, slug } = category;
-  const productCount = category.products.length;
+  const productCount = category.products?.length || 0;
 
   return (
     <div className="w-full overflow-x-hidden">
-      {/* Breadcrumb & Sorting */}
-      <div className="bg-white space-y-6 text-slate-900 py-8 px-4">
+
+      {/* ================= BREADCRUMB & SORTING ================= */}
+      <div className="bg-white dark:bg-slate-900 space-y-6 text-slate-900 dark:text-slate-100 py-6 px-4">
         <Breadcrumb title={title} resultCount={productCount} />
+
+        {/* Sorting always visible (mobile & desktop) */}
         <Sorting isSearch={category?.isSearch} title={title} slug={slug} />
       </div>
 
-      {/* Main Grid */}
-      <div className="flex flex-col md:flex-row gap-6 py-8 px-4">
-        {/* Sidebar: hidden on mobile */}
-        <div className="hidden md:block md:w-1/4">
+      {/* ================= MAIN GRID ================= */}
+      <div className="flex flex-col md:flex-row gap-6 py-6 px-4">
+
+        {/* ================= SIDEBAR FILTER (DESKTOP ONLY) ================= */}
+        <aside className="hidden md:block md:w-1/4">
+          <Filters slug={slug} isSearch={category?.isSearch} />
+        </aside>
+
+        {/* ================= MOBILE FILTER (UNDER SORTING ONLY) ================= */}
+        <div className="md:hidden w-full">
           <Filters slug={slug} isSearch={category?.isSearch} />
         </div>
 
-        {/* Products Grid: full width on mobile */}
-        <div className="w-full md:w-3/4">
+        {/* ================= PRODUCTS GRID (NO FILTERS INSIDE) ================= */}
+        <main className="w-full md:w-3/4">
           <FilteredProducts
             isSearch={category?.isSearch}
             productCount={productCount}
             products={products}
           />
-        </div>
+        </main>
+
       </div>
     </div>
   );
