@@ -35,7 +35,7 @@ export default async function ProductDetailPage({ params }) {
   const isOwner = currentUser?.id === product?.userId;
   const seller = product?.farmer;
 
-  // ✅ ONLINE CHECK (5 minutes threshold)
+  // ONLINE CHECK (5 minutes threshold)
   const isOnline =
     seller?.lastSeen &&
     new Date() - new Date(seller.lastSeen) < 5 * 60 * 1000;
@@ -136,20 +136,6 @@ export default async function ProductDetailPage({ params }) {
               currentUserId={currentUser?.id ?? null}
             />
 
-            {/* WHATSAPP BUTTON */}
-            {seller.phoneNumber && (
-              <a
-                href={`https://wa.me/${seller.phoneNumber.replace(
-                  /^0/,
-                  "234"
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
-              >
-                Chat on WhatsApp
-              </a>
-            )}
           </div>
         </div>
       )}
@@ -160,7 +146,7 @@ export default async function ProductDetailPage({ params }) {
         <p className="text-sm text-gray-700 mt-2">
           BuyLog does not handle payments or financial transactions. Buyers and sellers
           should agree on a safe meeting location. Meet in public places and confirm
-          payments before leaving, Buylog is not responsible for any lose.
+          payments before leaving, Buylog is not responsible for any loss.
         </p>
       </div>
     </div>

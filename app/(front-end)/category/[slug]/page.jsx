@@ -20,40 +20,61 @@ export default async function page({ params: { slug }, searchParams }) {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-6">
+      
       {/* Category Title */}
       <h1 className="text-2xl font-bold mb-4 capitalize">
         {category.title}
       </h1>
 
       <div className="flex flex-col md:flex-row gap-6">
-        
-        {/* Desktop Sidebar Filters */}
+
+        {/* ================= DESKTOP SIDEBAR ================= */}
         <aside className="hidden md:block md:w-1/4">
           <FilterComponent
             category={category}
-            products={products}
             variant="sidebar"
           />
         </aside>
 
-        {/* Main Content */}
+        {/* ================= MAIN CONTENT ================= */}
         <main className="w-full md:w-3/4">
 
-          {/* Mobile Filter Bar */}
-          <div className="md:hidden mb-4">
+          {/* ===== SORT + MOBILE FILTER (Mobile Only) ===== */}
+          <div className="md:hidden space-y-3 mb-4">
+            
+            {/* Sort By */}
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Sort By</span>
+              <FilterComponent
+                category={category}
+                variant="sort"
+              />
+            </div>
+
+            {/* Mobile Filters (Under Sort) */}
             <FilterComponent
               category={category}
-              products={products}
               variant="mobile"
             />
           </div>
 
-          {/* Product Grid */}
-          <FilterComponent
-            category={category}
-            products={products}
-            variant="grid"
-          />
+          {/* ===== DESKTOP SORT ===== */}
+          <div className="hidden md:flex justify-end mb-4">
+            <FilterComponent
+              category={category}
+              variant="sort"
+            />
+          </div>
+
+          {/* ===== PRODUCT GRID (ONLY ONCE) ===== */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+            {products.map((product) => (
+              <div key={product.id}>
+                {/* Your product card component here */}
+              </div>
+            ))}
+          </div>
+
         </main>
       </div>
     </div>
