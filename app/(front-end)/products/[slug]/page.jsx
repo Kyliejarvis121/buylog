@@ -27,7 +27,7 @@ export default async function ProductDetailPage({ params }) {
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
 
-  // Update viewer last seen
+  // Update viewer lastSeen
   if (currentUser?.id) {
     await updateLastSeen(currentUser.id);
   }
@@ -42,6 +42,7 @@ export default async function ProductDetailPage({ params }) {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      
       {/* ================= PRODUCT IMAGES ================= */}
       <ProductImageCarousel
         productImages={product.productImages ?? []}
@@ -95,6 +96,35 @@ export default async function ProductDetailPage({ params }) {
         {product.description || "No description available."}
       </p>
 
+      {/* ================= CTA UNDER DESCRIPTION ================= */}
+      {!currentUser && (
+        <div className="mt-6 border border-gray-200 dark:border-slate-700 rounded-xl p-6 bg-gray-50 dark:bg-slate-800 text-center shadow-sm">
+          <h3 className="text-lg font-semibold mb-2">
+            💬 Want to message this seller?
+          </h3>
+
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Create a free account to chat directly with the seller and get more details about this product.
+          </p>
+
+          <div className="flex justify-center gap-4">
+            <a
+              href="/login"
+              className="px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-medium transition"
+            >
+              Login
+            </a>
+
+            <a
+              href="/register"
+              className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition"
+            >
+              Sign Up
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* ================= SELLER CARD ================= */}
       {seller && !isOwner && (
         <div className="mt-8 border rounded-xl p-5 bg-white dark:bg-slate-800 shadow-sm">
@@ -127,42 +157,14 @@ export default async function ProductDetailPage({ params }) {
         </div>
       )}
 
-      {/* ================= CONTACT SELLER ================= */}
-      {!isOwner && seller && (
+      {/* ================= CONTACT SELLER CHAT ================= */}
+      {currentUser && !isOwner && seller && (
         <div className="mt-6">
-          {currentUser ? (
-            <ProductChatSection
-              productId={product.id}
-              farmerId={product.farmerId}
-              currentUserId={currentUser.id}
-            />
-          ) : (
-            <div className="border rounded-xl p-6 text-center bg-gray-50 dark:bg-slate-800 shadow-sm">
-              <h3 className="text-lg font-semibold mb-2">
-                🔒 Want to contact the seller?
-              </h3>
-
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                You need an account to chat directly with the seller.
-              </p>
-
-              <div className="flex justify-center gap-4">
-                <a
-                  href="/login"
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
-                >
-                  Login
-                </a>
-
-                <a
-                  href="/register"
-                  className="px-4 py-2 rounded-lg bg-lime-600 hover:bg-lime-700 text-white font-medium transition"
-                >
-                  Sign Up
-                </a>
-              </div>
-            </div>
-          )}
+          <ProductChatSection
+            productId={product.id}
+            farmerId={product.farmerId}
+            currentUserId={currentUser.id}
+          />
         </div>
       )}
 
