@@ -46,7 +46,7 @@ export default function HelpModal() {
               <div className="flex items-center w-10 h-10 bg-lime-100 justify-center rounded-full">
                 <Truck className="w-6 h-6 text-lime-800" />
               </div>
-              <span>Track your Order</span>
+              <span>Help Us to serve you better, contact us regarding the features that might be missing. @info@buylogint.com</span>
             </Link>
             <Link
               href="Email:Support@buylogint.com"
