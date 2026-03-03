@@ -1,16 +1,12 @@
 import { withAuth } from "next-auth/middleware";
 
 export default withAuth({
+  // Matches the pages config in `[...nextauth]`
   pages: {
     signIn: "/login",
-  },
-  callbacks: {
-    authorized: ({ token }) => {
-      return !!token; // allow only if logged in
-    },
+    // error: '/error',
   },
 });
-
 export const config = {
-  matcher: ["/dashboard/:path*"], // protect dashboard only
+  matcher: ["/dashboard/:path*"],
 };
