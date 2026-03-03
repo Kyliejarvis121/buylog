@@ -1,3 +1,4 @@
+import Script from "next/script";
 import Footer from "@/components/frontend/Footer";
 import Navbar from "@/components/frontend/Navbar";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -16,6 +17,14 @@ export default function Layout({ children }) {
 
             <Footer />
           </div>
+
+          {/* Google AdSense Script (Safe Placement) */}
+          <Script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9597681757893442"
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
         </ThemeProvider>
       </body>
     </html>
