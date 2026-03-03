@@ -18,12 +18,6 @@ export default async function HomePage() {
     ? categoriesRes.data
     : [];
 
-  // Trainings
-  const trainingsRes = await getData("trainings");
-  const trainings = Array.isArray(trainingsRes?.data)
-    ? trainingsRes.data
-    : [];
-
   return (
     <div className="min-h-screen">
       {/* Hero / Banners */}
@@ -32,30 +26,21 @@ export default async function HomePage() {
       {/* Markets */}
       <MarketList markets={markets} />
 
-      {/* Categories Grid (Jiji style) */}
+      {/* Categories Grid */}
       <div className="py-6">
         <h2 className="text-lg md:text-xl font-semibold text-center mb-4">
           Browse by Category
         </h2>
 
         <CategoryGrid
-  categories={categoriesArray.map((cat) => ({
-    id: cat.id,
-    name: cat.title,
-    imageUrl: cat.imageUrl || null,
-    slug: cat.slug || null,
-  }))}
-/>
-
-      </div>
-
-      {/* Trainings */}
-      {trainings.length > 0 && (
-        <CommunityTrainings
-          title="Featured Trainings"
-          trainings={trainings.slice(0, 3)}
+          categories={categoriesArray.map((cat) => ({
+            id: cat.id,
+            name: cat.title,
+            imageUrl: cat.imageUrl || null,
+            slug: cat.slug || null,
+          }))}
         />
-      )}
+      </div>
     </div>
   );
 }

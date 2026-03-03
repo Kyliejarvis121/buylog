@@ -1,26 +1,11 @@
 import Script from "next/script";
 import Footer from "@/components/frontend/Footer";
 import Navbar from "@/components/frontend/Navbar";
-import React from "react";
 import ThemeProvider from "@/components/ThemeProvider";
 
-export default function Layout({ children }) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta
-          name="google-adsense-account"
-          content="ca-pub-9597681757893442"
-        />
-
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9597681757893442"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
-      </head>
-
       <body>
         <ThemeProvider>
           <div className="w-full overflow-x-hidden">
@@ -30,6 +15,14 @@ export default function Layout({ children }) {
             </main>
             <Footer />
           </div>
+
+          {/* Google Ads Script (safe location) */}
+          <Script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9597681757893442"
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
         </ThemeProvider>
       </body>
     </html>
