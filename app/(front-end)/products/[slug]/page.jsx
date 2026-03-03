@@ -27,7 +27,7 @@ export default async function ProductDetailPage({ params }) {
   const session = await getServerSession(authOptions);
   const currentUser = session?.user;
 
-  // update viewer last seen
+  // Update viewer last seen
   if (currentUser?.id) {
     await updateLastSeen(currentUser.id);
   }
@@ -35,13 +35,14 @@ export default async function ProductDetailPage({ params }) {
   const isOwner = currentUser?.id === product?.userId;
   const seller = product?.farmer;
 
-  // online status (5 minute threshold)
+  // Online status (5 minute threshold)
   const isOnline =
     seller?.lastSeen &&
     new Date() - new Date(seller.lastSeen) < 5 * 60 * 1000;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      {/* ================= PRODUCT IMAGES ================= */}
       <ProductImageCarousel
         productImages={product.productImages ?? []}
         thumbnail={product.imageUrl ?? null}
@@ -53,7 +54,7 @@ export default async function ProductDetailPage({ params }) {
         Category: {product.category?.title || "Uncategorized"}
       </p>
 
-      {/* LOCATION */}
+      {/* ================= LOCATION ================= */}
       {product.location ? (
         <p className="text-gray-600 mt-1">
           📍 Location:{" "}
@@ -69,10 +70,12 @@ export default async function ProductDetailPage({ params }) {
           </a>
         </p>
       ) : (
-        <p className="text-gray-400 mt-1">📍 Location: Not provided</p>
+        <p className="text-gray-400 mt-1">
+          📍 Location: Not provided
+        </p>
       )}
 
-      {/* PHONE */}
+      {/* ================= PHONE ================= */}
       {product.phoneNumber && (
         <p className="text-blue-600 mt-1">
           Seller Phone:{" "}
@@ -82,10 +85,12 @@ export default async function ProductDetailPage({ params }) {
         </p>
       )}
 
+      {/* ================= PRICE ================= */}
       <p className="text-2xl font-semibold text-green-600 mt-4">
         ₦{Number(product.price).toLocaleString()}
       </p>
 
+      {/* ================= DESCRIPTION ================= */}
       <p className="text-gray-700 mt-4 whitespace-pre-line">
         {product.description || "No description available."}
       </p>
@@ -93,8 +98,6 @@ export default async function ProductDetailPage({ params }) {
       {/* ================= SELLER CARD ================= */}
       {seller && !isOwner && (
         <div className="mt-8 border rounded-xl p-5 bg-white dark:bg-slate-800 shadow-sm">
-
-          {/* Seller Header */}
           <div className="flex items-center gap-3">
             <span
               className={`h-3 w-3 rounded-full ${
@@ -124,14 +127,42 @@ export default async function ProductDetailPage({ params }) {
         </div>
       )}
 
-      {/* ================= CONTACT SELLER (ALWAYS SHOW) ================= */}
+      {/* ================= CONTACT SELLER ================= */}
       {!isOwner && seller && (
         <div className="mt-6">
-          <ProductChatSection
-            productId={product.id}
-            farmerId={product.farmerId}
-            currentUserId={currentUser?.id ?? null}
-          />
+          {currentUser ? (
+            <ProductChatSection
+              productId={product.id}
+              farmerId={product.farmerId}
+              currentUserId={currentUser.id}
+            />
+          ) : (
+            <div className="border rounded-xl p-6 text-center bg-gray-50 dark:bg-slate-800 shadow-sm">
+              <h3 className="text-lg font-semibold mb-2">
+                🔒 Want to contact the seller?
+              </h3>
+
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                You need an account to chat directly with the seller.
+              </p>
+
+              <div className="flex justify-center gap-4">
+                <a
+                  href="/login"
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
+                >
+                  Login
+                </a>
+
+                <a
+                  href="/register"
+                  className="px-4 py-2 rounded-lg bg-lime-600 hover:bg-lime-700 text-white font-medium transition"
+                >
+                  Sign Up
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -139,10 +170,10 @@ export default async function ProductDetailPage({ params }) {
       <div className="mt-8 p-4 bg-[#fff7f5] border-l-4 border-[#f97316] rounded">
         <strong>Safety Tip:</strong>
         <p className="text-sm text-gray-700 mt-2">
-          BuyLog does not handle payments or financial transactions. Buyers and
-          sellers should agree on a safe meeting location. Meet in public places
-          and confirm payments before leaving. BuyLog is not responsible for any
-          loss.
+          BuyLog does not handle payments or financial transactions.
+          Buyers and sellers should agree on a safe meeting location.
+          Meet in public places and confirm payments before leaving.
+          BuyLog is not responsible for any loss.
         </p>
       </div>
     </div>
