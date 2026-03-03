@@ -1,7 +1,6 @@
 import HeroCarousel from "@/components/frontend/HeroCarousel";
 import MarketList from "@/components/frontend/MarketList";
 import CategoryGrid from "@/components/frontend/CategoryGrid";
-import CommunityTrainings from "@/components/frontend/CommunityTrainings";
 import { getData } from "@/lib/getData";
 
 export default async function HomePage() {

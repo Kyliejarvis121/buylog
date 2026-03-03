@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 
-import CommunityTrainings from "@/components/frontend/CommunityTrainings";
+
 import { getData } from "@/lib/getData";
 import React from "react";
 
