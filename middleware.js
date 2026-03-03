@@ -1,12 +1,9 @@
-import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-export default withAuth({
-  // Matches the pages config in `[...nextauth]`
-  pages: {
-    signIn: "/login",
-    // error: '/error',
-  },
-});
+export function middleware(req) {
+  return NextResponse.next(); // allow request to continue (no redirect)
+}
+
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*"], // still applies to dashboard but doesn't block
 };
