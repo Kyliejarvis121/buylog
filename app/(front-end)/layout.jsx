@@ -19,12 +19,12 @@ export default function Layout({ children }) {
           </div>
         </ThemeProvider>
 
-        {/* Google AdSense Script (Safe & After Render) */}
+        {/* Delay AdSense to prevent hydration crash */}
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9597681757893442"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
       </body>
     </html>
