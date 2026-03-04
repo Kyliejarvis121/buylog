@@ -1,4 +1,5 @@
 "use client";
+
 import Navbar from "@/components/backoffice/Navbar";
 import Sidebar from "@/components/backoffice/Sidebar";
 import React, { useState, useEffect } from "react";
@@ -40,11 +41,11 @@ export default function Layout({ children }) {
   }, []);
 
   return (
-    <div className="w-full overflow-x-hidden">
-      <div className="flex relative">
+    <div className="w-full overflow-x-hidden min-h-screen bg-background text-foreground">
+      <div className="flex">
         <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-        <div className="flex-1 lg:ml-64 bg-slate-100 dark:bg-slate-900 min-h-screen w-full">
+        <div className="flex-1 lg:ml-64 min-h-screen">
           <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
           <main className="mt-16 px-4 sm:px-6 py-6 w-full overflow-x-hidden">
