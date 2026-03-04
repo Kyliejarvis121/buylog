@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Modal } from "flowbite-react";
+import { Modal } from "flowbite-react";
 import {
   CornerDownLeft,
   Headphones,
@@ -9,6 +9,7 @@ import {
   Truck,
 } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function HelpModal() {
   const [openModal, setOpenModal] = useState(false);
@@ -32,7 +33,7 @@ export default function HelpModal() {
           <div className="grid grid-cols-2 gap-6">
             <a
               href="mailto:support@buylogint.com"
-              className="flex items-center space-x-2 text-green-950 dark:text-slate-100"
+              className="flex items-center space-x-2"
             >
               <div className="flex items-center w-10 h-10 bg-lime-100 justify-center rounded-full">
                 <Headphones className="w-6 h-6 text-lime-800" />
@@ -42,7 +43,8 @@ export default function HelpModal() {
 
             <Link
               href="/track"
-              className="flex items-center space-x-2 text-green-950 dark:text-slate-100"
+              className="flex items-center space-x-2"
+              onClick={() => setOpenModal(false)}
             >
               <div className="flex items-center w-10 h-10 bg-lime-100 justify-center rounded-full">
                 <Truck className="w-6 h-6 text-lime-800" />
@@ -52,7 +54,7 @@ export default function HelpModal() {
 
             <a
               href="mailto:support@buylogint.com"
-              className="flex items-center space-x-2 text-green-950 dark:text-slate-100"
+              className="flex items-center space-x-2"
             >
               <div className="flex items-center w-10 h-10 bg-lime-100 justify-center rounded-full">
                 <CornerDownLeft className="w-6 h-6 text-lime-800" />
@@ -62,7 +64,7 @@ export default function HelpModal() {
 
             <a
               href="mailto:support@buylogint.com"
-              className="flex items-center space-x-2 text-green-950 dark:text-slate-100"
+              className="flex items-center space-x-2"
             >
               <div className="flex items-center w-10 h-10 bg-lime-100 justify-center rounded-full">
                 <MessageSquare className="w-6 h-6 text-lime-800" />
