@@ -1,23 +1,17 @@
-import Script from "next/script";
-import Footer from "@/components/frontend/Footer";
-import Navbar from "@/components/frontend/Navbar";
-import ThemeProvider from "@/components/ThemeProvider";
+import "../styles/main.scss";
+import Providers from "@/context/Providers";
+import AdsenseScript from "@/components/frontend/AdsenseScript";
 
-export default function Layout({ children }) {
+export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body>
-        <ThemeProvider>
-          <div className="w-full overflow-x-hidden">
-            <Navbar />
+        <Providers>
+          {/* Load AdSense safely after hydration */}
+          <AdsenseScript />
 
-            <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-0 py-6">
-              {children}
-            </main>
-
-            <Footer />
-          </div>
-        </ThemeProvider>
+          {children}
+        </Providers>
       </body>
     </html>
   );
