@@ -8,7 +8,6 @@ import {
   MessageSquare,
   Truck,
 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 
 export default function HelpModal() {
@@ -16,7 +15,6 @@ export default function HelpModal() {
 
   return (
     <>
-      {/* <Button onClick={() => setOpenModal(true)}>Toggle modal</Button> */}
       <button
         onClick={() => setOpenModal(true)}
         className="flex items-center space-x-1 text-green-950 dark:text-slate-100"
@@ -24,21 +22,24 @@ export default function HelpModal() {
         <HelpCircle />
         <span>Help</span>
       </button>
+
       <Modal show={openModal} onClose={() => setOpenModal(false)}>
         <Modal.Header>
           Need Help with Shopping, Talk to our Help Desk
         </Modal.Header>
+
         <Modal.Body>
           <div className="grid grid-cols-2 gap-6">
-            <Link
-              href="email:support@buylogint.com"
+            <a
+              href="mailto:support@buylogint.com"
               className="flex items-center space-x-2 text-green-950 dark:text-slate-100"
             >
               <div className="flex items-center w-10 h-10 bg-lime-100 justify-center rounded-full">
                 <Headphones className="w-6 h-6 text-lime-800" />
               </div>
-              <span>Email: Support@buylogint.com</span>
-            </Link>
+              <span>Email: support@buylogint.com</span>
+            </a>
+
             <Link
               href="/track"
               className="flex items-center space-x-2 text-green-950 dark:text-slate-100"
@@ -46,26 +47,28 @@ export default function HelpModal() {
               <div className="flex items-center w-10 h-10 bg-lime-100 justify-center rounded-full">
                 <Truck className="w-6 h-6 text-lime-800" />
               </div>
-              <span>Help Us to serve you better, contact us regarding the features that might be missing. @info@buylogint.com</span>
+              <span>Track Order</span>
             </Link>
-            <Link
-              href="Email:Support@buylogint.com"
+
+            <a
+              href="mailto:support@buylogint.com"
               className="flex items-center space-x-2 text-green-950 dark:text-slate-100"
             >
               <div className="flex items-center w-10 h-10 bg-lime-100 justify-center rounded-full">
                 <CornerDownLeft className="w-6 h-6 text-lime-800" />
               </div>
               <span>Urgent Request</span>
-            </Link>
-            <Link
-              href="email:support@buylogint.com"
+            </a>
+
+            <a
+              href="mailto:support@buylogint.com"
               className="flex items-center space-x-2 text-green-950 dark:text-slate-100"
             >
               <div className="flex items-center w-10 h-10 bg-lime-100 justify-center rounded-full">
                 <MessageSquare className="w-6 h-6 text-lime-800" />
               </div>
               <span>Contact Us</span>
-            </Link>
+            </a>
           </div>
         </Modal.Body>
       </Modal>
