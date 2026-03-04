@@ -1,4 +1,4 @@
-import "../styles/main.scss";
+import "@/styles/main.scss";
 import Providers from "@/context/Providers";
 import AdsenseScript from "@/components/frontend/AdsenseScript";
 
@@ -7,7 +7,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className="dark" suppressHydrationWarning>
       <body>
         <Providers>
-          {/* Load AdSense safely after hydration */}
+          {/* Adsense loads after hydration */}
           <AdsenseScript />
 
           {children}
