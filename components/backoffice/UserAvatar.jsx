@@ -11,28 +11,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LayoutDashboard, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { generateInitials } from "@/lib/generateInitials";
 
 export default function UserAvatar({ user = {} }) {
   const { name, image, role } = user;
-  const initials = generateInitials(name || "U"); // fallback initial
-  const router = useRouter();
+  const initials = generateInitials(name || "U");
 
+  // ✅ FIXED LOGOUT (No More React Crash)
   async function handleLogout() {
-    await signOut();
-    router.push("/");
+    await signOut({ redirect: false });
+    window.location.href = "/login";
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>
         <button className="flex items-center">
           {image ? (
             <Image
-              src={image}               // ✅ use the user image
+              src={image}
               alt={name || "User profile"}
               width={32}
               height={32}
@@ -50,14 +49,14 @@ export default function UserAvatar({ user = {} }) {
         <DropdownMenuLabel>{name || "User"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/dashboard" className="flex items-center space-x-2">
             <LayoutDashboard className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
           </Link>
         </DropdownMenuItem>
 
-        <DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/dashboard/profile" className="flex items-center space-x-2">
             <Settings className="mr-2 h-4 w-4" />
             <span>Edit Profile</span>
@@ -65,7 +64,7 @@ export default function UserAvatar({ user = {} }) {
         </DropdownMenuItem>
 
         {role === "USER" && (
-          <DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <Link href="/dashboard/orders" className="flex items-center space-x-2">
               <Settings className="mr-2 h-4 w-4" />
               <span>My Orders</span>
@@ -74,7 +73,10 @@ export default function UserAvatar({ user = {} }) {
         )}
 
         <DropdownMenuItem>
-          <button onClick={handleLogout} className="flex items-center space-x-2">
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 w-full text-left"
+          >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </button>
