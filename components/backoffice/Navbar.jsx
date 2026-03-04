@@ -3,7 +3,6 @@
 import {
   AlignJustify,
   Bell,
-  Home,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -17,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ThemeSwitcherBtn from "../ThemeSwitcherBtn";
-import Link from "next/link";
 import UserAvatar from "./UserAvatar";
 import { useSession } from "next-auth/react";
 
@@ -40,22 +38,6 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
         >
           <AlignJustify />
         </button>
-
-        {/* HOME BUTTON */}
-        <Link
-          href="/"
-          title="Click to view your products"
-          className="flex items-center gap-2 rounded-lg border border-lime-300 bg-lime-50 px-3 py-2 text-sm font-medium text-lime-800 transition hover:bg-lime-100 dark:border-lime-600 dark:bg-slate-700 dark:text-lime-400 dark:hover:bg-slate-600"
-        >
-          <Home size={18} />
-
-          <div className="hidden sm:flex flex-col leading-tight">
-            <span className="font-semibold">Home</span>
-            <span className="text-xs opacity-80">
-              Click to view your products
-            </span>
-          </div>
-        </Link>
       </div>
 
       {/* RIGHT SIDE */}

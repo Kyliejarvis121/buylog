@@ -9,7 +9,6 @@ import {
   User,
   Menu,
   X,
-  LayoutDashboard,
 } from "lucide-react";
 import ThemeSwitcherBtn from "../ThemeSwitcherBtn";
 import HelpModal from "./HelpModal";
@@ -21,7 +20,6 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
 
-  // Show loading header instead of null (avoids DOM jump)
   if (status === "loading") {
     return (
       <header className="bg-white dark:bg-slate-700 border-b">
@@ -33,10 +31,11 @@ export default function Navbar() {
   return (
     <header className="bg-white dark:bg-slate-700 border-b">
       <div className="max-w-6xl mx-auto px-4 py-3">
-        {/* TOP BAR */}
+
         <div className="flex items-center justify-between">
+
           {/* LOGO */}
-          <Link href="/" className="flex-shrink-0" onClick={() => setOpen(false)}>
+          <Link href="/" className="flex-shrink-0">
             <Image
               src={logo}
               alt="Buylog logo"
@@ -55,22 +54,11 @@ export default function Navbar() {
           {/* DESKTOP ACTIONS */}
           <div className="hidden md:flex items-center gap-6">
             {session ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="flex items-center gap-1 text-green-950 dark:text-slate-100"
-                >
-                  <LayoutDashboard size={20} />
-                  <span>Dashboard</span>
-                </Link>
-
-                <UserAvatar user={session?.user} />
-              </>
+              <UserAvatar user={session?.user} />
             ) : (
               <Link
                 href="/login"
                 className="flex items-center gap-1 text-green-950 dark:text-slate-100"
-                onClick={() => setOpen(false)}
               >
                 <User size={20} />
                 <span>Login</span>
@@ -100,18 +88,7 @@ export default function Navbar() {
         {open && (
           <div className="md:hidden mt-4 space-y-4 border-t pt-4">
             {session ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="flex items-center gap-2"
-                  onClick={() => setOpen(false)}
-                >
-                  <LayoutDashboard />
-                  Dashboard
-                </Link>
-
-                <UserAvatar user={session?.user} />
-              </>
+              <UserAvatar user={session?.user} />
             ) : (
               <Link
                 href="/login"
@@ -129,10 +106,10 @@ export default function Navbar() {
             </div>
 
             <CartCount />
-
             <ThemeSwitcherBtn />
           </div>
         )}
+
       </div>
     </header>
   );
