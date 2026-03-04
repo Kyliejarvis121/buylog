@@ -9,7 +9,8 @@ export default function RootLayout({ children }) {
       <body>
         <Providers>
           
-
+        {/* Adsense loads safely after hydration */}
+        <AdsenseScript />
           <div className="w-full overflow-x-hidden">
             <Navbar />
 
