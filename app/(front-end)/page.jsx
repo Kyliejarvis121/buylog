@@ -1,6 +1,7 @@
 import HeroCarousel from "@/components/frontend/HeroCarousel";
 import MarketList from "@/components/frontend/MarketList";
 import CategoryGrid from "@/components/frontend/CategoryGrid";
+import AdsenseScript from "@/components/frontend/AdsenseScript";
 import { getData } from "@/lib/getData";
 
 export default async function HomePage() {
@@ -20,6 +21,9 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Load AdSense AFTER hydration (mobile-safe) */}
+      <AdsenseScript />
+
       {/* Hero / Banners */}
       {banners.length > 0 && <HeroCarousel banners={banners} />}
 

@@ -18,14 +18,6 @@ export default function Layout({ children }) {
             <Footer />
           </div>
         </ThemeProvider>
-
-        {/* Delay AdSense to prevent hydration crash */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9597681757893442"
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
       </body>
     </html>
   );
