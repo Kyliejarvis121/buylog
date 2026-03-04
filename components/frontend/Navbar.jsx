@@ -21,8 +21,15 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
 
+  // Instead of returning null, show minimal header to avoid DOM jump
   if (status === "loading") {
-    return null;
+    return (
+      <header className="bg-white dark:bg-slate-700 border-b">
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          Loading...
+        </div>
+      </header>
+    );
   }
 
   return (
@@ -49,16 +56,17 @@ export default function Navbar() {
 
           {/* DESKTOP ACTIONS */}
           <div className="hidden md:flex items-center gap-6">
-            {status === "unauthenticated" ? (
+            {session ? (
+              <UserAvatar user={session?.user} />
+            ) : (
               <Link
                 href="/login"
                 className="flex items-center gap-1 text-green-950 dark:text-slate-100"
+                onClick={() => setOpen(false)}
               >
                 <User size={20} />
                 <span>Login</span>
               </Link>
-            ) : (
-              <UserAvatar user={session?.user} />
             )}
 
             <HelpModal />
@@ -83,7 +91,9 @@ export default function Navbar() {
         {/* MOBILE MENU */}
         {open && (
           <div className="md:hidden mt-4 space-y-4 border-t pt-4">
-            {status === "unauthenticated" ? (
+            {session ? (
+              <UserAvatar user={session?.user} />
+            ) : (
               <Link
                 href="/login"
                 className="flex items-center gap-2"
@@ -92,8 +102,6 @@ export default function Navbar() {
                 <User />
                 Login
               </Link>
-            ) : (
-              <UserAvatar user={session?.user} />
             )}
 
             <div className="flex items-center gap-2">
