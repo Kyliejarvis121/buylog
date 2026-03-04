@@ -4,12 +4,7 @@ import SearchForm from "./SearchForm";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "../../public/limiLogo.webp.png";
-import {
-  HelpCircle,
-  User,
-  Menu,
-  X,
-} from "lucide-react";
+import { HelpCircle, User, Menu, X } from "lucide-react";
 import ThemeSwitcherBtn from "../ThemeSwitcherBtn";
 import HelpModal from "./HelpModal";
 import CartCount from "./CartCount";
@@ -17,8 +12,10 @@ import { useSession } from "next-auth/react";
 import UserAvatar from "../backoffice/UserAvatar";
 
 export default function Navbar() {
-  const { data: session, status } = useSession();
+  const { status, data: session } = useSession();
   const [open, setOpen] = useState(false);
+
+  const isAuthenticated = status === "authenticated";
 
   if (status === "loading") {
     return (
@@ -31,11 +28,10 @@ export default function Navbar() {
   return (
     <header className="bg-white dark:bg-slate-700 border-b">
       <div className="max-w-6xl mx-auto px-4 py-3">
-
         <div className="flex items-center justify-between">
 
           {/* LOGO */}
-          <Link href="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0" onClick={() => setOpen(false)}>
             <Image
               src={logo}
               alt="Buylog logo"
@@ -53,12 +49,13 @@ export default function Navbar() {
 
           {/* DESKTOP ACTIONS */}
           <div className="hidden md:flex items-center gap-6">
-            {session ? (
+            {isAuthenticated ? (
               <UserAvatar user={session?.user} />
             ) : (
               <Link
                 href="/login"
                 className="flex items-center gap-1 text-green-950 dark:text-slate-100"
+                onClick={() => setOpen(false)}
               >
                 <User size={20} />
                 <span>Login</span>
@@ -71,10 +68,7 @@ export default function Navbar() {
           </div>
 
           {/* MOBILE MENU BUTTON */}
-          <button
-            onClick={() => setOpen(!open)}
-            className="md:hidden"
-          >
+          <button onClick={() => setOpen(!open)} className="md:hidden">
             {open ? <X size={26} /> : <Menu size={26} />}
           </button>
         </div>
@@ -87,7 +81,7 @@ export default function Navbar() {
         {/* MOBILE MENU */}
         {open && (
           <div className="md:hidden mt-4 space-y-4 border-t pt-4">
-            {session ? (
+            {isAuthenticated ? (
               <UserAvatar user={session?.user} />
             ) : (
               <Link
@@ -109,7 +103,6 @@ export default function Navbar() {
             <ThemeSwitcherBtn />
           </div>
         )}
-
       </div>
     </header>
   );

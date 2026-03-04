@@ -1,12 +1,13 @@
 "use client";
 import { DoorOpen, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useId } from "react";
 import { useForm } from "react-hook-form";
 
 export default function SearchForm() {
   const { register, handleSubmit, reset } = useForm();
   const router = useRouter();
+  const inputId = useId(); // unique ID per instance
 
   function handleSearch(data) {
     const { searchTerm } = data;
@@ -21,7 +22,9 @@ export default function SearchForm() {
       onSubmit={handleSubmit(handleSearch)}
       className="flex items-center w-full"
     >
-      <label className="sr-only">Search</label>
+      <label htmlFor={inputId} className="sr-only">
+        Search
+      </label>
 
       <div className="relative w-full">
         <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
@@ -31,6 +34,7 @@ export default function SearchForm() {
         <input
           {...register("searchTerm")}
           type="text"
+          id={inputId}
           name="searchTerm"
           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-lime-500 dark:focus:border-lime-500"
           placeholder="Search Products, Categories, Markets..."
