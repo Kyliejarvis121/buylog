@@ -1,24 +1,22 @@
 "use client";
-
+import Script from "next/script";
 import { useEffect } from "react";
 
 export default function AdsenseScript() {
   useEffect(() => {
-    const existingScript = document.querySelector(
-      'script[src*="adsbygoogle.js"]'
-    );
-
-    // Prevent loading twice
-    if (existingScript) return;
-
-    const script = document.createElement("script");
-    script.src =
-      "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9597681757893442";
-    script.async = true;
-    script.crossOrigin = "anonymous";
-
-    document.body.appendChild(script);
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      console.warn("AdSense init error (ignore on dev)", e);
+    }
   }, []);
 
-  return null;
+  return (
+    <Script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9597681757893442"
+      crossOrigin="anonymous"
+      strategy="afterInteractive"
+    />
+  );
 }
