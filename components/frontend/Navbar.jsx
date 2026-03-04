@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import SearchForm from "./SearchForm";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,24 +15,28 @@ import UserAvatar from "../backoffice/UserAvatar";
 export default function Navbar() {
   const { status, data: session } = useSession();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   const isAuthenticated = status === "authenticated";
-
-  if (status === "loading") {
-    return (
-      <header className="bg-white dark:bg-slate-700 border-b">
-        <div className="max-w-6xl mx-auto px-4 py-3">Loading...</div>
-      </header>
-    );
-  }
 
   return (
     <header className="bg-white dark:bg-slate-700 border-b">
       <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-
+          
           {/* LOGO */}
-          <Link href="/" className="flex-shrink-0" onClick={() => setOpen(false)}>
+          <Link
+            href="/"
+            className="flex-shrink-0"
+            onClick={() => setOpen(false)}
+          >
             <Image
               src={logo}
               alt="Buylog logo"
@@ -68,7 +73,10 @@ export default function Navbar() {
           </div>
 
           {/* MOBILE MENU BUTTON */}
-          <button onClick={() => setOpen(!open)} className="md:hidden">
+          <button
+            onClick={() => setOpen(!open)}
+            className="md:hidden"
+          >
             {open ? <X size={26} /> : <Menu size={26} />}
           </button>
         </div>
