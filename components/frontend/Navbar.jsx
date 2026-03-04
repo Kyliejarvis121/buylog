@@ -6,10 +6,10 @@ import Image from "next/image";
 import logo from "../../public/limiLogo.webp.png";
 import {
   HelpCircle,
-  ShoppingCart,
   User,
   Menu,
   X,
+  LayoutDashboard,
 } from "lucide-react";
 import ThemeSwitcherBtn from "../ThemeSwitcherBtn";
 import HelpModal from "./HelpModal";
@@ -21,13 +21,11 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
 
-  // Instead of returning null, show minimal header to avoid DOM jump
+  // Show loading header instead of null (avoids DOM jump)
   if (status === "loading") {
     return (
       <header className="bg-white dark:bg-slate-700 border-b">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          Loading...
-        </div>
+        <div className="max-w-6xl mx-auto px-4 py-3">Loading...</div>
       </header>
     );
   }
@@ -38,7 +36,7 @@ export default function Navbar() {
         {/* TOP BAR */}
         <div className="flex items-center justify-between">
           {/* LOGO */}
-          <Link href="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0" onClick={() => setOpen(false)}>
             <Image
               src={logo}
               alt="Buylog logo"
@@ -57,7 +55,17 @@ export default function Navbar() {
           {/* DESKTOP ACTIONS */}
           <div className="hidden md:flex items-center gap-6">
             {session ? (
-              <UserAvatar user={session?.user} />
+              <>
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-1 text-green-950 dark:text-slate-100"
+                >
+                  <LayoutDashboard size={20} />
+                  <span>Dashboard</span>
+                </Link>
+
+                <UserAvatar user={session?.user} />
+              </>
             ) : (
               <Link
                 href="/login"
@@ -92,7 +100,18 @@ export default function Navbar() {
         {open && (
           <div className="md:hidden mt-4 space-y-4 border-t pt-4">
             {session ? (
-              <UserAvatar user={session?.user} />
+              <>
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2"
+                  onClick={() => setOpen(false)}
+                >
+                  <LayoutDashboard />
+                  Dashboard
+                </Link>
+
+                <UserAvatar user={session?.user} />
+              </>
             ) : (
               <Link
                 href="/login"
