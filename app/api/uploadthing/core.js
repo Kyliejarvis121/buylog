@@ -57,10 +57,13 @@ export const ourFileRouter = {
   ),
 
   /* ===============================
-     MULTIPLE PRODUCT IMAGES
+     MULTIPLE PRODUCT IMAGES (UP TO 8)
   =============================== */
   multipleProductsUploader: f({
-    image: { maxFileSize: "8MB", maxFileCount: 4 },
+    image: {
+      maxFileSize: "8MB",
+      maxFileCount: 8, // <--- ALLOW UP TO 8 IMAGES
+    },
   }).onUploadComplete(async ({ file }) => {
     return { url: file.url };
   }),
