@@ -56,25 +56,45 @@ export default async function ProductDetailPage({ params }) {
       </p>
 
       {/* ================= LOCATION ================= */}
-      {product.location ? (
-        <p className="text-gray-600 mt-1">
-          📍 Location:{" "}
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-              product.location
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-blue-600 underline"
-          >
-            {product.location}
-          </a>
-        </p>
-      ) : (
-        <p className="text-gray-400 mt-1">
-          📍 Location: Not provided
-        </p>
-      )}
+{product.country || product.state || product.city ? (
+  <p className="text-gray-600 mt-1">
+    📍 Location:{" "}
+    <a
+      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        `${product.city || ""} ${product.state || ""} ${product.country || ""}`
+      )}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-blue-600 underline"
+    >
+      {[
+        product.city,
+        product.state,
+        product.country,
+      ]
+        .filter(Boolean)
+        .join(", ")}
+    </a>
+  </p>
+) : product.location ? (
+  <p className="text-gray-600 mt-1">
+    📍 Location:{" "}
+    <a
+      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        product.location
+      )}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-blue-600 underline"
+    >
+      {product.location}
+    </a>
+  </p>
+) : (
+  <p className="text-gray-400 mt-1">
+    📍 Location: Not provided
+  </p>
+)}
 
       {/* ================= PHONE ================= */}
       {product.phoneNumber && (
