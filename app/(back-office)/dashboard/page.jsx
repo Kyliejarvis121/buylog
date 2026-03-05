@@ -1,4 +1,5 @@
 // app/backoffice/dashboard/page.jsx
+
 import React from "react";
 import Heading from "@/components/backoffice/Heading";
 import LargeCards from "@/components/backoffice/LargeCards";
@@ -45,7 +46,6 @@ export default async function DashboardPage() {
 
   // FARMER dashboard
   if (role === "FARMER") {
-    // ❌ BUG FIX: product.farmerId is FARMER ID, NOT userId
     const farmer = farmers.find((f) => f.userId === userId);
 
     const farmerSales = sales.filter((s) => s.farmerId === farmer?.id);
@@ -63,7 +63,8 @@ export default async function DashboardPage() {
 
   // ADMIN dashboard
   return (
-    <div className="p-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+      
       <Heading title="Dashboard Overview" />
 
       <LargeCards
@@ -79,20 +80,30 @@ export default async function DashboardPage() {
 
       <DashboardCharts sales={sales} />
 
+      {/* Recent Orders */}
       <div className="mt-8">
         <Heading title="Recent Orders" />
-        <CustomDataTable data={orders} type="orders" />
+        <div className="overflow-x-auto">
+          <CustomDataTable data={orders} type="orders" />
+        </div>
       </div>
 
+      {/* Farmers */}
       <div className="mt-8">
         <Heading title="All Farmers (Pending & Active)" />
-        <CustomDataTable data={farmers} type="farmers" />
+        <div className="overflow-x-auto">
+          <CustomDataTable data={farmers} type="farmers" />
+        </div>
       </div>
 
+      {/* Users */}
       <div className="mt-8">
         <Heading title="All Users" />
-        <CustomDataTable data={users} type="users" />
+        <div className="overflow-x-auto">
+          <CustomDataTable data={users} type="users" />
+        </div>
       </div>
+
     </div>
   );
 }
