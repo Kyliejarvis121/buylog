@@ -37,14 +37,16 @@ export default async function DashboardPage() {
     safe("users"),
   ]);
 
+  // USER DASHBOARD
   if (role === "USER") {
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6">
         <UserDashboard orders={orders} />
       </div>
     );
   }
 
+  // FARMER DASHBOARD
   if (role === "FARMER") {
     const farmer = farmers.find((f) => f.userId === userId);
 
@@ -53,7 +55,7 @@ export default async function DashboardPage() {
     const farmerSupport = supports.filter((s) => s.farmerId === farmer?.id);
 
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6">
         <FarmerDashboard
           sales={farmerSales}
           products={farmerProducts}
@@ -63,38 +65,45 @@ export default async function DashboardPage() {
     );
   }
 
+  // ADMIN DASHBOARD
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
       <Heading title="Dashboard Overview" />
 
-      <div className="mt-6">
+      {/* Large Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <LargeCards sales={sales} products={products} farmers={farmers} />
       </div>
 
-      <div className="mt-6">
+      {/* Small Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
         <SmallCards orders={orders} supports={supports} />
       </div>
 
-      <div className="mt-10">
+      {/* Charts */}
+      <div className="mt-10 w-full">
         <DashboardCharts sales={sales} />
       </div>
 
-      <div className="mt-10">
+      {/* Recent Orders */}
+      <div className="mt-10 w-full">
         <Heading title="Recent Orders" />
         <div className="mt-4 overflow-x-auto">
           <CustomDataTable data={orders} type="orders" />
         </div>
       </div>
 
-      <div className="mt-10">
+      {/* Farmers */}
+      <div className="mt-10 w-full">
         <Heading title="All Farmers (Pending & Active)" />
         <div className="mt-4 overflow-x-auto">
           <CustomDataTable data={farmers} type="farmers" />
         </div>
       </div>
 
-      <div className="mt-10">
+      {/* Users */}
+      <div className="mt-10 w-full">
         <Heading title="All Users" />
         <div className="mt-4 overflow-x-auto">
           <CustomDataTable data={users} type="users" />
