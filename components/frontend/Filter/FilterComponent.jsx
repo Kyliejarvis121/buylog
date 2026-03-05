@@ -1,5 +1,3 @@
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
 import React from "react";
 import Breadcrumb from "./Breadcrumb";
 import Sorting from "./Sorting";
@@ -27,6 +25,11 @@ export default function FilterComponent({ category, products }) {
         <aside className="hidden md:block md:w-1/3">
           <Filters slug={slug} isSearch={category?.isSearch} />
         </aside>
+
+        {/* Mobile Filter (Below Sorting) */}
+        <div className="md:hidden w-full">
+          <Filters slug={slug} isSearch={category?.isSearch} />
+        </div>
 
         {/* Products Area */}
         <main className="w-full md:w-2/3">
