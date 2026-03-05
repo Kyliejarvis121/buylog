@@ -32,30 +32,27 @@ export default function Layout({ children }) {
     };
 
     window.addEventListener("beforeunload", handleOffline);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.removeEventListener("beforeunload", handleOffline);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
   return (
-    <div className="w-full min-h-screen bg-background text-foreground">
+    <div className="w-full min-h-screen">
       <div className="flex">
 
         {/* Sidebar */}
         <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-        {/* Main Content (smaller & centered) */}
+        {/* Main Area (no forced zoom) */}
         <div className="flex-1 lg:ml-64 min-h-screen">
 
           <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-          <main className="mt-12 px-2 sm:px-2 py-2 w-full">
-            <div className="max-w-5xl mx-auto">
-              {children}
-            </div>
+          <main className="mt-14 px-3 sm:px-4 py-4 w-full">
+            {children}
           </main>
 
         </div>
