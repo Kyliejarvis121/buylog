@@ -25,32 +25,33 @@ export default function Layout({ children }) {
       } catch (e) {}
     };
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        handleOffline();
-      }
-    };
-
     window.addEventListener("beforeunload", handleOffline);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.removeEventListener("beforeunload", handleOffline);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
   return (
-    <div className="w-full overflow-x-hidden min-h-screen bg-background text-foreground">
-      <div className="flex">
+    <div className="w-full min-h-screen bg-background text-foreground overflow-x-hidden">
+
+      {/* MOBILE: column, DESKTOP: row */}
+      <div className="flex flex-col lg:flex-row min-h-screen">
+
+        {/* Sidebar */}
         <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-        <div className="flex-1 lg:ml-64 min-h-screen">
+        {/* Main Content */}
+        <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
+
+          {/* Navbar */}
           <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-          <main className="mt-16 px-4 sm:px-6 py-6 w-full overflow-x-hidden">
+          {/* Page Content */}
+          <main className="flex-1 mt-16 px-4 sm:px-6 lg:px-8 py-6 w-full">
             {children}
           </main>
+
         </div>
       </div>
     </div>
