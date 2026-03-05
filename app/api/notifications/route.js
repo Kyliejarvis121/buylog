@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// GET notifications (for navbar & dropdown)
+// =====================================
+// GET notifications
+// =====================================
 export async function GET() {
   const session = await getServerSession(authOptions);
 
@@ -19,7 +21,9 @@ export async function GET() {
   return NextResponse.json({ notifications });
 }
 
-// CREATE notification (use this from backend)
+// =====================================
+// CREATE notification (backend use)
+// =====================================
 export async function POST(req) {
   const session = await getServerSession(authOptions);
 
@@ -28,11 +32,12 @@ export async function POST(req) {
   }
 
   const body = await req.json();
-  const { message, type } = body;
+  const { message, type, chatId } = body;
 
   const notification = await prisma.notification.create({
     data: {
       userId: session.user.id,
+      chatId: chatId || null,  // 👈 store chatId
       message,
       type,
     },

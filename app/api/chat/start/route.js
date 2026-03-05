@@ -34,7 +34,7 @@ export async function POST(req) {
     },
   });
 
-  // 🔔 Create notification for farmer
+  // 🔔 Create notification for farmer (with chatId)
   const farmer = await prisma.farmer.findUnique({
     where: { id: sellerId },
     select: { userId: true },
@@ -44,6 +44,7 @@ export async function POST(req) {
     await prisma.notification.create({
       data: {
         userId: farmer.userId,
+        chatId: chat.id,               // 👈 link notification to chat
         message: "New customer message",
         type: "message",
       },

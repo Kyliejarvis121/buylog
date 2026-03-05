@@ -129,6 +129,16 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
                       </div>
                     </div>
 
+                    {/* 👉 CLICK TO OPEN CHAT INBOX */}
+                    {notification.chatId && (
+                      <a
+                        href={`/dashboard/chat/${notification.chatId}`}
+                        className="text-xs text-lime-600 hover:underline"
+                      >
+                        View
+                      </a>
+                    )}
+
                     {!notification.isRead && (
                       <button
                         onClick={() => markAsRead(notification.id)}
