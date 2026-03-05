@@ -52,7 +52,7 @@ export default function Layout({ children }) {
 
           <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-          <main className="mt-14 px-2 sm:px-3 py-3 w-full">
+          <main className="mt-12 px-2 sm:px-2 py-2 w-full">
             <div className="max-w-5xl mx-auto">
               {children}
             </div>
