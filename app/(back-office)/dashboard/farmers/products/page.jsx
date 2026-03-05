@@ -41,6 +41,7 @@ export default async function ProductsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
+
       <PageHeader
         heading="My Products"
         href="/dashboard/farmers/products/new"
@@ -48,17 +49,17 @@ export default async function ProductsPage() {
       />
 
       <div className="mt-6">
+
         {farmerProducts.length === 0 ? (
           <p className="text-gray-500 dark:text-gray-400">
             You haven’t uploaded any products yet.
           </p>
         ) : (
-          <div className="relative overflow-x-auto rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-            <div className="min-w-[900px]">
-              <DataTable data={farmerProducts} columns={columns} />
-            </div>
+          <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+            <DataTable data={farmerProducts} columns={columns} />
           </div>
         )}
+
       </div>
     </div>
   );
