@@ -7,7 +7,6 @@ import React, { useState, useEffect } from "react";
 export default function Layout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
 
-  // PRESENCE (kept)
   useEffect(() => {
     const updateOnline = async () => {
       try {
@@ -46,7 +45,7 @@ export default function Layout({ children }) {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full overflow-hidden">
+    <div className="flex min-h-screen w-full">
 
       {/* Sidebar */}
       <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
@@ -58,8 +57,8 @@ export default function Layout({ children }) {
         <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
         {/* Page Content (scroll only here) */}
-        <main className="flex-1 mt-16 p-6 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 mt-16 p-6 overflow-auto">
+          <div className="max-w-7xl mx-auto w-full">
             {children}
           </div>
         </main>
