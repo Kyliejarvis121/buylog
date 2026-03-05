@@ -1,30 +1,17 @@
-import { Inter } from "next/font/google";
-import "../../styles/main.scss";
-import Providers from "@/context/Providers";
 import Navbar from "@/components/frontend/Navbar";
 import Footer from "@/components/frontend/Footer";
+import React from "react";
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata = {
-  title: "BuyLog",
-  description: "Buy and Sell with ease",
-};
-
-export default function RootLayout({ children }) {
+export default function Layout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <Providers>
-          <Navbar />
+    <>
+      <Navbar />
 
-          <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-0 py-6">
-            {children}
-          </main>
+      <main className="max-w-6xl mx-auto py-6 px-8 lg:px-0">
+        {children}
+      </main>
 
-          <Footer />
-        </Providers>
-      </body>
-    </html>
+      <Footer />
+    </>
   );
 }
