@@ -1,5 +1,4 @@
 "use client";
-
 import Navbar from "@/components/backoffice/Navbar";
 import Sidebar from "@/components/backoffice/Sidebar";
 import React, { useState, useEffect } from "react";
@@ -25,14 +24,7 @@ export default function Layout({ children }) {
       } catch (e) {}
     };
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        handleOffline();
-      }
-    };
-
     window.addEventListener("beforeunload", handleOffline);
-    document.removeEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.removeEventListener("beforeunload", handleOffline);
@@ -40,22 +32,22 @@ export default function Layout({ children }) {
   }, []);
 
   return (
-    <div className="w-full min-h-screen">
-      <div className="flex">
+    <div className="flex min-h-screen">
 
-        {/* Sidebar */}
-        <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
+      {/* Sidebar */}
+      <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-        {/* Main Area (no forced zoom) */}
-        <div className="flex-1 lg:ml-64 min-h-screen">
+      {/* Main Content */}
+      <div className="lg:ml-64 ml-0 flex-grow bg-slate-100 dark:bg-slate-900">
 
-          <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
+        {/* Navbar */}
+        <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-          <main className="mt-14 px-3 sm:px-4 py-4 w-full">
-            {children}
-          </main>
+        {/* Page Content */}
+        <main className="p-6 md:p-8 mt-16 min-h-screen">
+          {children}
+        </main>
 
-        </div>
       </div>
     </div>
   );
