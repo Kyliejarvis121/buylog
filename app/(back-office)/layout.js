@@ -57,8 +57,8 @@ export default function Layout({ children }) {
         <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
         {/* Page Content (scroll only here) */}
-        <main className="flex-1 mt-16 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto w-full">
+        <main className="flex-1 mt-14 p-4 md:p-6 overflow-auto">
+          <div className="w-full max-w-6xl mx-auto">
             {children}
           </div>
         </main>
