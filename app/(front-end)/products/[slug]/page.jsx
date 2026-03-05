@@ -56,7 +56,7 @@ export default async function ProductDetailPage({ params }) {
       </p>
 
       {/* ================= LOCATION ================= */}
-{product.country || product.state || product.city ? (
+{product.city || product.state || product.country || product.location ? (
   <p className="text-gray-600 mt-1">
     📍 Location:{" "}
     <a
@@ -71,23 +71,10 @@ export default async function ProductDetailPage({ params }) {
         product.city,
         product.state,
         product.country,
+        product.location,
       ]
         .filter(Boolean)
         .join(", ")}
-    </a>
-  </p>
-) : product.location ? (
-  <p className="text-gray-600 mt-1">
-    📍 Location:{" "}
-    <a
-      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        product.location
-      )}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="font-medium text-blue-600 underline"
-    >
-      {product.location}
     </a>
   </p>
 ) : (
