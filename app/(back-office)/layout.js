@@ -32,22 +32,19 @@ export default function Layout({ children }) {
   }, []);
 
   return (
-    <div className="flex min-h-screen">
-
+    <div className="flex">
       {/* Sidebar */}
       <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
       {/* Main Content */}
-      <div className="lg:ml-64 ml-0 flex-grow bg-slate-100 dark:bg-slate-900">
-
+      <div className="lg:ml-64 ml-0 flex-grow bg-slate-100 min-h-screen">
         {/* Navbar */}
         <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
         {/* Page Content */}
-        <main className="p-6 md:p-8 mt-16 min-h-screen">
+        <main className="p-8 bg-slate-100 dark:bg-slate-900 text-slate-50 min-h-screen mt-16">
           {children}
         </main>
-
       </div>
     </div>
   );

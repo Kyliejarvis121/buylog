@@ -18,7 +18,6 @@ export default async function DashboardPage() {
   const role = session?.user?.role ?? "USER";
   const userId = session?.user?.id;
 
-  // Safe fetch helper
   async function safe(endpoint) {
     try {
       const res = await getData(endpoint);
@@ -29,7 +28,6 @@ export default async function DashboardPage() {
     }
   }
 
-  // Fetch all data
   const [sales, orders, products, farmers, supports, users] = await Promise.all([
     safe("sales"),
     safe("orders"),
@@ -39,16 +37,14 @@ export default async function DashboardPage() {
     safe("users"),
   ]);
 
-  // USER DASHBOARD
   if (role === "USER") {
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full px-4 sm:px-6 py-6">
         <UserDashboard orders={orders} />
       </div>
     );
   }
 
-  // FARMER DASHBOARD
   if (role === "FARMER") {
     const farmer = farmers.find((f) => f.userId === userId);
 
@@ -57,7 +53,7 @@ export default async function DashboardPage() {
     const farmerSupport = supports.filter((s) => s.farmerId === farmer?.id);
 
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full px-4 sm:px-6 py-6">
         <FarmerDashboard
           sales={farmerSales}
           products={farmerProducts}
@@ -67,25 +63,17 @@ export default async function DashboardPage() {
     );
   }
 
-  // ADMIN DASHBOARD
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden">
-      
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden">
+
       <Heading title="Dashboard Overview" />
 
       <div className="mt-6">
-        <LargeCards
-          sales={sales}
-          products={products}
-          farmers={farmers}
-        />
+        <LargeCards sales={sales} products={products} farmers={farmers} />
       </div>
 
       <div className="mt-6">
-        <SmallCards
-          orders={orders}
-          supports={supports}
-        />
+        <SmallCards orders={orders} supports={supports} />
       </div>
 
       <div className="mt-10">
