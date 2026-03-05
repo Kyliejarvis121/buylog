@@ -41,7 +41,7 @@ export async function POST(req) {
     }
 
     // =========================================
-    // 2️⃣ IF NO CHAT → CREATE ONE PROPERLY
+    // 2️⃣ IF NO CHAT → CREATE ONE
     // =========================================
     if (!chat) {
       if (!productId) {
@@ -102,9 +102,29 @@ export async function POST(req) {
     });
 
     // =========================================
-    // 5️⃣ PUSHER TRIGGER
+    // 5️⃣ PUSHER TRIGGER (REAL TIME)
     // =========================================
     await pusher.trigger(`chat-${chat.id}`, "new-message", message);
+
+    // =========================================
+    // 🔔 NOTIFY FARMER
+    // =========================================
+    if (chat?.farmerId) {
+      const farmer = await prisma.farmer.findUnique({
+        where: { id: chat.farmerId },
+        select: { userId: true },
+      });
+
+      if (farmer?.userId) {
+        await prisma.notification.create({
+          data: {
+            userId: farmer.userId,
+            message: "New customer message",
+            type: "message",
+          },
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,
