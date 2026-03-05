@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import {
   Pagination,
   PaginationContent,
@@ -11,153 +10,99 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useSearchParams } from "next/navigation";
+import React from "react";
 
 export default function Paginate({ totalPages, isSearch }) {
   const searchParams = useSearchParams();
   const sort = searchParams.get("sort") || "asc";
-  const min = searchParams.get("min") || 0;
+  const min = searchParams.get("min") || "";
   const max = searchParams.get("max") || "";
   const search = searchParams.get("search");
-  const currentPage = parseInt(searchParams.get("page")) || 1;
-  console.log(currentPage, totalPages);
+  const currentPage = Number(searchParams.get("page")) || 1;
+
+  function buildUrl(page) {
+    const params = new URLSearchParams({
+      page,
+      sort,
+      min,
+      max,
+    });
+
+    if (isSearch) {
+      params.set("search", search || "");
+    }
+
+    return `?${params.toString()}`;
+  }
+
   return (
     <Pagination>
       <PaginationContent>
+
+        {/* Previous */}
         <PaginationItem>
           <PaginationPrevious
-            href={
-              isSearch
-                ? `${
-                    currentPage === 1
-                      ? `?${new URLSearchParams({
-                          search,
-                          page: 1,
-                          sort,
-                          min,
-                          max,
-                        })}`
-                      : `?${new URLSearchParams({
-                          search,
-                          page: parseInt(currentPage) - 1,
-                          sort,
-                          min,
-                          max,
-                        })}`
-                  }`
-                : `${
-                    currentPage === 1
-                      ? `?${new URLSearchParams({ page: 1, sort, min, max })}`
-                      : `?${new URLSearchParams({
-                          page: parseInt(currentPage) - 1,
-                          sort,
-                          min,
-                          max,
-                        })}`
-                  }`
-            }
+            href={currentPage > 1 ? buildUrl(currentPage - 1) : buildUrl(1)}
+            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
           />
         </PaginationItem>
-        {totalPages <= 3 ? (
-          Array.from({ length: totalPages }, (_, index) => {
-            return (
-              <PaginationItem key={index}>
-                <PaginationLink
-                  isActive={index + 1 === currentPage}
-                  href={
-                    isSearch
-                      ? `?${new URLSearchParams({
-                          search,
-                          page: index + 1,
-                          sort,
-                          min,
-                          max,
-                        })}`
-                      : `?${new URLSearchParams({
-                          page: index + 1,
-                          sort,
-                          min,
-                          max,
-                        })}`
-                  }
-                >
-                  {index + 1}
-                </PaginationLink>
-              </PaginationItem>
-            );
-          })
+
+        {/* Pages */}
+        {totalPages <= 5 ? (
+          Array.from({ length: totalPages }, (_, i) => (
+            <PaginationItem key={i}>
+              <PaginationLink
+                href={buildUrl(i + 1)}
+                isActive={i + 1 === currentPage}
+              >
+                {i + 1}
+              </PaginationLink>
+            </PaginationItem>
+          ))
         ) : (
           <>
-            {Array.from({ length: 3 }, (_, index) => {
-              return (
-                <PaginationItem key={index}>
-                  <PaginationLink
-                    href={
-                      isSearch
-                        ? `?${new URLSearchParams({
-                            search,
-                            page: index + 1,
-                            sort,
-                            min,
-                            max,
-                          })}`
-                        : `?${new URLSearchParams({
-                            page: index + 1,
-                            sort,
-                            min,
-                            max,
-                          })}`
-                    }
-                  >
-                    {index + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            })}
+            {/* First few */}
+            {Array.from({ length: 3 }, (_, i) => (
+              <PaginationItem key={i}>
+                <PaginationLink
+                  href={buildUrl(i + 1)}
+                  isActive={i + 1 === currentPage}
+                >
+                  {i + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+
             <PaginationItem>
               <PaginationEllipsis />
+            </PaginationItem>
+
+            {/* Last page */}
+            <PaginationItem>
+              <PaginationLink
+                href={buildUrl(totalPages)}
+                isActive={totalPages === currentPage}
+              >
+                {totalPages}
+              </PaginationLink>
             </PaginationItem>
           </>
         )}
 
+        {/* Next */}
         <PaginationItem>
           <PaginationNext
             href={
-              isSearch
-                ? `${
-                    currentPage == totalPages
-                      ? `?${new URLSearchParams({
-                          search,
-                          page: totalPages,
-                          sort,
-                          min,
-                          max,
-                        })}`
-                      : `?${new URLSearchParams({
-                          search,
-                          page: parseInt(currentPage) + 1,
-                          sort,
-                          min,
-                          max,
-                        })}`
-                  }`
-                : `${
-                    currentPage == totalPages
-                      ? `?${new URLSearchParams({
-                          page: totalPages,
-                          sort,
-                          min,
-                          max,
-                        })}`
-                      : `?${new URLSearchParams({
-                          page: parseInt(currentPage) + 1,
-                          sort,
-                          min,
-                          max,
-                        })}`
-                  }`
+              currentPage < totalPages
+                ? buildUrl(currentPage + 1)
+                : buildUrl(totalPages)
+            }
+            className={
+              currentPage === totalPages ? "pointer-events-none opacity-50" : ""
             }
           />
         </PaginationItem>
+
       </PaginationContent>
     </Pagination>
   );

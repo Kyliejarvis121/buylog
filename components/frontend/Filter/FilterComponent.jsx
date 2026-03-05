@@ -13,29 +13,23 @@ export default function FilterComponent({ category, products }) {
   return (
     <div className="w-full overflow-x-hidden">
 
-      {/* ================= BREADCRUMB & SORTING ================= */}
+      {/* Breadcrumb & Sorting */}
       <div className="bg-white dark:bg-slate-900 space-y-6 text-slate-900 dark:text-slate-100 py-6 px-4">
         <Breadcrumb title={title} resultCount={productCount} />
 
-        {/* Sorting always visible (mobile & desktop) */}
         <Sorting isSearch={category?.isSearch} title={title} slug={slug} />
       </div>
 
-      {/* ================= MAIN GRID ================= */}
+      {/* Main Grid */}
       <div className="flex flex-col md:flex-row gap-6 py-6 px-4">
 
-        {/* ================= SIDEBAR FILTER (DESKTOP ONLY) ================= */}
-        <aside className="hidden md:block md:w-1/4">
+        {/* Sidebar Filter (Desktop) */}
+        <aside className="hidden md:block md:w-1/3">
           <Filters slug={slug} isSearch={category?.isSearch} />
         </aside>
 
-        {/* ================= MOBILE FILTER (UNDER SORTING ONLY) ================= */}
-        <div className="md:hidden w-full">
-          <Filters slug={slug} isSearch={category?.isSearch} />
-        </div>
-
-        {/* ================= PRODUCTS GRID (NO FILTERS INSIDE) ================= */}
-        <main className="w-full md:w-3/4">
+        {/* Products Area */}
+        <main className="w-full md:w-2/3">
           <FilteredProducts
             isSearch={category?.isSearch}
             productCount={productCount}
