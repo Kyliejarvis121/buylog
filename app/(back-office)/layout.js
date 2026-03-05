@@ -8,61 +8,57 @@ export default function Layout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
 
   useEffect(() => {
-    const updateOnline = async () => {
-      try {
-        await fetch("/api/presence", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "online" }),
-        });
-      } catch (err) {
-        console.warn("Presence update failed");
-      }
-    };
+    try {
+      fetch("/api/presence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "online" }),
+      });
+    } catch (e) {}
 
-    const sendOffline = () => {
+    const handleOffline = () => {
       try {
         navigator.sendBeacon(
           "/api/presence",
           new Blob([JSON.stringify({ status: "offline" })])
         );
-      } catch (err) {}
+      } catch (e) {}
     };
 
-    updateOnline();
-
-    window.addEventListener("beforeunload", sendOffline);
-    document.addEventListener("visibilitychange", () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        sendOffline();
+        handleOffline();
       }
-    });
+    };
+
+    window.addEventListener("beforeunload", handleOffline);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      sendOffline();
-      window.removeEventListener("beforeunload", sendOffline);
+      window.removeEventListener("beforeunload", handleOffline);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="w-full min-h-screen overflow-x-hidden">
+      <div className="flex">
 
-      {/* Sidebar */}
-      <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
+        {/* Sidebar */}
+        <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-      {/* Main Content */}
-      <div className="flex flex-col flex-1 lg:ml-64 bg-slate-100 dark:bg-slate-900">
+        {/* Main Content */}
+        <div className="flex-1 lg:ml-64 min-h-screen">
 
-        {/* Navbar */}
-        <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
+          {/* Navbar */}
+          <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-        {/* Page Content (scroll only here) */}
-        <main className="flex-1 mt-14 p-4 md:p-6 overflow-auto">
-          <div className="w-full max-w-6xl mx-auto">
+          {/* Page Content */}
+          <main className="mt-16 px-4 sm:px-6 py-6 w-full overflow-x-hidden">
             {children}
-          </div>
-        </main>
+          </main>
 
+        </div>
       </div>
     </div>
   );
