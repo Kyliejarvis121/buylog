@@ -13,15 +13,17 @@ export default function Layout({ children }) {
       {/* Sidebar */}
       <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex flex-col flex-1 lg:ml-64 bg-slate-100 dark:bg-slate-900">
 
         {/* Dashboard Header */}
         <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
         {/* Page Content */}
-        <main className="flex-1 mt-16 p-6 overflow-y-auto text-slate-900 dark:text-slate-100">
-          {children}
+        <main className="flex-1 mt-16 overflow-y-auto">
+          <div className="max-w-6xl mx-auto p-6 text-slate-900 dark:text-slate-100">
+            {children}
+          </div>
         </main>
 
       </div>
