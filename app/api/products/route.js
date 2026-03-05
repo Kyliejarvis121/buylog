@@ -92,6 +92,9 @@ export async function POST(req) {
         isActive: body.isActive ?? true,
         phoneNumber: body.phoneNumber || "",
         location: body.location || "",
+        country: body.country || "",
+        state: body.state || "",
+        city: body.city || "",
         farmer: { connect: { id: body.farmerId } },
 
         ...(body.categoryId &&
