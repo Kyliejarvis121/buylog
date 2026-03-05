@@ -48,25 +48,20 @@ export default function Layout({ children }) {
   return (
     <div className="flex min-h-screen w-full overflow-hidden">
 
-      {/* Sidebar (fixed width) */}
+      {/* Sidebar */}
       <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-      {/* Main Area */}
-      <div className="flex flex-col flex-1">
+      {/* Main Content */}
+      <div className="flex flex-col flex-1 lg:ml-64 bg-slate-100 dark:bg-slate-900">
 
-        {/* Navbar (fixed) */}
+        {/* Navbar */}
         <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-        {/* Page Content */}
-        <main
-          className="
-            flex-1
-            mt-16
-            p-6
-            overflow-y-auto
-          "
-        >
-          {children}
+        {/* Page Content (scroll only here) */}
+        <main className="flex-1 mt-16 p-6 overflow-y-auto">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
 
       </div>
