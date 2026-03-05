@@ -7,7 +7,7 @@ import React, { useState, useEffect } from "react";
 export default function Layout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
 
-  // PRESENCE (kept as is)
+  // PRESENCE (kept)
   useEffect(() => {
     const updateOnline = async () => {
       try {
@@ -46,13 +46,13 @@ export default function Layout({ children }) {
   }, []);
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
+    <div className="flex min-h-screen">
 
       {/* Sidebar */}
       <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-      {/* Main Content */}
-      <div className="flex flex-col flex-1 lg:ml-64 bg-slate-100 dark:bg-slate-900">
+      {/* Main Section */}
+      <div className="flex flex-col flex-1">
 
         {/* Navbar */}
         <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
@@ -63,7 +63,7 @@ export default function Layout({ children }) {
             flex-1
             mt-16
             p-6
-            overflow-hidden
+            w-full
           "
         >
           {children}
