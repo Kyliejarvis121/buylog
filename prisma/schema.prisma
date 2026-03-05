@@ -129,19 +129,24 @@ model Product {
   qty            Int?     @default(1)
   isWholesale    Boolean? @default(false)
   wholesalePrice Float?   @default(0)
-  wholesaleQty   Int?     @default(0)
-  isActive       Boolean? @default(true)
-  phoneNumber    String?
-  location       String?
+  wholesaleQty    Int?     @default(0)
+  isActive        Boolean? @default(true)
+  phoneNumber      String?
+
+  location         String?
+  country          String?
+  state            String?
+  city             String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  category   Category?   @relation(fields: [categoryId], references: [id])
-  farmer     Farmer?     @relation(fields: [farmerId], references: [id])
+  category   Category? @relation(fields: [categoryId], references: [id])
+  farmer     Farmer?   @relation(fields: [farmerId], references: [id])
+  market     Market?   @relation(fields: [marketId], references: [id])
+  marketId   String?    @db.ObjectId
+
   orderItems OrderItem[]
-  market     Market?     @relation(fields: [marketId], references: [id])
-  marketId   String?     @db.ObjectId
   chats      Chat[]
 }
 
