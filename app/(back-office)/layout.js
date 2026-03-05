@@ -47,13 +47,13 @@ export default function Layout({ children }) {
         {/* Sidebar */}
         <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-        {/* Main Content (slightly reduced) */}
+        {/* Main Content (smaller & centered) */}
         <div className="flex-1 lg:ml-64 min-h-screen">
 
           <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-          <main className="mt-16 px-4 sm:px-6 py-6 w-full">
-            <div className="max-w-6xl mx-auto">
+          <main className="mt-14 px-2 sm:px-3 py-3 w-full">
+            <div className="max-w-5xl mx-auto">
               {children}
             </div>
           </main>
