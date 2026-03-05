@@ -29,7 +29,7 @@ export default async function DashboardPage() {
     }
   }
 
-  // Fetch all data concurrently
+  // Fetch all data
   const [sales, orders, products, farmers, supports, users] = await Promise.all([
     safe("sales"),
     safe("orders"),
@@ -39,12 +39,16 @@ export default async function DashboardPage() {
     safe("users"),
   ]);
 
-  // USER dashboard
+  // USER DASHBOARD
   if (role === "USER") {
-    return <UserDashboard orders={orders} />;
+    return (
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <UserDashboard orders={orders} />
+      </div>
+    );
   }
 
-  // FARMER dashboard
+  // FARMER DASHBOARD
   if (role === "FARMER") {
     const farmer = farmers.find((f) => f.userId === userId);
 
@@ -53,53 +57,58 @@ export default async function DashboardPage() {
     const farmerSupport = supports.filter((s) => s.farmerId === farmer?.id);
 
     return (
-      <FarmerDashboard
-        sales={farmerSales}
-        products={farmerProducts}
-        supports={farmerSupport}
-      />
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <FarmerDashboard
+          sales={farmerSales}
+          products={farmerProducts}
+          supports={farmerSupport}
+        />
+      </div>
     );
   }
 
-  // ADMIN dashboard
+  // ADMIN DASHBOARD
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden">
       
       <Heading title="Dashboard Overview" />
 
-      <LargeCards
-        sales={sales}
-        products={products}
-        farmers={farmers}
-      />
+      <div className="mt-6">
+        <LargeCards
+          sales={sales}
+          products={products}
+          farmers={farmers}
+        />
+      </div>
 
-      <SmallCards
-        orders={orders}
-        supports={supports}
-      />
+      <div className="mt-6">
+        <SmallCards
+          orders={orders}
+          supports={supports}
+        />
+      </div>
 
-      <DashboardCharts sales={sales} />
+      <div className="mt-10">
+        <DashboardCharts sales={sales} />
+      </div>
 
-      {/* Recent Orders */}
-      <div className="mt-8">
+      <div className="mt-10">
         <Heading title="Recent Orders" />
-        <div className="overflow-x-auto">
+        <div className="mt-4 overflow-x-auto">
           <CustomDataTable data={orders} type="orders" />
         </div>
       </div>
 
-      {/* Farmers */}
-      <div className="mt-8">
+      <div className="mt-10">
         <Heading title="All Farmers (Pending & Active)" />
-        <div className="overflow-x-auto">
+        <div className="mt-4 overflow-x-auto">
           <CustomDataTable data={farmers} type="farmers" />
         </div>
       </div>
 
-      {/* Users */}
-      <div className="mt-8">
+      <div className="mt-10">
         <Heading title="All Users" />
-        <div className="overflow-x-auto">
+        <div className="mt-4 overflow-x-auto">
           <CustomDataTable data={users} type="users" />
         </div>
       </div>
