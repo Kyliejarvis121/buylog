@@ -41,7 +41,7 @@ export default function Layout({ children }) {
   }, []);
 
   return (
-    <div className="w-full min-h-screen overflow-x-hidden">
+    <div className="w-full min-h-screen bg-background text-foreground">
       <div className="flex">
 
         {/* Sidebar */}
@@ -54,7 +54,7 @@ export default function Layout({ children }) {
           <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
           {/* Page Content */}
-          <main className="mt-16 px-4 sm:px-6 py-6 w-full overflow-x-hidden">
+          <main className="mt-16 px-4 sm:px-6 py-6 w-full">
             {children}
           </main>
 
