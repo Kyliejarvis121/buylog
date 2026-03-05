@@ -1,11 +1,20 @@
+import { Inter } from "next/font/google";
+import "../styles/main.scss";
+import Providers from "@/context/Providers";
 import Navbar from "@/components/frontend/Navbar";
 import Footer from "@/components/frontend/Footer";
-import Providers from "@/context/Providers";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata = {
+  title: "BuyLog",
+  description: "Buy and Sell with ease",
+};
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className={inter.className}>
         <Providers>
           <Navbar />
 
