@@ -11,6 +11,7 @@ import UserDashboard from "@/components/backoffice/UserDashboard";
 import { getData } from "@/lib/getData";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import "../../styles/main.scss";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
