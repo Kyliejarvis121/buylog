@@ -46,15 +46,15 @@ export default function Layout({ children }) {
   }, []);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen w-full overflow-hidden">
 
-      {/* Sidebar */}
+      {/* Sidebar (fixed width) */}
       <Sidebar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
-      {/* Main Section */}
+      {/* Main Area */}
       <div className="flex flex-col flex-1">
 
-        {/* Navbar */}
+        {/* Navbar (fixed) */}
         <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
 
         {/* Page Content */}
@@ -63,7 +63,7 @@ export default function Layout({ children }) {
             flex-1
             mt-16
             p-6
-            w-full
+            overflow-y-auto
           "
         >
           {children}
