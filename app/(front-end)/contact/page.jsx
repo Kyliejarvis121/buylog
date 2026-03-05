@@ -37,43 +37,63 @@ export default function ContactPage() {
       </div>
 
       {/* Contact Form */}
+      
+
       <form className="space-y-4">
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Name</label>
-          <input
-            type="text"
-            className="w-full border px-4 py-2 rounded-lg"
-            placeholder="Your name"
-          />
-        </div>
+<div>
+  <label className="block text-sm font-medium mb-1">
+    Name
+  </label>
+  <input
+    type="text"
+    className="w-full border px-4 py-2 rounded-lg
+      bg-white dark:bg-slate-800
+      text-slate-900 dark:text-slate-100
+      border-slate-300 dark:border-slate-700
+      placeholder:text-slate-500 dark:placeholder:text-slate-400"
+    placeholder="Your name"
+  />
+</div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
-            type="email"
-            className="w-full border px-4 py-2 rounded-lg"
-            placeholder="you@example.com"
-          />
-        </div>
+<div>
+  <label className="block text-sm font-medium mb-1">
+    Email
+  </label>
+  <input
+    type="email"
+    className="w-full border px-4 py-2 rounded-lg
+      bg-white dark:bg-slate-800
+      text-slate-900 dark:text-slate-100
+      border-slate-300 dark:border-slate-700
+      placeholder:text-slate-500 dark:placeholder:text-slate-400"
+    placeholder="you@example.com"
+  />
+</div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Message</label>
-          <textarea
-            rows="4"
-            className="w-full border px-4 py-2 rounded-lg"
-            placeholder="Your message"
-          ></textarea>
-        </div>
+<div>
+  <label className="block text-sm font-medium mb-1">
+    Message
+  </label>
+  <textarea
+    rows="4"
+    className="w-full border px-4 py-2 rounded-lg
+      bg-white dark:bg-slate-800
+      text-slate-900 dark:text-slate-100
+      border-slate-300 dark:border-slate-700
+      placeholder:text-slate-500 dark:placeholder:text-slate-400"
+    placeholder="Your message"
+  ></textarea>
+</div>
 
-        <button
-          type="submit"
-          className="bg-green-600 text-white px-6 py-2 rounded-lg"
-        >
-          Send Message
-        </button>
+<button
+  type="submit"
+  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+>
+  Send Message
+</button>
 
-      </form>
+</form>
     </div>
   );
 }
