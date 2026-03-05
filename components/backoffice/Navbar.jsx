@@ -6,7 +6,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,34 @@ import { useSession } from "next-auth/react";
 
 export default function Navbar({ setShowSidebar, showSidebar }) {
   const { data: session, status } = useSession();
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then((data) => setNotifications(data.notifications || []))
+      .catch(() => setNotifications([]));
+  }, []);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const markAsRead = async (id) => {
+    try {
+      await fetch("/api/notifications/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, isRead: true } : n
+        )
+      );
+    } catch (err) {
+      console.error("Failed to mark notification as read", err);
+    }
+  };
 
   if (status === "loading") {
     return <p>Loading...</p>;
@@ -28,10 +56,9 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
 
   return (
     <div className="fixed top-0 z-50 flex h-20 w-full items-center justify-between bg-white px-8 py-8 dark:bg-slate-800 sm:pr-[20rem]">
-      
+
       {/* LEFT SIDE */}
       <div className="flex items-center gap-4">
-        {/* Sidebar Toggle */}
         <button
           onClick={() => setShowSidebar(!showSidebar)}
           className="text-lime-700 dark:text-lime-500"
@@ -54,9 +81,11 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
               <Bell className="text-lime-700 dark:text-lime-500" />
               <span className="sr-only">Notifications</span>
 
-              <div className="absolute -top-0 end-6 inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                20
-              </div>
+              {unreadCount > 0 && (
+                <div className="absolute -top-0 end-6 inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                  {unreadCount}
+                </div>
+              )}
             </button>
           </DropdownMenuTrigger>
 
@@ -64,10 +93,17 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            {[1, 2, 3].map((item) => (
-              <React.Fragment key={item}>
+            {notifications.length === 0 && (
+              <DropdownMenuItem>
+                <p className="text-sm text-slate-500">No notifications</p>
+              </DropdownMenuItem>
+            )}
+
+            {notifications.map((notification) => (
+              <React.Fragment key={notification.id}>
                 <DropdownMenuItem>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 w-full">
+
                     <Image
                       src="/profile.JPG"
                       alt="User profile"
@@ -76,18 +112,31 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
                       className="h-8 w-8 rounded-full"
                     />
 
-                    <div className="flex flex-col space-y-1">
+                    <div className="flex flex-col space-y-1 flex-1">
                       <p className="text-sm font-medium">
-                        Yellow Sweet Corn Stock out
+                        {notification.message}
                       </p>
 
                       <div className="flex items-center space-x-2 text-xs">
-                        <p className="rounded-full bg-red-700 px-3 py-0.5 text-white">
-                          Stock Out
+                        {notification.type && (
+                          <p className="rounded-full bg-red-700 px-3 py-0.5 text-white">
+                            {notification.type}
+                          </p>
+                        )}
+                        <p>
+                          {new Date(notification.createdAt).toLocaleString()}
                         </p>
-                        <p>Dec 12 2021 - 12:40PM</p>
                       </div>
                     </div>
+
+                    {!notification.isRead && (
+                      <button
+                        onClick={() => markAsRead(notification.id)}
+                        className="text-xs text-lime-600 hover:underline"
+                      >
+                        Mark read
+                      </button>
+                    )}
 
                     <button className="text-slate-400 hover:text-red-500">
                       <X size={16} />

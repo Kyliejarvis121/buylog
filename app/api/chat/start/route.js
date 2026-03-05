@@ -34,5 +34,21 @@ export async function POST(req) {
     },
   });
 
+  // 🔔 Create notification for farmer
+  const farmer = await prisma.farmer.findUnique({
+    where: { id: sellerId },
+    select: { userId: true },
+  });
+
+  if (farmer?.userId) {
+    await prisma.notification.create({
+      data: {
+        userId: farmer.userId,
+        message: "New customer message",
+        type: "message",
+      },
+    });
+  }
+
   return NextResponse.json({ chatId: chat.id });
 }
