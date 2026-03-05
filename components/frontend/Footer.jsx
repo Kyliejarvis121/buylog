@@ -85,26 +85,28 @@ const Footer = () => {
           </div>
 
           {/* Help Links */}
-          <div>
-            <p className="text-sm font-semibold tracking-widest uppercase mb-6 text-gray-900">Help</p>
-            <ul className="space-y-4">
-              <li>
-                <Link href="/customer-support" className="text-base text-gray-800 hover:text-blue-600">
-                  Customer Support
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-base text-gray-800 hover:text-blue-600">
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy-policy" className="text-base text-gray-800 hover:text-blue-600">
-                  Privacy Policy
-                </Link>
-              </li>
-            </ul>
-          </div>
+<div>
+  <p className="text-sm font-semibold tracking-widest uppercase mb-6 text-gray-900">
+    Help
+  </p>
+  <ul className="space-y-4">
+    <li>
+      <Link href="/customer-support" className="text-base text-gray-800 hover:text-blue-600">
+        Customer Support
+      </Link>
+    </li>
+    <li>
+      <Link href="/terms" className="text-base text-gray-800 hover:text-blue-600">
+        Terms & Conditions
+      </Link>
+    </li>
+    <li>
+      <Link href="/privacy-policy" className="text-base text-gray-800 hover:text-blue-600">
+        Privacy Policy
+      </Link>
+    </li>
+  </ul>
+</div>
 
           {/* Signup CTA */}
           <div className="col-span-2 md:col-span-2 lg:col-span-1">
