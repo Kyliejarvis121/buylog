@@ -12,7 +12,6 @@ import { getData } from "@/lib/getData";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
@@ -40,7 +39,7 @@ export default async function DashboardPage() {
 
   if (role === "USER") {
     return (
-      <div className="w-full px-4 sm:px-6 py-6">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <UserDashboard orders={orders} />
       </div>
     );
@@ -54,7 +53,7 @@ export default async function DashboardPage() {
     const farmerSupport = supports.filter((s) => s.farmerId === farmer?.id);
 
     return (
-      <div className="w-full px-4 sm:px-6 py-6">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <FarmerDashboard
           sales={farmerSales}
           products={farmerProducts}
@@ -65,7 +64,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden">
 
       <Heading title="Dashboard Overview" />
 
