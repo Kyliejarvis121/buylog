@@ -1,10 +1,13 @@
 import Navbar from "@/components/frontend/Navbar";
 import Footer from "@/components/frontend/Footer";
+import AdsenseScript from "@/components/frontend/AdsenseScript";
 import React from "react";
 
 export default function Layout({ children }) {
   return (
     <>
+      <AdsenseScript />
+
       <Navbar />
 
       <main className="max-w-6xl mx-auto py-6 px-8 lg:px-0">
