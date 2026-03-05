@@ -1,8 +1,10 @@
 "use client";
+
+import "../../styles/main.scss";
 import Navbar from "@/components/backoffice/Navbar";
 import Sidebar from "@/components/backoffice/Sidebar";
 import React, { useState, useEffect } from "react";
-import "../../styles/main.scss";
+
 
 export default function Layout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
