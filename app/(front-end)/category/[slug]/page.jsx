@@ -1,29 +1,51 @@
-import FilterComponent from "@/components/frontend/Filter/FilterComponent";
+iimport FilterComponent from "@/components/frontend/Filter/FilterComponent";
 import { getData } from "@/lib/getData";
 import React from "react";
 
-export default async function page({ params: { slug }, searchParams }) {
-  const { sort = "asc", min = 0, max = "", page = 1 } = searchParams;
+export default async function Page({ params, searchParams }) {
+  const { slug } = params;
 
-  // Fetch category
+  // Normalize query params
+  const sort = searchParams?.sort || "asc";
+  const page = parseInt(searchParams?.page) || 1;
+  const min = parseInt(searchParams?.min) || 0;
+  const max = searchParams?.max ? parseInt(searchParams.max) : "";
+
+  // Fetch category by slug
   const categoryRes = await getData(`categories/filter/${slug}`);
-  const category = categoryRes.success ? categoryRes.data : null;
 
-  if (!category || !category.id) {
-    return <div className="p-4 text-red-600">Category not found</div>;
+  if (!categoryRes?.success || !categoryRes?.data) {
+    return (
+      <div className="p-4 text-red-600">
+        Category not found
+      </div>
+    );
   }
 
-  // Fetch products
+  const category = categoryRes.data;
+
+  if (!category?.id) {
+    return (
+      <div className="p-4 text-red-600">
+        Invalid category data
+      </div>
+    );
+  }
+
+  // Fetch products with filters
   const productsRes = await getData(
     `products?categoryId=${category.id}&page=${page}&sort=${sort}&min=${min}&max=${max}`
   );
 
-  const products = productsRes.success ? productsRes.data : [];
+  const products =
+    productsRes?.success && Array.isArray(productsRes.data)
+      ? productsRes.data
+      : [];
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-6">
 
-      {/* SINGLE FILTER COMPONENT (handles mobile & desktop) */}
+      {/* Filter component (handles mobile & desktop) */}
       <FilterComponent category={category} products={products} />
 
     </div>

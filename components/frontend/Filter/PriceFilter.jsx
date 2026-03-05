@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { getPriceRanges } from "@/lib/priceRanges";
 
 export default function PriceFilter({ slug, isSearch }) {
   const searchParams = useSearchParams();
@@ -15,30 +16,8 @@ export default function PriceFilter({ slug, isSearch }) {
   const router = useRouter();
   const { handleSubmit, reset, register } = useForm();
 
-  const priceRanges = [
-    {
-      label: "Low (Budget)",
-      display: "Low (Budget)",
-      max: 500,
-    },
-    {
-      label: "Medium",
-      display: "Medium",
-      min: 500,
-      max: 1500,
-    },
-    {
-      label: "High",
-      display: "High",
-      min: 1500,
-      max: 3000,
-    },
-    {
-      label: "Premium",
-      display: "Premium",
-      min: 3000,
-    },
-  ];
+  // 👇 Category-based ranges (Jiji-style)
+  const priceRanges = getPriceRanges(slug);
 
   function onSubmit(data) {
     const { min, max } = data;
@@ -100,7 +79,7 @@ export default function PriceFilter({ slug, isSearch }) {
               }`}
             >
               <Circle className="w-4 h-4 flex-shrink-0" />
-              {range.display}
+              {range.label}
             </Link>
           );
         })}
