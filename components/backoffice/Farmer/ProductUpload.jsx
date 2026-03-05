@@ -46,15 +46,16 @@ export default function ProductUpload({
       wholesalePrice: existingProduct?.wholesalePrice ?? 0,
       wholesaleQty: existingProduct?.wholesaleQty ?? 0,
       phoneNumber: existingProduct?.phoneNumber ?? "",
+
       location: existingProduct?.location ?? "",
+      country: existingProduct?.country ?? "",
+      state: existingProduct?.state ?? "",
+      city: existingProduct?.city ?? "",
     },
   });
 
   const isWholesale = watch("isWholesale");
 
-  /* =============================
-     SUBMIT HANDLER
-  ============================== */
   const onSubmit = async (formData) => {
     if (!productImages.length) {
       toast.error("Upload at least one product image");
@@ -94,7 +95,11 @@ export default function ProductUpload({
       qty: 1,
 
       phoneNumber: formData.phoneNumber,
+
       location: formData.location,
+      country: formData.country,
+      state: formData.state,
+      city: formData.city,
     };
 
     const endpoint = productId
@@ -141,9 +146,6 @@ export default function ProductUpload({
     }
   };
 
-  /* =============================
-     UI (THEME SAFE)
-  ============================== */
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -154,6 +156,7 @@ export default function ProductUpload({
       </h2>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+
         <TextInput
           label="Product Title"
           name="title"
@@ -190,7 +193,7 @@ export default function ProductUpload({
           <label className="text-sm font-medium">Category</label>
           <select
             {...register("categoryId")}
-            className="border rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
+            className="border rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-800"
           >
             <option value="">Select Category</option>
             {categories.map((cat) => (
@@ -201,7 +204,39 @@ export default function ProductUpload({
           </select>
         </div>
 
-        {/* WHOLESALE TOGGLE */}
+        {/* LOCATION */}
+        <TextInput
+          label="Country"
+          name="country"
+          placeholder="e.g Nigeria"
+          register={register}
+          errors={errors}
+        />
+
+        <TextInput
+          label="State / Province"
+          name="state"
+          placeholder="e.g Rivers"
+          register={register}
+          errors={errors}
+        />
+
+        <TextInput
+          label="City"
+          name="city"
+          placeholder="e.g Port Harcourt"
+          register={register}
+          errors={errors}
+        />
+
+        <TextInput
+          label="Specific Area"
+          name="location"
+          placeholder="e.g GRA Phase 2"
+          register={register}
+          errors={errors}
+        />
+
         <ToggleInput
           label="Supports Wholesale"
           name="isWholesale"
@@ -230,7 +265,6 @@ export default function ProductUpload({
           </>
         )}
 
-        {/* IMAGES */}
         <MultipleImageInput
           imageUrls={productImages}
           setImageUrls={setProductImages}
@@ -238,7 +272,6 @@ export default function ProductUpload({
           label="Upload Product Images"
         />
 
-        {/* TAGS */}
         <ArrayItemsInput items={tags} setItems={setTags} itemTitle="Tag" />
 
         <TextareaInput
@@ -251,14 +284,6 @@ export default function ProductUpload({
         <TextInput
           label="Contact Number"
           name="phoneNumber"
-          register={register}
-          errors={errors}
-        />
-
-        <TextInput
-          label="Location"
-          name="location"
-          placeholder="e.g. Benin City"
           register={register}
           errors={errors}
         />
