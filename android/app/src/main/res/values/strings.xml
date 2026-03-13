@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Buylog</string>
+    <string name="title_activity_main">Buylog</string>
+    <string name="package_name">com.buylogint.buylog</string>
+    <string name="custom_url_scheme">com.buylogint.buylog</string>
+</resources>
