@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- Base application theme -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
@@ -16,14 +15,15 @@
         <item name="android:background">@null</item>
     </style>
 
-    <!-- Splash Screen theme for modern Android -->
+    <!-- Splash Screen Theme -->
     <style name="LaunchTheme" parent="Theme.SplashScreen">
-        <!-- Background color of splash screen -->
-        <item name="android:windowSplashScreenBackground">#ffffff</item>
-        <!-- Splash image -->
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash</item>
-        <!-- Theme to apply after splash -->
+
+        <!-- App logo -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>
+
+        <!-- Theme after splash -->
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+
     </style>
 
 </resources>
