@@ -1,4 +1,6 @@
 "use client";
+export const dynamic = "force-dynamic";
+
 import Breadcrumb from "@/components/frontend/Breadcrumb";
 import CartItems from "@/components/frontend/CartItems";
 import CartProduct from "@/components/frontend/CartProduct";

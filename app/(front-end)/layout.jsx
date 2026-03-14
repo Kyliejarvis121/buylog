@@ -1,11 +1,13 @@
+"use client";
+
 import Navbar from "@/components/frontend/Navbar";
 import Footer from "@/components/frontend/Footer";
 import AdsenseScript from "@/components/frontend/AdsenseScript";
-import React from "react";
+import React, { useEffect } from "react";
 
 export default function Layout({ children }) {
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handler = (e) => {
       const link = e.target.closest("a[target='_blank']");
       if (link && link.href.includes("buylogint.com")) {
