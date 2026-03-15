@@ -1,22 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Pusher from "pusher-js";
 
 export default function ChatBox({ chatId, currentUser }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     if (!chatId) return;
 
-    // Initialize Pusher
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
       forceTLS: true,
     });
 
     const channel = pusher.subscribe(`chat-${chatId}`);
+
     channel.bind("new-message", (message) => {
       setMessages((prev) => [...prev, message]);
     });
@@ -26,6 +27,11 @@ export default function ChatBox({ chatId, currentUser }) {
       pusher.unsubscribe(`chat-${chatId}`);
     };
   }, [chatId]);
+
+  // Auto scroll to latest message
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!text.trim()) return;
@@ -44,38 +50,48 @@ export default function ChatBox({ chatId, currentUser }) {
   };
 
   return (
-    <div className="mt-4 border border-gray-300 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
-      <div className="max-h-64 overflow-y-auto mb-2">
+    <div className="fixed inset-0 flex flex-col bg-white dark:bg-gray-900">
+
+      {/* Header */}
+      <div className="p-4 border-b font-semibold">
+        Chat with Seller
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {messages.map((m) => (
           <div
             key={m.id}
-            className={`py-1 px-2 my-1 rounded ${
+            className={`max-w-xs px-3 py-2 rounded-lg ${
               m.senderId === currentUser.id
-                ? "bg-green-200 text-green-900 self-end"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                ? "ml-auto bg-green-500 text-white"
+                : "mr-auto bg-gray-200 dark:bg-gray-700"
             }`}
           >
-            <span className="font-semibold">{m.senderId === currentUser.id ? "You" : "Seller"}: </span>
             {m.text}
           </div>
         ))}
+
+        <div ref={bottomRef}></div>
       </div>
 
-      <div className="flex gap-2">
+      {/* Input */}
+      <div className="p-3 border-t flex gap-2">
         <input
-          type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1 border rounded px-3 py-2 text-sm"
+          placeholder="Type message..."
+          className="flex-1 border rounded-lg px-3 py-2"
         />
+
         <button
           onClick={sendMessage}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
         >
           Send
         </button>
       </div>
+
     </div>
   );
 }
