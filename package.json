@@ -37,6 +37,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "faker": "^6.6.6",
+    "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",
     "flowbite": "^2.2.0",
     "flowbite-react": "^0.7.0",
