@@ -19,7 +19,7 @@ model User {
   role     String  @default("FARMER")
 
   // ✅ MUST BE DateTime
-  emailVerified Boolean @default(false)
+  emailVerified          Boolean @default(false)
   emailVerificationToken String?
 
   image String?
@@ -41,12 +41,12 @@ model User {
 
   // 👥 Relations
   profile Profile?
-  farmer Farmer?
+  farmer  Farmer?
   orders  Order[]
 
   // 💬 Chat relations
-  BuyerChats Chat[]    @relation("BuyerChats") // Buyer side only
-  Messages   Message[]
+  BuyerChats    Chat[]         @relation("BuyerChats") // Buyer side only
+  Messages      Message[]
   notifications Notification[]
 
   pushTokens PushToken[]
@@ -77,18 +77,19 @@ model Profile {
 // FARMERS
 // ===============================
 model Farmer {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  userId    String   @unique @db.ObjectId
-  isActive  Boolean? @default(false)
-  lastSeen  DateTime?
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  userId   String    @unique @db.ObjectId
+  isActive Boolean?  @default(false)
+  lastSeen DateTime?
 
-  products  Product[]
-  chats     Chat[]    @relation("SellerChats")
-  Messages  Message[]
+  products Product[]
+  chats    Chat[]    @relation("SellerChats")
+  Messages Message[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 //
 // ===============================
 // CATEGORIES
@@ -132,22 +133,22 @@ model Product {
   qty            Int?     @default(1)
   isWholesale    Boolean? @default(false)
   wholesalePrice Float?   @default(0)
-  wholesaleQty    Int?     @default(0)
-  isActive        Boolean? @default(true)
-  phoneNumber      String?
+  wholesaleQty   Int?     @default(0)
+  isActive       Boolean? @default(true)
+  phoneNumber    String?
 
-  location         String?
-  country          String?
-  state            String?
-  city             String?
+  location String?
+  country  String?
+  state    String?
+  city     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  category   Category? @relation(fields: [categoryId], references: [id])
-  farmer     Farmer?   @relation(fields: [farmerId], references: [id])
-  market     Market?   @relation(fields: [marketId], references: [id])
-  marketId   String?    @db.ObjectId
+  category Category? @relation(fields: [categoryId], references: [id])
+  farmer   Farmer?   @relation(fields: [farmerId], references: [id])
+  market   Market?   @relation(fields: [marketId], references: [id])
+  marketId String?   @db.ObjectId
 
   orderItems OrderItem[]
   chats      Chat[]
@@ -362,20 +363,20 @@ model Message {
 model NewsletterSubscriber {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
-  createdAt DateTime  @default(now())
-  isActive  Boolean   @default(true)
+  createdAt DateTime @default(now())
+  isActive  Boolean  @default(true)
 }
 
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
-  chatId    String?   @db.ObjectId
+  chatId    String?  @db.ObjectId
   message   String
   type      String?
-  isRead     Boolean  @default(false)
-  createdAt  DateTime  @default(now())
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PushToken {

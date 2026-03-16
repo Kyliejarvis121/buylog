@@ -3,11 +3,16 @@
 import Navbar from "@/components/frontend/Navbar";
 import Footer from "@/components/frontend/Footer";
 import AdsenseScript from "@/components/frontend/AdsenseScript";
+import { initPushNotifications } from "@/lib/pushNotifications";
 import React, { useEffect } from "react";
 
 export default function Layout({ children }) {
 
   useEffect(() => {
+
+    // Initialize push notifications
+    initPushNotifications();
+
     const handler = (e) => {
       const link = e.target.closest("a[target='_blank']");
       if (link && link.href.includes("buylogint.com")) {

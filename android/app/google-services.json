@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "814888693221",
+    "project_id": "buylog-ebf69",
+    "storage_bucket": "buylog-ebf69.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:814888693221:android:f9b6559ba4eef53974130c",
+        "android_client_info": {
+          "package_name": "com.buylogint.buylog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnWaYgqKryNZkDohyTV6OtYj2U1Vl2Acw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
