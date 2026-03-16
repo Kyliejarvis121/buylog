@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+"use client";
 
 import HeroCarousel from "@/components/frontend/HeroCarousel";
 import MarketList from "@/components/frontend/MarketList";
