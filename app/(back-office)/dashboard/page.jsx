@@ -1,4 +1,5 @@
 // app/backoffice/dashboard/page.jsx
+export const dynamic = "force-dynamic";
 
 import React from "react";
 import Heading from "@/components/backoffice/Heading";
