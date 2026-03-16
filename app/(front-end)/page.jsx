@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import HeroCarousel from "@/components/frontend/HeroCarousel";
 import MarketList from "@/components/frontend/MarketList";
 import CategoryGrid from "@/components/frontend/CategoryGrid";
