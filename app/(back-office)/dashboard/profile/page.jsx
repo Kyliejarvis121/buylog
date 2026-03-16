@@ -12,9 +12,7 @@ export default async function ProfilePage() {
   }
 
   const user = await prisma.user.findUnique({
-    where: {
-      id: session.user.id,
-    },
+    where: { id: session.user.id },
     include: {
       profile: true,
       farmer: true,
@@ -26,28 +24,40 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto mt-6 bg-zinc-900 text-white rounded-xl p-6">
-      <h2 className="text-2xl font-bold mb-6">My Profile</h2>
+    <div className="max-w-3xl mx-auto mt-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
 
-      <div className="flex flex-col sm:flex-row gap-6 items-center">
-        <div className="relative w-24 h-24 rounded-full overflow-hidden border">
+      <h2 className="text-2xl font-bold mb-6 text-zinc-900 dark:text-white">
+        My Profile
+      </h2>
+
+      <div className="flex flex-col sm:flex-row items-center gap-6">
+
+        {/* Avatar */}
+        <div className="relative w-24 h-24 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700">
           <Image
             src={user.profile?.avatar || "/avatar.png"}
+            alt="User Avatar"
             fill
             className="object-cover"
-            alt="Avatar"
           />
         </div>
 
-        <div className="text-center sm:text-left">
-          <p className="text-lg font-semibold">
-            {user.name ?? "No Name"}
+        {/* User Info */}
+        <div className="text-center sm:text-left space-y-1">
+          <p className="text-lg font-semibold text-zinc-900 dark:text-white">
+            {user.name || "No Name"}
           </p>
-          <p className="text-sm text-zinc-400">
+
+          <p className="text-sm text-zinc-500">
             {user.email}
           </p>
-          <AvatarUploader />
+
+          {/* Upload new avatar */}
+          <div className="pt-2">
+            <AvatarUploader />
+          </div>
         </div>
+
       </div>
     </div>
   );

@@ -78,9 +78,10 @@ export default function FarmerDashboard({
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
         <Heading title="Farmer Dashboard" />
-        <div className="w-full lg:w-[320px]">
-          <ProfileCard user={session.user} />
-        </div>
+        <div className="w-full lg:w-[320px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4">
+  <p className="font-semibold text-lg">{session.user.name}</p>
+  <p className="text-sm text-zinc-500">{session.user.email}</p>
+</div>
       </div>
 
       {/* STATS */}
