@@ -1,5 +1,6 @@
-"use client";
+export const dynamic = "force-dynamic";
 
+"use client";
 import Navbar from "@/components/frontend/Navbar";
 import Footer from "@/components/frontend/Footer";
 import AdsenseScript from "@/components/frontend/AdsenseScript";
