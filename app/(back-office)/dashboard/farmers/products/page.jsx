@@ -1,7 +1,3 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-
 import PageHeader from "@/components/backoffice/PageHeader";
 import DataTable from "@/components/data-table-components/DataTable";
 import { columns } from "./columns";

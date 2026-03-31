@@ -1,6 +1,4 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+// app/backoffice/dashboard/page.jsx
 
 import React from "react";
 import Heading from "@/components/backoffice/Heading";
@@ -14,51 +12,29 @@ import { getData } from "@/lib/getData";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// Safe API fetch
-async function safe(endpoint, timeoutMs = 5000) {
-  try {
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Timeout")), timeoutMs)
-    );
-
-    const res = await Promise.race([getData(endpoint), timeout]);
-
-    return Array.isArray(res?.data) ? res.data : [];
-  } catch (e) {
-    console.error("FAILED FETCH:", endpoint, e.message || e);
-    return [];
-  }
-}
-
 export default async function DashboardPage() {
-
-  // Session
-  let session = null;
-
-  try {
-    session = await getServerSession(authOptions);
-  } catch (e) {
-    console.error("SESSION FETCH FAILED:", e);
-  }
+  const session = await getServerSession(authOptions);
 
   const role = session?.user?.role ?? "USER";
-  const userId = session?.user?.id ?? null;
+  const userId = session?.user?.id;
 
-  // Fetch everything in parallel (faster)
-  const [
-    sales,
-    orders,
-    products,
-    farmers,
-    supports,
-    users
-  ] = await Promise.all([
+  async function safe(endpoint) {
+    try {
+      const res = await getData(endpoint);
+      return Array.isArray(res?.data) ? res.data : [];
+    } catch (e) {
+      console.error("FAILED FETCH:", endpoint, e.message);
+      return [];
+    }
+  }
+
+  const [sales, orders, products, farmers, supports, users] = await Promise.all([
     safe("sales"),
     safe("orders"),
     safe("products"),
     safe("farmers?includeInactive=true"),
     safe("farmerSupport"),
-    safe("users")
+    safe("users"),
   ]);
 
   // USER DASHBOARD
@@ -72,7 +48,6 @@ export default async function DashboardPage() {
 
   // FARMER DASHBOARD
   if (role === "FARMER") {
-
     const farmer = farmers.find((f) => f.userId === userId);
 
     const farmerSales = sales.filter((s) => s.farmerId === farmer?.id);
@@ -96,12 +71,12 @@ export default async function DashboardPage() {
 
       <Heading title="Dashboard Overview" />
 
-      {/* Large Cards */}
+      {/* Large Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <LargeCards sales={sales} products={products} farmers={farmers} />
       </div>
 
-      {/* Small Cards */}
+      {/* Small Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
         <SmallCards orders={orders} supports={supports} />
       </div>
@@ -111,7 +86,7 @@ export default async function DashboardPage() {
         <DashboardCharts sales={sales} />
       </div>
 
-      {/* Orders */}
+      {/* Recent Orders */}
       <div className="mt-10 w-full">
         <Heading title="Recent Orders" />
         <div className="mt-4 overflow-x-auto">

@@ -1,7 +1,3 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
-
 import NewFarmerForm from "@/components/backoffice/NewFarmerForm";
 import { getData } from "@/lib/getData";
 import React from "react";
